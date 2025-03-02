@@ -1,0 +1,16 @@
+<x-app-layout>
+    @props(['breadcrumbs'])
+    @include('components.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
+    <div class="my-6">
+        <div class="flex justify-between">
+            <p class="font-semibold text-xl text-gray-600 ml-6">{{$course->course_code . ' ' . $section->year_level . $section->class_section}}</p>
+            <button wire:click="batchAssign" class="mr-6 bg-blue-500 px-2 py-1 rounded uppercase text-white font-semibold hover:bg-blue-600">
+                Batch Assign
+            </button>
+        </div>
+        
+        <livewire:instructor.deployment-table :section_id="$section->id" />
+
+    </div>
+</x-app-layout>

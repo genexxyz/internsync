@@ -1,0 +1,46 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "./pikaday.css";
+@import "tailwindcss/utilities";
+
+
+@layer base{
+    :root{
+        --color-primary: rgb(31 41 55);
+        --color-secondary: rgb(209 213 219);
+    }
+}
+
+.theme-maroon {
+    --color-primary: rgb(128, 0, 0); /* Maroon */
+    --color-secondary: rgb(192, 57, 43); /* Maroon Light */
+    --color-accent: rgb(139, 0, 0); /* Maroon Dark */
+}
+
+.theme-green {
+    --color-primary: rgb(0, 128, 1); /* Green */
+    --color-secondary: rgb(104, 211, 145); /* Green Light */
+    --color-accent: rgb(56, 161, 105); /* Green Dark */
+}
+
+.theme-blue {
+    --color-primary: rgb(49, 130, 206); /* Blue */
+    --color-secondary: rgb(99, 179, 237); /* Blue Light */
+    --color-accent: rgb(43, 108, 176); /* Blue Dark */
+}
+
+.theme-gold {
+    --color-primary: rgb(255, 215, 0); /* Gold */
+    --color-secondary: rgb(255, 184, 0); /* Gold Light */
+    --color-accent: rgb(255, 165, 0); /* Gold Dark */
+}
+
+.theme-black {
+    --color-primary: rgb(31, 41, 55); /* Black (Slate 800) */
+    --color-secondary: rgb(209, 213, 219); /* Gray 300 */
+    --color-accent: rgb(75, 85, 99); /* Gray 600 */
+}
