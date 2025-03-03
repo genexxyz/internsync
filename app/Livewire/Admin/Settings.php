@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Setting;
@@ -49,51 +50,47 @@ class Settings extends Component
     }
 
     public function uploadLogo()
-    {
-        $this->validate([
-            'logo' => 'required|image|max:2048|mimes:svg,png,jpg,jpeg',
-        ]);
+{
+    $this->validate([
+        'logo' => 'required|image|max:2048|mimes:svg,png,jpg,jpeg',
+    ]);
 
-        try {
-            // Start progress
-            $this->uploadProgress = 25;
+    try {
+        $this->uploadProgress = 25;
 
-            // Generate a unique filename
-            $filename = 'logo_' . uniqid() . '.' . $this->logo->getClientOriginalExtension();
+        // Generate a unique filename
+        $filename = 'logo_' . Str::uuid() . '.' . $this->logo->getClientOriginalExtension();
+        $folder = config('app.logo_path', 'logos');
 
-            // Store the file in the logos directory
-            $path = $this->logo->storeAs('logos', $filename, 'public');
+        // Store the file
+        $path = $this->logo->storeAs($folder, $filename, 'public');
 
-            // Update progress
-            $this->uploadProgress = 75;
+        $this->uploadProgress = 75;
 
-            // Get settings or create new
-            $settings = Setting::first() ?? new Setting();
-            
-            // Delete old logo if exists
-            if ($settings->default_logo && Storage::disk('public')->exists($settings->default_logo)) {
-                Storage::disk('public')->delete($settings->default_logo);
-            }
+        // Get settings or create new
+        $settings = Setting::first() ?? new Setting();
 
-            // Update logo path
-            $settings->default_logo = $path;
-            $settings->save();
-
-            // Complete progress
-            $this->uploadProgress = 100;
-
-            // Reset logo input and update path
-            $this->uploadedLogoPath = $path;
-            $this->logo = null;
-
-            // Flash success message
-            $this->dispatch('alert', type: 'success', text: 'System Logo has been updated successfully!');
-        } catch (\Exception $e) {
-            // Reset progress on failure
-            $this->uploadProgress = 0;
-            $this->dispatch('alert', type: 'danger', text: 'Error uploading System Logo!');
+        // Delete old logo if it exists and isn't the default
+        if ($settings->default_logo && Storage::disk('public')->exists($settings->default_logo) && $settings->default_logo !== 'logos/default-logo.png') {
+            Storage::disk('public')->delete($settings->default_logo);
         }
+
+        // Update logo path
+        $settings->default_logo = $path;
+        $settings->save();
+
+        $this->uploadProgress = 100;
+
+        $this->uploadedLogoPath = $path;
+        $this->logo = null;
+        $this->dispatch('reloadPage');
+        $this->dispatch('alert', type: 'success', text: 'System Logo has been updated successfully!');
+    } catch (\Exception $e) {
+        $this->uploadProgress = 0;
+        $this->dispatch('alert', type: 'danger', text: 'Error uploading System Logo!');
     }
+}
+
 
     public function saveSettings()
     {
@@ -112,7 +109,7 @@ class Settings extends Component
         $settings = Setting::first() ?? new Setting();
         $settings->fill($validatedData);
         $settings->save();
-
+        $this->dispatch('reloadPage');
         // Success Message
         $this->dispatch('alert', type: 'success', text: 'Settings have been updated successfully!');
     }

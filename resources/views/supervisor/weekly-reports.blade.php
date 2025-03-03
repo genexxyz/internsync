@@ -1,6 +1,12 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="[['url' => route('supervisor.weeklyReports'), 'label' => 'Weekly Reports']]" />
-        <div class="grid grid-cols-1 my-6">
+
+
+
+        <div class="p-6">
+            <livewire:supervisor.weekly-reports-table/>
+        </div>
+        {{-- <div class="grid grid-cols-1 my-6">
             <div class="flex flex-col bg-white rounded-lg shadow-md">
                 <!-- Top Section -->
                 <div class="bg-secondary text-white rounded-t-lg flex items-center justify-between px-4 py-3">
@@ -60,6 +66,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
 </x-app-layout>

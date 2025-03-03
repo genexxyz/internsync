@@ -43,7 +43,7 @@ class InstructorTable extends Component
     public function render()
     {
         $query = Instructor::query()->orderBy('first_name','asc')
-            ->with(['user', 'instructor_sections'])
+            ->with(['user', 'handles'])
             ->whereHas('user', function ($q) {
                 $q->where('role', 'instructor');
             });

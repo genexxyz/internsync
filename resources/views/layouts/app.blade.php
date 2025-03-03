@@ -59,7 +59,12 @@
 
         @livewireScripts
         @yield('scripts')
-
+        <script>
+            Livewire.on('reloadPage', () => {
+                location.reload();
+            });
+        </script>
+        
     </div>
 </body>
 

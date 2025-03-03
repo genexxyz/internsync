@@ -14,6 +14,11 @@ class Deployment extends Model
         'company_dept_id',
         'academic_id',
         'custom_hours',
+        'starting_date',
+    ];
+
+    protected $casts = [
+        'starting_date' => 'date'
     ];
     public function student()
     {
@@ -41,5 +46,10 @@ class Deployment extends Model
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'student_id', 'student_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }

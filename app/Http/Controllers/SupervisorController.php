@@ -10,7 +10,13 @@ class SupervisorController extends Controller
 {
     public function index(): View
     {
+        
         return view('supervisor.dashboard');
+    }
+
+    public function interns(): View
+    {
+        return view('supervisor.interns');
     }
 
     public function weeklyReports(): View

@@ -34,7 +34,7 @@
                         </label>
 
                         @if($logo)
-                            <button disabled type="button" wire:click="uploadLogo" 
+                            <button type="button" wire:click="uploadLogo" 
                                 class="ml-3 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fa fa-check mr-2"></i>
                                 Confirm Upload

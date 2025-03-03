@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CompanyDepartment;
 use App\Models\Department;
 use App\Models\Deployment;
+use App\Models\Handle;
 use App\Models\Student;
 use App\Models\Supervisor;
 use LivewireUI\Modal\ModalComponent;
@@ -26,6 +27,7 @@ class AssignModal extends ModalComponent
     public $companyExists = false;
     public $existingCompanyDepartment = null;
     public $isCreatingCompany = false;
+    public $assignButton = false;
     public $existingDepartments = [];
     public $selectedDepartment = '';
     
@@ -102,6 +104,7 @@ class AssignModal extends ModalComponent
         $this->existingDepartments = Department::where('company_id', $company->id)
             ->pluck('department_name')
             ->toArray();
+            $this->assignButton = true;
     }
 
     public function addNewDepartment()
@@ -208,35 +211,55 @@ public function createNewDepartment()
     }
 
     public function assignStudent()
-    {
-        $academic = Academic::where('ay_default', 1)->firstOrFail();
+{
+    $academic = Academic::where('ay_default', 1)->firstOrFail();
 
-        $this->validate([
-            'selectedCompany' => 'required',
-            'department' => 'required',
-            'custom_hours' => 'nullable|integer|min:1',
-        ]);
+    // Get the instructor from instructor_sections table
+    $instructor = Handle::where('year_section_id', $this->student->yearSection->id)->where('is_verified', 1)
+        ->first();
 
-        Deployment::create([
-            'student_id' => $this->student->id,
-            'instructor_id' => Auth::user()->instructor->id,
-            'supervisor_id' => $this->selectedSupervisor?->id,
-            'academic_id' => $academic->id,
-            'company_id' => $this->selectedCompany->id,
-            'department' => $this->department,
-            'custom_hours' => $this->custom_hours,
-            'status' => 'pending'
-        ]);
-
-        $this->closeModalWithEvents([
-            'studentAssigned' => $this->student->id
-        ]);
-
+    if (!$instructor) {
         $this->dispatch('alert', [
-            'type' => 'success',
-            'message' => "{$this->student->first_name} successfully assigned to {$this->selectedCompany->company_name}!"
+            'type' => 'error',
+            'message' => 'No instructor assigned to this section.'
         ]);
+        return;
     }
+
+    $this->validate([
+        'selectedCompany' => 'required',
+        'custom_hours' => 'nullable|integer|min:1',
+    ]);
+
+    // Find existing deployment for this student
+    $deployment = Deployment::where('student_id', $this->student->id)->first();
+
+    $deploymentData = [
+        'instructor_id' => $instructor->instructor_id, // Using section's instructor
+        'supervisor_id' => $this->selectedSupervisor?->id,
+        'company_id' => $this->selectedCompany->id,
+        'company_dept_id' => $this->selectedDepartment ? 
+            Department::where('company_id', $this->selectedCompany->id)
+                ->where('department_name', $this->selectedDepartment)
+                ->first()?->id 
+            : null,
+    ];
+
+    if ($deployment) {
+        // Update existing deployment
+        $deployment->update($deploymentData);
+    } else {
+        // Create new deployment if none exists
+        $deploymentData['student_id'] = $this->student->id;
+        Deployment::create($deploymentData);
+    }
+
+    $this->closeModal();
+
+    
+    $this->dispatch('refreshAllStudents');
+    $this->dispatch('alert', type: 'success', text: "{$this->student->first_name} successfully assigned to {$this->selectedCompany->company_name}!");
+}
 
     public function cancelCompanyCreation()
     {

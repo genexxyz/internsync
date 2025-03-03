@@ -92,11 +92,14 @@
                             <i class="fa fa-file-image text-red-500 text-xl"></i>
                             <span class="text-gray-600">{{ basename($instructor->supporting_doc) }}</span>
                         </div>
-                        <button x-data @click="$dispatch('open-preview', { url: '{{ $this->getDocumentUrl() }}' })"
-                            class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200">
-                            <i class="fa fa-eye mr-2"></i>
-                            View Document
-                        </button>
+                        <button 
+                    x-data
+                    @click="$dispatch('open-preview', { url: '{{ Storage::url($instructor->supporting_doc) }}' })"
+                    class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+                >
+                    <i class="fa fa-eye mr-2"></i>
+                    View Document
+                </button>
                     </div>
                 </div>
             @else
@@ -124,27 +127,34 @@
     </div>
     <!-- Document Preview Modal -->
     <div x-data="{ 
-    showPreview: false,
-    previewUrl: '',
-    init() {
-        window.addEventListener('open-preview', (e) => {
-            this.previewUrl = e.detail.url;
-            this.showPreview = true;
-        });
-    }
-}" x-show="showPreview" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        showPreview: false,
+        previewUrl: '',
+        init() {
+            window.addEventListener('open-preview', (e) => {
+                this.previewUrl = e.detail.url;
+                this.showPreview = true;
+            });
+        }
+    }" x-show="showPreview" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <!-- Backdrop overlay -->
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-
+    
+        <!-- Modal container -->
         <div class="relative min-h-screen flex items-center justify-center p-4">
             <div class="relative bg-white rounded-xl shadow-xl max-w-4xl w-full">
-                <div class="absolute top-4 right-4">
+                <!-- Close button -->
+                <div class="absolute top-4 right-4 z-10">
                     <button @click="showPreview = false"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
+                        class="p-2 bg-white hover:bg-gray-100 rounded-full transition-colors duration-200 shadow-md">
                         <i class="fa fa-times text-gray-500"></i>
                     </button>
                 </div>
+                
+                <!-- Image viewer -->
                 <div class="p-1">
-                    <iframe :src="previewUrl" class="w-full h-[85vh] rounded-lg" frameborder="0"></iframe>
+                    <div class="flex items-center justify-center bg-gray-100 w-full h-[85vh] rounded-lg overflow-auto">
+                        <img :src="previewUrl" class="max-w-full max-h-full object-contain" alt="Document preview">
+                    </div>
                 </div>
             </div>
         </div>

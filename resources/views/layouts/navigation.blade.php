@@ -70,11 +70,11 @@
                     </p>
                 </div>
 
-                <!-- System Status -->
+                {{-- <!-- System Status -->
                 <div class="flex items-center bg-white/10 px-4 py-2 rounded-lg">
                     <i class="fas fa-circle text-green-400 mr-2 text-xs animate-pulse"></i>
                     <span class="text-white/90 text-sm">System Active</span>
-                </div>
+                </div> --}}
             </div>
 
             <!-- Right Side Nav Items -->

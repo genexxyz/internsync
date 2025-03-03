@@ -1,71 +1,115 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="[['url' => route('student.journey'), 'label' => 'OJT Journey']]" />
 
-        <div class="my-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="bg-white rounded-lg shadow-sm flex justify-between items-center">
-
-            
-            <div class="p-3 ml-3 text-start text-gray-600">
-                
-                @if($company)
-                <p class="uppercase font-semibold text-xl">{{$company->company_name ?? 'Not Assigned Yet'}}</p>
-                @endif
-                <p class="text-sm text-gray-400">Company/Client Name</p>
-
-            </div>
-            <div>
-                <i class="fa fa-building text-4xl text-gray-400 p-3"></i>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-sm flex justify-between items-center">
-
-            
-            <div class="p-3 ml-3 text-start text-gray-600">
-                @if($supervisor)
-                <p class="uppercase font-semibold text-xl">{{ $supervisor->first_name . ' ' . $supervisor->last_name ?? 'Not Assigned'}}</p>
-                @endif
-                <p class="text-sm text-gray-400">Supervisor</p>
-            </div>
-            <div>
-                <i class="fa fa-user-tie text-4xl text-gray-400 p-3"></i>
+    <!-- Company and Supervisor Info -->
+    <div class="my-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Company Card -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5 flex items-start justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">Company/Client Name</p>
+                    <p class="text-xl font-semibold text-gray-900">
+                        {{ $deployment->company->company_name ?? 'Not Assigned Yet' }}
+                    </p>
+                    @if($deployment->company && $deployment->department)
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-users text-gray-400 mr-2"></i>
+                            <p class="text-sm text-gray-600">{{ $deployment->department }}</p>
+                        </div>
+                    @endif
+                </div>
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 bg-blue-50 flex items-center justify-center rounded-lg">
+                        <i class="fa fa-building text-2xl text-blue-500"></i>
+                    </div>
+                </div>
             </div>
         </div>
-        </div>
 
-
-    <div class="grid grid-cols-3 gap-4 my-6">
-        <div class="bg-white shadow-sm rounded-lg">
-            <div class="pt-3 ml-3 text-start text-xl text-gray-600">
-                <p>Starting Date</p>
-            </div>
-
-            <div class="m-3">
-                <p class="border-2 border-gray-200 rounded text-sm px-3 py-2  text-center">09/10/2024</p>
-
-            </div>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg">
-            <div class="pt-3 ml-3 text-start text-xl text-gray-600">
-                <p>Total Hours Worked</p>
-            </div>
-
-            <div class="m-3">
-                <div><p class="border-2 border-gray-200 rounded text-sm px-3 py-2 text-center"> 0/500</p></div>
-            </div>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg">
-            <div class="pt-3 ml-3 text-start text-xl text-gray-600">
-                <p>End Date</p>
-            </div>
-
-            <div class="m-3">
-                
-                
-                <p class="border-2 border-gray-200 rounded text-sm px-3 py-2  text-center"> Not Specified</p>
+        <!-- Supervisor Card -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5 flex items-start justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">Supervisor</p>
+                    <p class="text-xl font-semibold text-gray-900">
+                        {{ $deployment->supervisor ? $deployment->supervisor->first_name . ' ' . $deployment->supervisor->last_name : 'Not Assigned' }}
+                    </p>
+                    @if($deployment->supervisor && $deployment->supervisor->email)
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                            <p class="text-sm text-gray-600">{{ $deployment->supervisor->email }}</p>
+                        </div>
+                    @endif
+                </div>
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 bg-green-50 flex items-center justify-center rounded-lg">
+                        <i class="fa fa-user-tie text-2xl text-green-500"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div>
-        @livewire('calendar')
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
+        <!-- Starting Date -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm font-medium text-gray-500">Starting Date</p>
+                    <div class="h-8 w-8 bg-blue-50 flex items-center justify-center rounded-lg">
+                        <i class="fas fa-calendar text-blue-500"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold text-gray-900">
+                    {{ $deployment->starting_date ? $deployment->starting_date->format('M d, Y') : 'Not Set' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Hours Progress -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm font-medium text-gray-500">Hours Progress</p>
+                    <div class="h-8 w-8 bg-purple-50 flex items-center justify-center rounded-lg">
+                        <i class="fas fa-clock text-purple-500"></i>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-2xl font-semibold text-gray-900">
+                        {{ $hours_rendered ?? 0 }}/{{ $deployment->custom_hours ?? 500 }}
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-purple-500 h-2 rounded-full" style="width: {{ ($hours_rendered ?? 0) / ($deployment->custom_hours ?? 500) * 100 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Date -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm font-medium text-gray-500">End Date</p>
+                    <div class="h-8 w-8 bg-green-50 flex items-center justify-center rounded-lg">
+                        <i class="fas fa-flag-checkered text-green-500"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-semibold text-gray-900">
+                    {{ $deployment->end_date ? $deployment->end_date->format('M d, Y') : 'Not Set' }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">Attendance Calendar</h2>
+        </div>
+        <div class="p-6">
+            @livewire('calendar')
+        </div>
     </div>
 </x-app-layout>

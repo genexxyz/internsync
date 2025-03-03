@@ -58,4 +58,9 @@ public function deployment()
     {
         return $this->hasOne(Deployment::class);
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'company_department_id');
+    }
 }

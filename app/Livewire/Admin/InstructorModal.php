@@ -59,7 +59,7 @@ public function mount(Instructor $instructor)
     $this->user = $instructor->load([
         'sections.course',
         'instructorCourse.course',
-        'instructor_sections'
+        'handles'
     ]);
     
 }
@@ -88,14 +88,14 @@ public function verifyInstructor()
         $this->user->user->update(['is_verified' => 1]);
 
         // Get all sections handled by this instructor
-        $handledSections = $this->user->instructor_sections;
+        $handledSections = $this->user->handles;
 
         foreach ($handledSections as $section) {
             // Verify this instructor's section
             $section->update(['is_verified' => 1]);
 
             // Delete duplicate section assignments for other instructors
-            DB::table('instructor_sections')
+            DB::table('handles')
                 ->where('year_section_id', $section->year_section_id)
                 ->where('instructor_id', '!=', $this->user->id)
                 ->delete();

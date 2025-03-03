@@ -22,14 +22,23 @@ class TaskAttendance extends Component
     public $isEditing = false;
     public $journalId = null;
     public $existingJournal = null;
+    public $deployment;
     // Validation rules
 
     public function mount()
     {
-        $this->dayToday = now()->format('l, F j, Y');
-        $this->updateCurrentTime();
-        $this->loadAttendance();
-        $this->loadJournal();
+        
+
+        $this->deployment = Auth::user()->student->deployment;
+    
+    if ($this->deployment && 
+        $this->deployment->starting_date && 
+        Carbon::parse($this->deployment->starting_date)->lte(now())) {
+            $this->dayToday = now()->format('l, F j, Y');
+            $this->updateCurrentTime();
+            $this->loadAttendance();
+            $this->loadJournal();
+    }
     }
 
     public function updateCurrentTime()
@@ -233,7 +242,7 @@ class TaskAttendance extends Component
 
     public function toggleJournalModal()
     {
-        if (!$this->attendance || !$this->attendance->time_out) {
+        if (!$this->attendance) {
             return;
         }
 

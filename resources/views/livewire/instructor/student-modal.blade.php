@@ -71,7 +71,7 @@
             <!-- Deployment Details -->
             <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-800 mb-4">Deployment Details</h4>
-                @if (!empty($student->deployment->supervisor_id))
+                @if (!empty($student->deployment->company_id))
                     <div class="space-y-2">
                         <p class="flex items-center gap-2 text-gray-600">
                             <i class="fa fa-building w-5"></i>
@@ -79,7 +79,7 @@
                         </p>
                         <p class="flex items-center gap-2 text-gray-600">
                             <i class="fa fa-user-tie w-5"></i>
-                            <span>{{ $student->deployment->supervisor->first_name ?? '' }} {{ $student->deployment->supervisor->last_name ?? '' }}</span>
+                            <span>{{ $student->deployment->supervisor->first_name ?? 'N/A' }} {{ $student->deployment->supervisor->last_name ?? '' }}</span>
                         </p>
                     </div>
                 @else
@@ -106,13 +106,13 @@
                         <span class="text-gray-600">{{ basename($student->supporting_doc) }}</span>
                     </div>
                     <button 
-                        x-data
-                        @click="$dispatch('open-preview', { url: '{{ $this->getDocumentUrl() }}' })"
-                        class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
-                    >
-                        <i class="fa fa-eye mr-2"></i>
-                        View Document
-                    </button>
+                    x-data
+                    @click="$dispatch('open-preview', { url: '{{ Storage::url($student->supporting_doc) }}' })"
+                    class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+                >
+                    <i class="fa fa-eye mr-2"></i>
+                    View Document
+                </button>
                 </div>
             </div>
         @else
@@ -143,30 +143,38 @@
 
 
      <!-- Document Preview Modal -->
-     <div x-data="{ 
-        showPreview: false,
-        previewUrl: '',
-        init() {
-            window.addEventListener('open-preview', (e) => {
-                this.previewUrl = e.detail.url;
-                this.showPreview = true;
-            });
-        }
-    }" x-show="showPreview" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-    
-            <div class="relative min-h-screen flex items-center justify-center p-4">
-                <div class="relative bg-white rounded-xl shadow-xl max-w-4xl w-full">
-                    <div class="absolute top-4 right-4">
-                        <button @click="showPreview = false"
-                            class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200">
-                            <i class="fa fa-times text-gray-500"></i>
-                        </button>
-                    </div>
-                    <div class="p-1">
-                        <iframe :src="previewUrl" class="w-full h-[85vh] rounded-lg" frameborder="0"></iframe>
-                    </div>
+     <!-- Image Preview Modal -->
+<div x-data="{ 
+    showPreview: false,
+    previewUrl: '',
+    init() {
+        window.addEventListener('open-preview', (e) => {
+            this.previewUrl = e.detail.url;
+            this.showPreview = true;
+        });
+    }
+}" x-show="showPreview" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+    <!-- Backdrop overlay -->
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Modal container -->
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-xl max-w-4xl w-full">
+            <!-- Close button -->
+            <div class="absolute top-4 right-4 z-10">
+                <button @click="showPreview = false"
+                    class="p-2 bg-white hover:bg-gray-100 rounded-full transition-colors duration-200 shadow-md">
+                    <i class="fa fa-times text-gray-500"></i>
+                </button>
+            </div>
+            
+            <!-- Image viewer -->
+            <div class="p-1">
+                <div class="flex items-center justify-center bg-gray-100 w-full h-[85vh] rounded-lg overflow-auto">
+                    <img :src="previewUrl" class="max-w-full max-h-full object-contain" alt="Document preview">
                 </div>
             </div>
         </div>
+    </div>
+</div>
 </div>

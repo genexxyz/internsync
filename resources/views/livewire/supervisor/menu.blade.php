@@ -8,7 +8,12 @@
         <span>Dashboard</span>
     </a>
 
-
+    <a wire:navigate href="{{ route('supervisor.interns') }}"
+    class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
+        {{ request()->routeIs('supervisor.interns') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
+    <i class="fa fa-users"></i>
+    <span>Interns</span>
+</a>
     <a wire:navigate href="{{ route('supervisor.weeklyReports') }}"
         class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
             {{ request()->routeIs('supervisor.weeklyReports') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">

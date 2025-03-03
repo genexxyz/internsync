@@ -1,39 +1,70 @@
 <!-- filepath: /opt/lampp/htdocs/internsync/resources/views/livewire/student/task-attendance.blade.php -->
 <div class="mb-6">
-    <!-- Main Card -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <!-- Header -->
-        <div class="bg-secondary p-6">
-            <div class="flex justify-between items-center">
-                <div class="space-y-1">
-                    <h2 class="text-2xl font-bold text-white">Task & Attendance</h2>
-                    <p class="text-white/80">
-                        <i class="fa fa-calendar-day mr-2"></i>
-                        {{ Carbon\Carbon::parse($dayToday)->format('F d, Y') }}
-                    </p>
-                </div>
-                <div class="text-white/80">
-                    <p class="text-sm">Current Time</p>
-                    <p class="text-2xl font-semibold">{{ $currentTime }}</p>
+    @if(!$deployment || !$deployment->starting_date)
+        <!-- Not Started Message -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-4">
+                        <i class="fas fa-clock text-2xl text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Internship Not Started</h3>
+                    <p class="text-gray-600">Your internship starting date has not been set yet. Please wait for your supervisor to set your starting date.</p>
                 </div>
             </div>
         </div>
+    @elseif(Carbon\Carbon::parse($deployment->starting_date)->isAfter(now()))
+        <!-- Future Start Date Message -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+                        <i class="fas fa-calendar text-2xl text-blue-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Internship Starts Soon</h3>
+                    <p class="text-gray-600 mb-2">Your internship is scheduled to start on:</p>
+                    <p class="text-lg font-semibold text-blue-600">
+                        {{ Carbon\Carbon::parse($deployment->starting_date)->format('F d, Y') }}
+                    </p>
+                    <p class="text-sm text-gray-500 mt-4">You'll be able to access this section once your internship begins.</p>
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- Main Card -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <!-- Header -->
+            <div class="bg-secondary p-6">
+                <div class="flex justify-between items-center">
+                    <div class="space-y-1">
+                        <h2 class="text-2xl font-bold text-white">Task & Attendance</h2>
+                        <p class="text-white/80">
+                            <i class="fa fa-calendar-day mr-2"></i>
+                            {{ Carbon\Carbon::parse($dayToday)->format('F d, Y') }}
+                        </p>
+                    </div>
+                    <div class="text-white/80">
+                        <p class="text-sm">Current Time</p>
+                        <p class="text-2xl font-semibold">{{ $currentTime }}</p>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Content -->
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b-2 border-gray-200">
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Break</th>
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Content -->
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Break</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
                         <tr>
                             <!-- Time In Cell -->
                             <td class="px-6 py-4">
@@ -62,7 +93,7 @@
                                         'bg-blue-600 hover:bg-blue-700 text-white' => !$isSubmitted && $attendance,
                                         'bg-gray-100 text-gray-400 cursor-not-allowed' => !$attendance || $isSubmitted
                                     ])
-                                    @if (!$attendance ||  $isSubmitted) disabled @endif
+                                    @if (!$attendance || $isSubmitted) disabled @endif
                                 >
                                     <i class="fa fa-book mr-2"></i>
                                     {{ $existingJournal ? 'Edit Journal' : 'Add Journal' }}
@@ -230,6 +261,8 @@ class="fixed inset-0 z-50 overflow-y-auto">
         </div>
     </div>
 </div>
+</div>
+@endif
 </div>
 </div>
 

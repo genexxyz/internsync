@@ -118,7 +118,9 @@ Route::middleware(['auth', RoleMiddleware::class . ':instructor'])->group(functi
 Route::middleware(['auth', RoleMiddleware::class . ':supervisor'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/weekly-reports', [SupervisorController::class, 'weeklyReports'])->name('supervisor.weeklyReports');
+    Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])->name('supervisor.weekly-reports.view');
     Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])->name('supervisor.evaluation');
+    Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])->name('supervisor.interns');
 });
 
 // Profile management (accessible to all authenticated users)

@@ -66,7 +66,7 @@
                                     <!-- Mobile-only section count -->
                                     <div class="sm:hidden text-xs text-gray-500 mt-1">
                                         <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                            {{ $instructor->instructor_sections->count() ?? 0 }} sections
+                                            {{ $instructor->handles->count() ?? 0 }} sections
                                         </span>
                                     </div>
                                 </div>
@@ -84,7 +84,7 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
                                 <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                                    {{ $instructor->instructor_sections->count() ?? 0 }} sections
+                                    {{ $instructor->handles->count() ?? 0 }} sections
                                 </span>
                             </td>
                             <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center text-sm font-medium">

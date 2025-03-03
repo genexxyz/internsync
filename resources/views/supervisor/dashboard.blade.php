@@ -1,88 +1,145 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="[]" />
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-6 overflow-hidden">
-
-        <div class="rounded-lg shadow-md bg-secondary flex justify-between items-center px-4 py-3">
-            <div class="text-center text-white">
-                <p class="text-5xl font-extrabold">0</p>
-                <p class="text-lg font-medium">HANDLED INTERNS</p>
+    <!-- Company Info -->
+    <div class="p-6 pb-0">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-5 flex items-start justify-between border-b border-gray-100">
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-900">{{ auth()->user()->supervisor->company->company_name }}</h1>
+                    <div class="mt-1 flex items-center space-x-2 text-sm text-gray-500">
+                        <span>
+                            <i class="fa fa-users mr-1.5"></i>
+                            {{ auth()->user()->supervisor->department->department_name ?? 'No Department' }}
+                        </span>
+                        <span class="text-gray-300">•</span>
+                        <span>
+                            <i class="fa fa-location-dot mr-1.5"></i>
+                            {{ auth()->user()->supervisor->company->address }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex-shrink-0">
+                    @if(auth()->user()->supervisor->department_name)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700">
+                            Department Supervisor
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-50 text-gray-700">
+                            Company Supervisor
+                        </span>
+                    @endif
+                </div>
             </div>
-            <div>
-                <i class="fa fa-clock text-white text-6xl"></i>
+        </div>
+    </div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 overflow-hidden">
+        <!-- Total Handled Interns -->
+        <div class="rounded-xl shadow-sm bg-gradient-to-r from-secondary to-secondary/90 hover:shadow-md transition-shadow">
+            <div class="px-6 py-5 flex justify-between items-center">
+                <div class="text-white">
+                    <p class="text-5xl font-bold tracking-tight">0</p>
+                    <p class="mt-1 text-lg font-medium">Handled Interns</p>
+                    <p class="text-sm text-white/80 mt-1">Total handled interns</p>
+                </div>
+                <div class="bg-white/10 p-3 rounded-lg">
+                    <i class="fa fa-users text-white text-3xl"></i>
+                </div>
             </div>
         </div>
 
-
-        <div class="flex flex-col bg-white rounded-lg shadow-md">
-            <!-- Top Section -->
-            <div class="bg-secondary text-white rounded-t-lg flex items-center justify-between px-4 py-3">
-                <div class="flex-grow text-center ml-14">
-                    <p class="text-4xl font-extrabold">0</p>
-                    <p class="text-lg font-medium">ON-GOING</p>
+        <!-- On-going Interns -->
+        <div class="rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+            <div class="px-6 py-5">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-5xl font-bold tracking-tight text-gray-900">0</p>
+                        <p class="mt-1 text-lg font-medium text-gray-600">On-going</p>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <i class="fa fa-users-between-lines text-blue-500 text-3xl"></i>
+                    </div>
                 </div>
-                <div>
-                    <i class="fa fa-users-between-lines text-5xl"></i>
-                </div>
-            </div>
-            <!-- Bottom Section -->
-            <div class="py-3 text-center text-sm underline text-gray-600 hover:text-gray-800">
-                <a href="#" class="flex items-center justify-center gap-1">
-                    VIEW INTERNS <i class="fa fa-circle-info"></i>
+                <a href="#" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-700">
+                    View Interns <i class="fa fa-arrow-right ml-2"></i>
                 </a>
             </div>
         </div>
 
-        <div class="flex flex-col bg-white rounded-lg shadow-md">
-            <!-- Top Section -->
-            <div class="bg-secondary text-white rounded-t-lg flex items-center justify-between px-4 py-3">
-                <div class="flex-grow text-center ml-14">
-                    <p class="text-4xl font-extrabold">0</p>
-                    <p class="text-lg font-medium">FINISHED</p>
+        <!-- Finished Interns -->
+        <div class="rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+            <div class="px-6 py-5">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-5xl font-bold tracking-tight text-gray-900">0</p>
+                        <p class="mt-1 text-lg font-medium text-gray-600">Finished</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <i class="fa fa-user-check text-green-500 text-3xl"></i>
+                    </div>
                 </div>
-                <div>
-                    <i class="fa fa-user-check text-5xl"></i>
-                </div>
-            </div>
-            <!-- Bottom Section -->
-            <div class="py-3 text-center text-sm underline text-gray-600 hover:text-gray-800">
-                <a href="#" class="flex items-center justify-center gap-1">
-                    VIEW INSTERNS <i class="fa fa-circle-info"></i>
+                <a href="#" class="inline-flex items-center text-sm text-green-600 hover:text-green-700">
+                    View Interns <i class="fa fa-arrow-right ml-2"></i>
                 </a>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 p-6">
-        <div class="flex flex-col bg-white rounded-lg shadow-md">
-            <!-- Top Section -->
-            <div class="bg-secondary text-white rounded-t-lg flex items-center justify-between px-4 py-3">
-                <div class="flex-grow text-center">
-                    <p class="text-xl font-extrabold">Notifications</p>
+    <!-- Notifications Section -->
+    <div class="p-6">
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-gray-900">Recent Notifications</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                <!-- Notification Item -->
+                <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                                <i class="fa fa-file-lines text-blue-500"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">
+                                Juan Dela Cruz submitted his report
+                                <span class="text-gray-400">from 09/16/2024 to 9/20/2024</span>
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                        </div>
+                    </div>
+                    <a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                        View Report
+                    </a>
+                </div>
+
+                <!-- Notification Item -->
+                <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                                <i class="fa fa-file-lines text-blue-500"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">
+                                Danilo Cruz submitted his report
+                                <span class="text-gray-400">from 09/16/2024 to 9/20/2024</span>
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">3 hours ago</p>
+                        </div>
+                    </div>
+                    <a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                        View Report
+                    </a>
                 </div>
             </div>
-            <!-- Bottom Section -->
-            <div class="py-3 text-center text-sm text-gray-600">
-                <div class="overflow-x-auto">
-                    <table class="table-auto w-full text-sm">
-                        <tbody>
-                            <tr class="flex flex-row">
-                                <div class="flex flex-row items-center justify-center gap-5 px-5 py-3 border-b-2">
-                                    <p>Juan Dela Cruz submitted his report from 09/16/2024 to 9/20/2024</p>
-                                    <a href="#"
-                                        class="bg-primary text-sm py-1 px-4 rounded-full text-white shadow-md hover:shadow-none hover:bg-accent">VIEW</a>
-                                </div>
-                            </tr>
-                            <tr class="flex flex-row">
-                                <div class="flex flex-row items-center justify-center gap-5 px-5 py-3 border-b-2">
-                                    <p>Danilo Cruz submitted his report from 09/16/2024 to 9/20/2024</p>
-                                    <a href="#"
-                                        class="bg-primary text-sm py-1 px-4 rounded-full text-white shadow-md hover:shadow-none hover:bg-accent">VIEW</a>
-                                </div>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
+
+            <!-- View All Link -->
+            <div class="px-6 py-4 border-t border-gray-100">
+                <a href="#" class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center">
+                    View All Notifications <i class="fa fa-arrow-right ml-2"></i>
+                </a>
             </div>
         </div>
     </div>

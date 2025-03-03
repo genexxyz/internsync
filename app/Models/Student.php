@@ -77,12 +77,19 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+    public function journals()
+    {
+        return $this->hasMany(Journal::class);
+    }
 
     public function acceptance_letter()
     {
         return $this->hasOne(AcceptanceLetter::class);
     }
 
-    
+    public function weeklyReports()
+    {
+        return $this->hasMany(Report::class);
+    }
 
 }

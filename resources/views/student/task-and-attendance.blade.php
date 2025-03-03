@@ -1,14 +1,20 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="[['url' => route('student.taskAttendance'), 'label' => 'Task & Attendance']]" />
     
-    <div class="p-6 space-y-6">
+    <div class="m-6">
         <!-- Task & Attendance Section -->
-        <div class="mb-6">
+        
             @livewire('student.task-attendance')
-        </div>
+            <div class="mx-6">
+                <livewire:student.weekly-report-generator />
+            </div>
+            
+        
+        
+
 
         <!-- Weekly Reports Section -->
-        <div class="bg-white rounded-xl shadow-sm">
+        {{-- <div class="bg-white rounded-xl shadow-sm">
             <div class="border-b border-gray-200 p-4">
                 <h2 class="text-lg font-bold text-gray-800">Weekly Reports</h2>
             </div>
@@ -48,9 +54,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
-        <!-- Recent Activity -->
+        {{-- <!-- Recent Activity -->
         <div class="space-y-4">
             <div class="bg-white rounded-xl shadow-sm p-4">
                 <div class="flex items-center justify-between">
@@ -72,6 +78,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 </x-app-layout>

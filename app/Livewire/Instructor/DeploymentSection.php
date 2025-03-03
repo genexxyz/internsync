@@ -8,6 +8,7 @@ use App\Models\Instructor;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\On;
 
 class DeploymentSection extends Component
 {
@@ -21,7 +22,11 @@ class DeploymentSection extends Component
     public $filter = 'all';
     public $sortDirection = 'asc';
     public $showDateSort = false;
-
+    #[On('refreshAllStudents')] 
+    public function refresh()
+    {
+        $this->loadStudents();
+    }
     public function paginationView()
 
     {
