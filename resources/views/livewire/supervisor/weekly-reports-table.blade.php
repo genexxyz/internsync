@@ -1,4 +1,5 @@
 <div>
+    @if(auth()->user()->is_verified)
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100">
             <h2 class="text-lg font-semibold text-gray-900">Weekly Reports Monitoring</h2>
@@ -6,6 +7,11 @@
 
         <div class="divide-y divide-gray-200">
             @forelse($students as $student)
+                @php
+                    // Get the latest weekly report for this student
+                    $latestReport = $student->weeklyReports->sortByDesc('submitted_at')->first();
+                    $timeAgo = $latestReport ? $latestReport->submitted_at->diffForHumans() : null;
+                @endphp
                 <div class="p-6">
                     <!-- Student Info Header -->
                     <div class="flex items-center justify-between">
@@ -19,9 +25,20 @@
                                 <h3 class="text-lg font-medium text-gray-900">
                                     {{ $student->first_name }} {{ $student->last_name }}
                                 </h3>
-                                <p class="text-sm text-gray-500">
-                                    {{ $student->student_id }} • {{ $student->deployment->department }}
-                                </p>
+                                @if($latestReport)
+                                    <div class="mt-1 flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                                        <span class="text-sm text-gray-600 flex items-center">
+                                            <i class="fas fa-file-alt text-gray-400 mr-1"></i>
+                                            Latest: Week {{ $latestReport->week_number }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                            Submitted {{ $timeAgo }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <p class="text-sm text-gray-500 mt-1">No reports submitted yet</p>
+                                @endif
                             </div>
                         </div>
                         
@@ -90,4 +107,18 @@
 
     <!-- Include the Weekly Report Review Modal Component -->
     @livewire('supervisor.weekly-report-review')
+    @else
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            Your account is pending verification. You'll be able to manage interns once your account is verified.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
 </div>

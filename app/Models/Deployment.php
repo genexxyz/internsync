@@ -15,6 +15,7 @@ class Deployment extends Model
         'academic_id',
         'custom_hours',
         'starting_date',
+        'status',
     ];
 
     protected $casts = [
@@ -32,7 +33,7 @@ class Deployment extends Model
 
     public function supervisor()
     {
-        return $this->belongsTo(Supervisor::class);
+        return $this->belongsTo(Supervisor::class, 'supervisor_id');
     }
 
 
@@ -52,4 +53,9 @@ class Deployment extends Model
     {
         return $this->belongsTo(Company::class);
     }
+public function department()
+{
+    return $this->belongsTo(Department::class, 'company_dept_id');
+    
+}
 }

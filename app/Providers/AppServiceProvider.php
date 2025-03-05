@@ -30,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Share settings globally across all views
         View::share('settings', $settings);
+        if (env('APP_ENV') !== 'production') {
+            URL::forceScheme('http'); // Force HTTP in development
+        }
+
+        
     }
 }

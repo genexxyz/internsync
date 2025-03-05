@@ -21,6 +21,7 @@ return new class extends Migration
             $table->time('end_break')->nullable();
             $table->time('total_hours')->nullable();
             $table->enum('status', ['regular', 'late', 'absent']);
+            $table->tinyInteger('is_approved')->default(0)->comment('0: pending, 1: approved, 2: rejected');
             $table->timestamps();
         
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');

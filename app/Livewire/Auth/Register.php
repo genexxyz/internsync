@@ -291,8 +291,8 @@ class Register extends Component
         $documentPath = $this->processDocument($user);
 
         // Generate and send OTP
-        // $otp = $user->generateOTP();
-        // $this->sendOtpEmail($user, $otp);
+        $otp = $user->generateOTP();
+        $this->sendOtpEmail($user, $otp);
 
         // Create role-specific profile
         $this->createRoleProfile($user, $documentPath);
@@ -383,6 +383,7 @@ class Register extends Component
                     'supervisor_id' => null, // This should be set later when assigned
                     'company_id' => null, // This should be set later when assigned
                     'company_dept_id' => null, // This should be set later when assigned
+                    'status' => 'pending',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

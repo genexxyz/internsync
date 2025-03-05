@@ -14,6 +14,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Supervisors;
 use App\Http\Controllers\UserFormController;
 use App\Http\Controllers\VerificationEmailController;
 use App\Livewire\Auth\EmailVerification;
@@ -23,6 +24,7 @@ use App\Livewire\Student\AcceptanceLetterForm;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
+
 
 Route::get('document/preview/{path}', function (Request $request, $path) {
     if (!$request->hasValidSignature()) {
@@ -90,6 +92,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function ()
         // Sections under a course (specific section show)
         Route::get('/courses/{course_code}/{year_level}{class_section}', [SectionController::class, 'show'])->name('courses.sections.show');
         Route::get('/companies', [CompanyController::class, 'index'])->name('company');
+        Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('supervisors');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     });
 });
@@ -103,6 +106,8 @@ Route::middleware(['auth', RoleMiddleware::class . ':student'])->group(function 
     Route::get('/student/task-and-attendance', [StudentController::class, 'taskAttendance'])->name('student.taskAttendance');
     Route::get('/student/ojt-document', [StudentController::class, 'ojtDocument'])->name('student.document');
     Route::get('/documents/acceptance-letter', AcceptanceLetterForm::class)->name('student.acceptance-letter');
+    Route::get('/weekly-report/{report}/pdf', [StudentController::class, 'generateWeeklyReportPdf'])
+        ->name('student.weekly-report.pdf');
 });
 
 // Instructor dashboard

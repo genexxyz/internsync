@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\AcceptanceLetter;
 use App\Models\Attendance;
 use App\Models\Company;
+use App\Models\Journal;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Supervisor;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
-
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\WeeklyReport;
+use Carbon\Carbon;
 
 class StudentController extends Controller
 {
@@ -78,4 +81,55 @@ return view('student.dashboard', compact(
     
     return view('student.ojt-document', compact('student', 'acceptance_letter'));
 }
+
+
+public function generateWeeklyReportPdf(Report $report)
+{
+    // Check if user owns this report
+    if ($report->student_id !== Auth::user()->student->id) {
+        abort(403);
+    }
+    
+    // Get journals for the week, excluding rejected entries
+    $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
+        ->where('student_id', $report->student_id)
+        ->where('is_approved', '!=', 2) // Exclude rejected journals
+        ->with('attendance')
+        ->orderBy('date')
+        ->get();
+    
+    // Calculate total hours (excluding rejected entries)
+    $totalMinutes = 0;
+    foreach ($journals as $journal) {
+        if ($journal->attendance && $journal->attendance->total_hours) {
+            list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
+            $totalMinutes += ((int)$hours * 60) + (int)$minutes;
+        }
+    }
+    
+    $hours = floor($totalMinutes / 60);
+    $minutes = $totalMinutes % 60;
+    $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
+    
+    $student = $report->student;
+    $deployment = $student->deployment;
+    $company = $deployment ? $deployment->department->company : null;
+    
+    $data = [
+        'report' => $report,
+        'journals' => $journals,
+        'student' => $student,
+        'deployment' => $deployment,
+        'company' => $company,
+        'totalHours' => $formattedTotal,
+        'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
+        'endDate' => Carbon::parse($report->end_date)->format('M d, Y')
+    ];
+    
+    $pdf = PDF::loadView('pdfs.weekly-report', $data);
+    
+    return $pdf->download('Weekly_Report_Week_' . $report->week_number . '_' .  $student->last_name . '-' . $student->first_name . '.pdf');
+}
+
+
 }

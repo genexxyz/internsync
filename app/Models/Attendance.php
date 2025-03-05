@@ -14,7 +14,8 @@ class Attendance extends Model
         'start_break',
         'end_break', 
         'total_hours',
-        'status'
+        'status',
+        'is_approved',
     ];
 
     protected $dates = ['date', 'time_in', 'time_out'];

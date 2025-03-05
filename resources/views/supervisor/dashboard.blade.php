@@ -38,7 +38,7 @@
         <div class="rounded-xl shadow-sm bg-gradient-to-r from-secondary to-secondary/90 hover:shadow-md transition-shadow">
             <div class="px-6 py-5 flex justify-between items-center">
                 <div class="text-white">
-                    <p class="text-5xl font-bold tracking-tight">0</p>
+                    <p class="text-5xl font-bold tracking-tight">{{$supervisor->deployments->count() ?? 0}}</p>
                     <p class="mt-1 text-lg font-medium">Handled Interns</p>
                     <p class="text-sm text-white/80 mt-1">Total handled interns</p>
                 </div>
@@ -53,7 +53,7 @@
             <div class="px-6 py-5">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-5xl font-bold tracking-tight text-gray-900">0</p>
+                        <p class="text-5xl font-bold tracking-tight text-gray-900">{{ $supervisor->deployments->where('status', 'ongoing')->count() ?? 0 }}</p>
                         <p class="mt-1 text-lg font-medium text-gray-600">On-going</p>
                     </div>
                     <div class="bg-blue-50 p-3 rounded-lg">
@@ -71,7 +71,7 @@
             <div class="px-6 py-5">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-5xl font-bold tracking-tight text-gray-900">0</p>
+                        <p class="text-5xl font-bold tracking-tight text-gray-900">{{ $supervisor->deployments->where('status', 'completed')->count() ?? 0 }}</p>
                         <p class="mt-1 text-lg font-medium text-gray-600">Finished</p>
                     </div>
                     <div class="bg-green-50 p-3 rounded-lg">

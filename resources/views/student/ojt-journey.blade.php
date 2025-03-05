@@ -14,7 +14,7 @@
                     @if($deployment->company && $deployment->department)
                         <div class="flex items-center mt-2">
                             <i class="fas fa-users text-gray-400 mr-2"></i>
-                            <p class="text-sm text-gray-600">{{ $deployment->department }}</p>
+                            <p class="text-sm text-gray-600">{{ $deployment->department->department_name }}</p>
                         </div>
                     @endif
                 </div>

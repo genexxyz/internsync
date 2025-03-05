@@ -8,7 +8,8 @@ use App\Models\Report;
 use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 class WeeklyReportGenerator extends Component
 {
     public $weekNumber;
@@ -27,7 +28,7 @@ class WeeklyReportGenerator extends Component
     public $selectedReport = null;
 
     protected $rules = [
-        'learningOutcomes' => 'required|min:50',
+        'learningOutcomes' => 'required|min:30',
     ];
 
 // Update the mount() method
@@ -175,7 +176,30 @@ public function hydrate()
 }
 
 
+
+
+public function formatHoursAndMinutes($timeString)
+{
+    if (!$timeString || $timeString === '00:00') {
+        return '0 hours';
+    }
+
+    list($hours, $minutes) = array_pad(explode(':', $timeString), 2, 0);
     
+    // Convert to integers and remove leading zeros
+    $hours = (int)$hours;
+    $minutes = (int)$minutes;
+    
+    if ($hours === 0) {
+        return "{$minutes} minute" . ($minutes !== 1 ? 's' : '');
+    }
+
+    if ($minutes === 0) {
+        return "{$hours} hour" . ($hours !== 1 ? 's' : '');
+    }
+
+    return "{$hours} hour" . ($hours !== 1 ? 's' : '') . " and {$minutes} minute" . ($minutes !== 1 ? 's' : '');
+}
 
     protected function checkReportExists()
     {
@@ -208,7 +232,29 @@ public function hydrate()
     $this->checkReportExists();
     $this->render();
 }
-
+public function generatePdf()
+{
+    $reportId = $this->selectedReport ? $this->selectedReport->id : null;
+    
+    // If no selected report but report exists, find the report for current week
+    if (!$reportId && $this->reportExists) {
+        $report = Report::where('student_id', Auth::user()->student->id)
+            ->where('week_number', $this->weekNumber)
+            ->first();
+        
+        if ($report) {
+            $reportId = $report->id;
+        }
+    }
+    
+    if (!$reportId) {
+        $this->dispatch('alert', ['type' => 'error', 'message' => 'No report available to generate PDF']);
+        return;
+    }
+    
+    // Redirect to PDF route with report ID
+    return redirect()->route('student.weekly-report.pdf', ['report' => $reportId]);
+}
     public function render()
     {
         $previousReports = Report::where('student_id', Auth::user()->student->id)

@@ -37,6 +37,11 @@ class AdminController extends Controller
         return view('admin.instructors');
     }
 
+    public function supervisors(): View
+    {
+        return view('admin.supervisors');
+    }
+
     
 
     

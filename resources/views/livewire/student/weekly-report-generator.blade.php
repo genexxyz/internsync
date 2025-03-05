@@ -64,12 +64,12 @@
                                 <p class="text-sm text-green-700">
                                     Weekly report for Week {{ $weekNumber }} ({{ Carbon\Carbon::parse($startDate)->format('M d') }} - {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}) has been submitted.
                                 </p>
-                                <button 
+                                {{-- <button 
                                     wire:click="viewWeekDetails"
                                     class="mt-2 text-secondary hover:text-secondary/80 text-sm font-medium flex items-center gap-2"
                                 >
                                     <i class="fas fa-list-ul mr-1"></i> View Activities
-                                </button>
+                                </button> --}}
                             </div>
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Total Hours</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ $weeklyTotal }}</p>
+                                <p class="text-2xl font-semibold text-gray-900">{{ $this->formatHoursAndMinutes($weeklyTotal) }}</p>
                             </div>
                         </div>
 
@@ -157,13 +157,24 @@
                                             {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}
                                         </p>
                                         <p class="mt-1 text-sm text-gray-500">
-                                            Total Hours: {{ $weeklyTotal }}
+                                            Total Hours: {{ $this->formatHoursAndMinutes($weeklyTotal) }}
                                         </p>
                                     </div>
                                     
-                                    <button wire:click="$set('showWeekDetails', false)" class="text-gray-400 hover:text-gray-500">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <div class="flex items-center space-x-2">
+                                        @if(isset($selectedReport) || $reportExists)
+                                            <button 
+                                                wire:click="generatePdf"
+                                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-secondary hover:bg-secondary-dark focus:outline-none transition-colors duration-150"
+                                            >
+                                                <i class="fas fa-file-pdf mr-2"></i>
+                                                Export PDF
+                                            </button>
+                                        @endif
+                                        <button wire:click="$set('showWeekDetails', false)" class="text-gray-400 hover:text-gray-500">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Journal entries -->
@@ -185,10 +196,10 @@
                                                     @endif
                                                 </div>
                                                 @if($data['daily_total'] !== '00:00')
-                                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        {{ $data['daily_total'] }} hrs
-                                                    </span>
-                                                @endif
+    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        {{ $this->formatHoursAndMinutes($data['daily_total']) }}
+    </span>
+@endif
                                             </div>
                                             @if($data['journal'])
                                                 <p class="text-gray-600 text-sm">{{ $data['journal']->text }}</p>
@@ -199,13 +210,43 @@
 
                                 <!-- Learning outcomes section (for past reports) -->
                                 @if($selectedReport)
-                                    <div class="border-t border-gray-200 pt-4 mt-4">
-                                        <h4 class="font-medium text-gray-900 mb-2">Learning Outcomes & Accomplishments</h4>
-                                        <div class="bg-gray-50 p-3 rounded text-gray-700">
-                                            {{ $selectedReport->learning_outcomes }}
-                                        </div>
+                                <div class="border-t border-gray-200 pt-4 mt-4">
+                                    <h4 class="font-medium text-gray-900 mb-2">Learning Outcomes</h4>
+                                    <div class="bg-gray-50 p-3 rounded text-gray-700">
+                                        {{ $selectedReport->learning_outcomes }}
                                     </div>
-                                @endif
+                                </div>
+                                
+                                <!-- Supervisor feedback section -->
+                                @if($selectedReport->status !== 'pending')
+    <div class="border-t border-gray-200 pt-4 mt-4">
+        <h4 class="font-medium text-gray-900 mb-2">
+            Supervisor Feedback
+            @if($selectedReport->status === 'approved')
+                <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Approved
+                </span>
+            @elseif($selectedReport->status === 'rejected')
+                <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    Rejected
+                </span>
+            @endif
+        </h4>
+        <div class="bg-blue-50 p-3 rounded text-gray-700 border-l-4 border-blue-400">
+            @if($selectedReport->supervisor_feedback)
+                <p class="italic text-sm">{{ $selectedReport->supervisor_feedback }}</p>
+            @else
+                <p class="italic text-sm text-gray-500">No feedback provided.</p>
+            @endif
+            @if($selectedReport->reviewed_at)
+                <p class="text-xs text-gray-500 mt-2">
+                    Reviewed on {{ Carbon\Carbon::parse($selectedReport->reviewed_at)->format('M d, Y \a\t h:i A') }}
+                </p>
+            @endif
+        </div>
+    </div>
+@endif
+                            @endif
                             </div>
                         </div>
                     </div>

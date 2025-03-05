@@ -70,14 +70,31 @@
                             <td class="px-6 py-4">
                                 <div class="flex flex-col items-start space-y-2">
                                     @if (!$attendance)
-                                        <button wire:click="timeIn" class="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors duration-300">
-                                            <i class="fa fa-sign-in-alt mr-2"></i>
-                                            Time In
-                                        </button>
+                                        <div class="flex flex-col space-y-2">
+                                            <select wire:model="attendanceStatus" class="w-full rounded-md border-gray-300 text-sm mb-2">
+                                                <option value="regular">Regular</option>
+                                                <option value="late">Late</option>
+                                                <option value="absent">Absent</option>
+                                            </select>
+                                            <button wire:click="timeIn" class="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors duration-300">
+                                                <i class="fa fa-sign-in-alt mr-2"></i>
+                                                Time In
+                                            </button>
+                                        </div>
                                     @else
                                         <div class="flex items-center space-x-2 text-green-600">
                                             <i class="fa fa-check-circle text-lg"></i>
                                             <span class="font-medium">{{ Carbon\Carbon::parse($attendance->time_in)->format('h:i A') }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span @class([
+                                                'px-2 py-0.5 text-xs font-medium rounded-full',
+                                                'bg-green-100 text-green-800' => $attendance->status === 'regular',
+                                                'bg-yellow-100 text-yellow-800' => $attendance->status === 'late',
+                                                'bg-red-100 text-red-800' => $attendance->status === 'absent'
+                                            ])>
+                                                {{ ucfirst($attendance->status) }}
+                                            </span>
                                         </div>
                                         <span class="text-xs text-gray-500">Recorded</span>
                                     @endif
@@ -86,20 +103,26 @@
 
                             <!-- Tasks Cell -->
                             <td class="px-6 py-4">
-                                <button 
-                                    wire:click="toggleJournalModal"
-                                    @class([
-                                        'inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-300',
-                                        'bg-blue-600 hover:bg-blue-700 text-white' => !$isSubmitted && $attendance,
-                                        'bg-gray-100 text-gray-400 cursor-not-allowed' => !$attendance || $isSubmitted
-                                    ])
-                                    @if (!$attendance || $isSubmitted) disabled @endif
-                                >
-                                    <i class="fa fa-book mr-2"></i>
-                                    {{ $existingJournal ? 'Edit Journal' : 'Add Journal' }}
-                                </button>
-
-                                @if ($existingJournal)
+                                @if($attendance && $attendance->status === 'absent')
+                                    <div class="text-sm text-gray-600">
+                                        <span class="italic">Absent</span>
+                                    </div>
+                                @else
+                                    <button 
+                                        wire:click="toggleJournalModal"
+                                        @class([
+                                            'inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-300',
+                                            'bg-blue-600 hover:bg-blue-700 text-white' => !$isSubmitted && $attendance,
+                                            'bg-gray-100 text-gray-400 cursor-not-allowed' => !$attendance || $isSubmitted
+                                        ])
+                                        @if (!$attendance || $isSubmitted || ($attendance && $attendance->status === 'absent')) disabled @endif
+                                    >
+                                        <i class="fa fa-book mr-2"></i>
+                                        {{ $existingJournal ? 'Edit Journal' : 'Add Journal' }}
+                                    </button>
+                                @endif
+                            
+                                @if ($existingJournal && $attendance->status !== 'absent')
                                     <div class="mt-2 flex items-center space-x-2">
                                         <span class="text-xs text-gray-500">Updated {{ $existingJournal->updated_at->diffForHumans() }}</span>
                                         <span @class([
@@ -179,7 +202,24 @@
 
                             <!-- Actions Cell -->
                             <td class="px-6 py-4">
-                                @if (!$isSubmitted && $attendance && $attendance->time_out && $existingJournal)
+                                @if ($attendance && $attendance->status === 'absent')
+                                    @if (!$isSubmitted)
+                                        <button wire:click="submitJournal" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-300">
+                                            <i class="fa fa-paper-plane mr-2"></i>
+                                            Submit
+                                        </button>
+                                    @else
+                                        <div class="flex items-center text-green-600">
+                                            <i class="fa fa-check-circle mr-2"></i>
+                                            <div>
+                                                <span class="font-medium">Submitted</span>
+                                                <span class="block text-xs text-gray-500">
+                                                    {{ $existingJournal->updated_at->format('h:i A') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @elseif (!$isSubmitted && $attendance && $attendance->time_out && $existingJournal)
                                     <button wire:click="submitJournal" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-300">
                                         <i class="fa fa-paper-plane mr-2"></i>
                                         Submit

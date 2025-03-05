@@ -74,6 +74,11 @@ class InstructorController extends Controller
     ]);
 }
 
+public function supervisors(): View
+    {
+        return view('instructor.supervisors');
+    }
+
 private function getInstructor(): Instructor
 {
     return Instructor::where('user_id', Auth::id())

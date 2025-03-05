@@ -20,27 +20,45 @@
             @foreach (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day)
                 <div class="text-center text-sm font-medium text-gray-500">{{ $day }}</div>
             @endforeach
-
+    
             @for ($i = 1; $i <= $daysInMonth; $i++)
                 @php
                     $currentDate = Carbon\Carbon::create($currentYear, $currentMonth, $i);
                     $hasTask = isset($events[$currentDate->toDateString()]);
                     $isToday = $currentDate->isToday();
+                    $isAbsent = $hasTask && isset($events[$currentDate->toDateString()]['status']) && 
+                               $events[$currentDate->toDateString()]['status'] === 'absent';
                 @endphp
                 
                 <div 
                     wire:click="selectDate('{{ $currentDate->toDateString() }}')"
                     class="aspect-square flex flex-col items-center justify-center rounded-lg border {{ 
                         $isToday ? 'border-primary ring-1 ring-primary' : 'border-gray-200'
-                    }} {{ $hasTask ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50' }} 
-                    cursor-pointer transition-colors"
+                    }} {{ 
+                        $isAbsent ? 'bg-red-50 hover:bg-red-100' : 
+                        ($hasTask ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50') 
+                    }} cursor-pointer transition-colors"
                 >
                     <span class="{{ $isToday ? 'text-primary font-semibold' : 'text-gray-900' }}">{{ $i }}</span>
                     @if($hasTask)
-                        <div class="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        <div class="mt-1 w-1.5 h-1.5 rounded-full {{ 
+                            $isAbsent ? 'bg-red-500' : 'bg-blue-500'
+                        }}"></div>
                     @endif
                 </div>
             @endfor
+        </div>
+    
+        <!-- Legend -->
+        <div class="mt-6 flex items-center justify-center space-x-6 text-sm">
+            <div class="flex items-center">
+                <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2"></div>
+                <span class="text-gray-600">Present</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-1.5 h-1.5 rounded-full bg-red-500 mr-2"></div>
+                <span class="text-gray-600">Absent</span>
+            </div>
         </div>
     </div>
 

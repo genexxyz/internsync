@@ -54,13 +54,14 @@ class Supervisor extends Model
     return $this->belongsTo(Company::class);
 }
 
-public function deployment()
-    {
-        return $this->hasOne(Deployment::class);
-    }
+public function deployments()
+{
+    return $this->hasMany(Deployment::class, 'company_dept_id', 'company_department_id');
+}
 
     public function department()
     {
         return $this->belongsTo(Department::class, 'company_department_id');
     }
+    
 }

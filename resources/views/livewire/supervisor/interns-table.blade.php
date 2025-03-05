@@ -38,9 +38,6 @@
                                                 <div class="text-sm font-medium text-gray-900">
                                                     {{ $deployment->student->first_name }} {{ $deployment->student->last_name }}
                                                 </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ $deployment->student->student_id }}
-                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -49,7 +46,7 @@
                                         {{ $deployment->student->yearSection->year_level }}{{ $deployment->student->yearSection->class_section }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($deployment->starting_date)
+                                        @if($deployment->starting_date && $deployment->status !== 'pending')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
                                                 $deployment->status === 'ongoing' ? 'bg-blue-100 text-blue-800' : 
                                                 ($deployment->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') 
@@ -67,7 +64,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $deployment->hours_rendered ?? 0 }}/{{ $deployment->custom_hours ?? 0 }}
+                                        {{ $this->totalHours[$deployment->id]['formatted'] ?? '0' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="" 

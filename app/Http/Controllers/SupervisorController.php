@@ -4,14 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Supervisor;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class SupervisorController extends Controller
 {
+
     public function index(): View
     {
+$supervisor = Supervisor::where('user_id',Auth::id())->with([
+    'deployments'
+])
+->firstOrFail();;
         
-        return view('supervisor.dashboard');
+        return view('supervisor.dashboard', [
+            'supervisor' => $supervisor
+        ]);
     }
 
     public function interns(): View
@@ -28,4 +36,6 @@ class SupervisorController extends Controller
     {
         return view('supervisor.evaluation');
     }
+
+    
 }

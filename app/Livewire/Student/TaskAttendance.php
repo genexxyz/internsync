@@ -23,22 +23,20 @@ class TaskAttendance extends Component
     public $journalId = null;
     public $existingJournal = null;
     public $deployment;
-    // Validation rules
+    public $attendanceStatus = 'regular';
 
     public function mount()
     {
-        
-
         $this->deployment = Auth::user()->student->deployment;
-    
-    if ($this->deployment && 
-        $this->deployment->starting_date && 
-        Carbon::parse($this->deployment->starting_date)->lte(now())) {
-            $this->dayToday = now()->format('l, F j, Y');
-            $this->updateCurrentTime();
-            $this->loadAttendance();
-            $this->loadJournal();
-    }
+
+        if ($this->deployment && 
+            $this->deployment->starting_date && 
+            Carbon::parse($this->deployment->starting_date)->lte(now())) {
+                $this->dayToday = now()->format('l, F j, Y');
+                $this->updateCurrentTime();
+                $this->loadAttendance();
+                $this->loadJournal();
+        }
     }
 
     public function updateCurrentTime()
@@ -55,16 +53,35 @@ class TaskAttendance extends Component
         }
 
         // Create attendance record
-        Attendance::create([
+        $attendance = Attendance::create([
             'student_id' => Auth::user()->student->id,
             'date' => now()->toDateString(),
             'time_in' => now()->format('H:i:s'),
-            'status' => 'regular'
+            'status' => $this->attendanceStatus,
         ]);
 
+        // Handle absent status automatically
+        if ($this->attendanceStatus === 'absent') {
+            $attendance->update([
+                'time_out' => now()->format('H:i:s'),
+                'total_hours' => '00:00:00'
+            ]);
+
+            // Automatically create a journal entry with "absent" text
+            Journal::create([
+                'student_id' => Auth::user()->student->id,
+                'date' => now()->toDateString(),
+                'text' => 'Absent',
+                'remarks' => 'absent',
+                'is_submitted' => false
+            ]);
+
+            $this->loadJournal();
+        }
+
+        // Reload attendance to update the component state
         $this->loadAttendance();
     }
-
 
     public function startBreak()
     {
@@ -93,7 +110,6 @@ class TaskAttendance extends Component
             // Update attendance to mark break started
             $this->attendance->update([
                 'start_break' => now()->format('H:i:s'),
-
             ]);
 
             $this->isOnBreak = true;
@@ -149,67 +165,64 @@ class TaskAttendance extends Component
         $this->attendance->update([
             'time_out' => $timeOut->format('H:i:s'),
             'total_hours' => $totalHours,
-
         ]);
 
         $this->loadAttendance();
     }
 
     private function calculateTotalHours($timeIn, $timeOut)
-{
-    try {
-        // Convert strings to Carbon instances if they aren't already
-        $timeIn = $timeIn instanceof Carbon ? $timeIn : Carbon::parse($timeIn);
-        $timeOut = $timeOut instanceof Carbon ? $timeOut : Carbon::parse($timeOut);
+    {
+        try {
+            // Convert strings to Carbon instances if they aren't already
+            $timeIn = $timeIn instanceof Carbon ? $timeIn : Carbon::parse($timeIn);
+            $timeOut = $timeOut instanceof Carbon ? $timeOut : Carbon::parse($timeOut);
 
-        // Use diffInMinutes with absolute value to get correct duration
-        $totalMinutes = abs($timeOut->diffInMinutes($timeIn));
-        
-        logger()->info('Time calculation', [
-            'timeIn' => $timeIn->format('H:i:s'),
-            'timeOut' => $timeOut->format('H:i:s'),
-            'totalMinutes' => $totalMinutes
-        ]);
-
-        // Calculate break duration if break was taken
-        if ($this->attendance->start_break && $this->attendance->end_break) {
-            $breakStart = Carbon::parse($this->attendance->start_break);
-            $breakEnd = Carbon::parse($this->attendance->end_break);
-            $breakMinutes = abs($breakEnd->diffInMinutes($breakStart));
+            // Use diffInMinutes with absolute value to get correct duration
+            $totalMinutes = abs($timeOut->diffInMinutes($timeIn));
             
-            logger()->info('Break calculation', [
-                'breakStart' => $breakStart->format('H:i:s'),
-                'breakEnd' => $breakEnd->format('H:i:s'),
-                'breakMinutes' => $breakMinutes
+            logger()->info('Time calculation', [
+                'timeIn' => $timeIn->format('H:i:s'),
+                'timeOut' => $timeOut->format('H:i:s'),
+                'totalMinutes' => $totalMinutes
             ]);
 
-            $totalMinutes = max(0, $totalMinutes - $breakMinutes);
+            // Calculate break duration if break was taken
+            if ($this->attendance->start_break && $this->attendance->end_break) {
+                $breakStart = Carbon::parse($this->attendance->start_break);
+                $breakEnd = Carbon::parse($this->attendance->end_break);
+                $breakMinutes = abs($breakEnd->diffInMinutes($breakStart));
+                
+                logger()->info('Break calculation', [
+                    'breakStart' => $breakStart->format('H:i:s'),
+                    'breakEnd' => $breakEnd->format('H:i:s'),
+                    'breakMinutes' => $breakMinutes
+                ]);
+
+                $totalMinutes = max(0, $totalMinutes - $breakMinutes);
+            }
+
+            // Calculate hours and minutes
+            $hours = floor($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+
+            logger()->info('Final calculation', [
+                'totalMinutes' => $totalMinutes,
+                'hours' => $hours,
+                'minutes' => $minutes
+            ]);
+
+            return sprintf('%02d:%02d:00', $hours, $minutes);
+        } catch (\Exception $e) {
+            logger()->error('Error calculating total hours', [
+                'error' => $e->getMessage(),
+                'timeIn' => $timeIn ?? 'null',
+                'timeOut' => $timeOut ?? 'null',
+                'attendance' => $this->attendance
+            ]);
+            
+            return '00:00:00';
         }
-
-        // Calculate hours and minutes
-        $hours = floor($totalMinutes / 60);
-        $minutes = $totalMinutes % 60;
-
-        logger()->info('Final calculation', [
-            'totalMinutes' => $totalMinutes,
-            'hours' => $hours,
-            'minutes' => $minutes
-        ]);
-
-        return sprintf('%02d:%02d:00', $hours, $minutes);
-    } catch (\Exception $e) {
-        logger()->error('Error calculating total hours', [
-            'error' => $e->getMessage(),
-            'timeIn' => $timeIn ?? 'null',
-            'timeOut' => $timeOut ?? 'null',
-            'attendance' => $this->attendance
-        ]);
-        
-        return '00:00:00';
     }
-}
-
-
 
     private function loadAttendance()
     {
@@ -239,7 +252,6 @@ class TaskAttendance extends Component
         }
     }
 
-
     public function toggleJournalModal()
     {
         if (!$this->attendance) {
@@ -260,6 +272,7 @@ class TaskAttendance extends Component
         $this->loadJournal();
         $this->showJournalModal = true;
     }
+
     public function saveJournal()
     {
         $this->validate([
@@ -296,7 +309,6 @@ class TaskAttendance extends Component
         }
     }
 
-
     public function submitJournal()
     {
         if (!$this->attendance || !$this->attendance->time_out || !$this->existingJournal) {
@@ -308,7 +320,7 @@ class TaskAttendance extends Component
             // Update the journal to mark it as submitted
             $this->existingJournal->update([
                 'is_submitted' => true,
-                'submitted_at' => now()
+                'updated_at' => now()
             ]);
 
             $this->isSubmitted = true;
@@ -323,6 +335,7 @@ class TaskAttendance extends Component
             session()->flash('error', 'Failed to submit journal.');
         }
     }
+
     public function render()
     {
         $this->updateCurrentTime();
