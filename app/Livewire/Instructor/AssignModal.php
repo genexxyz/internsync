@@ -34,9 +34,9 @@ class AssignModal extends ModalComponent
     public $newCompany = [
         'company_name' => '',
         'address' => '',
-        'contact_number' => '',
-        'contact_person' => '',
-        'email' => '',
+        // 'contact_number' => '',
+        // 'contact_person' => '',
+        // 'email' => '',
         'department' => '',
     ];
 
@@ -77,8 +77,8 @@ class AssignModal extends ModalComponent
         $this->newCompany = [
             'company_name' => $this->acceptanceLetter->company_name,
             'address' => $this->acceptanceLetter->address,
-            'contact_number' => $this->acceptanceLetter->contact,
-            'contact_person' => $this->acceptanceLetter->name,
+            // 'contact_number' => $this->acceptanceLetter->contact,
+            // 'contact_person' => $this->acceptanceLetter->name,
             'department' => $this->acceptanceLetter->department_name,
         ];
     }
@@ -161,16 +161,16 @@ public function createNewDepartment()
         $this->validate([
             'newCompany.company_name' => 'required|min:3|unique:companies,company_name',
             'newCompany.address' => 'required',
-            'newCompany.contact_number' => 'required',
-            'newCompany.contact_person' => 'required',
+            // 'newCompany.contact_number' => 'required',
+            // 'newCompany.contact_person' => 'required',
         ]);
 
         // Create company
         $company = Company::create([
             'company_name' => $this->newCompany['company_name'],
             'address' => $this->newCompany['address'],
-            'contact' => $this->newCompany['contact_number'],
-            'contact_person' => $this->newCompany['contact_person'],
+            // 'contact' => $this->newCompany['contact_number'],
+            // 'contact_person' => $this->newCompany['contact_person'],
             
         ]);
         

@@ -269,6 +269,12 @@
                     <x-input-error :messages="$errors->get('company_department_id')" class="mt-2" />
                 </div>
             @endif
+            <div class="mt-4">
+                <x-text-input wire:model="position" icon="fa fa-font" id="position" class="block mt-1 w-full"
+                    type="text" name="position" :value="old('position')" required
+                    placeholder="Position" />
+                <x-input-error :messages="$errors->get('position')" class="mt-2" />
+            </div>
         @endif
 
 
@@ -307,14 +313,14 @@
 
         <div class="mt-4">
             <x-password-input wire:model="password" icon="fa fa-lock" id="password" name="password"
-                placeholder="Password" autocomplete="current-password" />
+                placeholder="Password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
 
         <div class="mt-4">
-            <x-password-input wire:model="password_confirmation" icon="fa fa-check" id="password"
-                name="password_confirmation" placeholder="Confirm Password" autocomplete="current-password" />
+            <x-password-input wire:model="password_confirmation" icon="fa fa-check" id="password_confirmation"
+                name="password_confirmation" placeholder="Confirm Password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 

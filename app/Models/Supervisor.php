@@ -21,6 +21,7 @@ class Supervisor extends Model
         'user_id',
         'company_id',
         'company_department_id',
+        'position',
         'first_name',
         'middle_name',
         'last_name',

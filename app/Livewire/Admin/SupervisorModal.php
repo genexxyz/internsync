@@ -26,64 +26,32 @@ class SupervisorModal extends ModalComponent
     }
 
     public function verifySupervisor()
-{
-    if (!$this->supervisor->user) {
-        $this->dispatch('alert', type: 'error', text: 'Error verifying!');
-        return;
-    }
-
-    try {
-        DB::beginTransaction();
-        
-        // Update user verification
-        $this->supervisor->user->update(['is_verified' => 1]);
-        
-        // Get the supervisor's company department ID
-        $companyDeptId = $this->supervisor->company_department_id;
-        
-        // Find deployments and assign the supervisor based on available information
-        if ($companyDeptId) {
-            // Case 1: Supervisor has a specific department - update deployments for that department
-            $updatedCount = DB::table('deployments')
-                ->where('company_dept_id', $companyDeptId)
-                ->whereNull('supervisor_id')
-                ->update(['supervisor_id' => $this->supervisor->id]);
-                
-            logger()->info('Assigned supervisor to department deployments', [
-                'supervisor_id' => $this->supervisor->id,
-                'company_dept_id' => $companyDeptId,
-                'updated_deployments' => $updatedCount
-            ]);
-        } else if ($this->supervisor->department && $this->supervisor->department->company_id) {
-            // Case 2: Supervisor has company but no specific department - update any deployments for that company without a supervisor
-            $companyId = $this->supervisor->department->company_id;
-            
-            $updatedCount = DB::table('deployments')
-                ->where('company_id', $companyId)
-                ->whereNull('supervisor_id')
-                ->update(['supervisor_id' => $this->supervisor->id]);
-                
-            logger()->info('Assigned supervisor to company-wide deployments', [
-                'supervisor_id' => $this->supervisor->id,
-                'company_id' => $companyId,
-                'updated_deployments' => $updatedCount
-            ]);
+    {
+        if (!$this->supervisor->user) {
+            $this->dispatch('alert', type: 'error', text: 'Error verifying!');
+            return;
         }
-        
-        DB::commit();
-        
-        $this->dispatch('refreshSupervisors');
-        $this->dispatch('alert', type: 'success', text: 'The supervisor has been verified and assigned to relevant deployments!');
-        $this->dispatch('closeModal');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        logger()->error('Error verifying supervisor', [
-            'error' => $e->getMessage(),
-            'supervisor_id' => $this->supervisor->id
-        ]);
-        $this->dispatch('alert', type: 'error', text: 'Error verifying supervisor!');
+
+        try {
+            DB::beginTransaction();
+            
+            // Update user verification only
+            $this->supervisor->user->update(['is_verified' => 1]);
+            
+            DB::commit();
+            
+            $this->dispatch('refreshSupervisors');
+            $this->dispatch('alert', type: 'success', text: 'The supervisor has been verified successfully!');
+            $this->dispatch('closeModal');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger()->error('Error verifying supervisor', [
+                'error' => $e->getMessage(),
+                'supervisor_id' => $this->supervisor->id
+            ]);
+            $this->dispatch('alert', type: 'error', text: 'Error verifying supervisor!');
+        }
     }
-}
 
     public function deleteSupervisor()
     {

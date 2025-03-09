@@ -75,13 +75,14 @@ return view('student.dashboard', compact(
     }
 
     public function ojtDocument(): View
-{
-    $student = Student::where('user_id', Auth::user()->id)->firstOrFail();
-    $acceptance_letter = AcceptanceLetter::where('student_id', $student->id)->first();
-    
-    return view('student.ojt-document', compact('student', 'acceptance_letter'));
-}
-
+    {
+        $student = Student::where('user_id', Auth::user()->id)
+            ->with(['acceptance_letter', 'deployment.supervisor'])
+            ->firstOrFail();
+        $acceptance_letter = AcceptanceLetter::where('student_id', $student->id)->first();
+        
+        return view('student.ojt-document', compact('student', 'acceptance_letter'));
+    }
 
 public function generateWeeklyReportPdf(Report $report)
 {

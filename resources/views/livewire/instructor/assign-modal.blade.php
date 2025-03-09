@@ -92,18 +92,22 @@
 
                     <!-- Other Details -->
                     <div>
-                        <p class="text-sm text-gray-500">Contact Person</p>
-                        <p class="font-medium">{{ $acceptanceLetter->name }}</p>
+                        <p class="text-sm text-gray-500">Supervisor Name</p>
+                        <p class="font-medium">{{ $acceptanceLetter->supervisor_name }}</p>
+                    </div>
+                    
+                    <div class="col-span-2">
+                        <p class="text-sm text-gray-500">Company Address</p>
+                        <p class="font-medium">{{ $acceptanceLetter->address }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Contact Number</p>
                         <p class="font-medium">{{ $acceptanceLetter->contact }}</p>
                     </div>
-                    <div class="col-span-2">
-                        <p class="text-sm text-gray-500">Address</p>
-                        <p class="font-medium">{{ $acceptanceLetter->address }}</p>
+                    <div>
+                        <p class="text-sm text-gray-500">Email</p>
+                        <p class="font-medium">{{ $acceptanceLetter->email}}</p>
                     </div>
-
                     
                 </div>
             </div>
@@ -157,7 +161,7 @@
                             <input type="text" wire:model="newCompany.company_name"
                                 class="mt-1 w-full rounded-lg border-gray-300">
                         </div>
-                        <div>
+                        {{-- <div>
                             <label class="block text-sm font-medium text-gray-700">Contact Person</label>
                             <input type="text" wire:model="newCompany.contact_person"
                                 class="mt-1 w-full rounded-lg border-gray-300">
@@ -166,15 +170,15 @@
                             <label class="block text-sm font-medium text-gray-700">Contact Number</label>
                             <input type="text" wire:model="newCompany.contact_number"
                                 class="mt-1 w-full rounded-lg border-gray-300">
-                        </div>
+                        </div> --}}
                         <div class="col-span-2">
                             <label class="block text-sm font-medium text-gray-700">Address</label>
                             <input type="text" wire:model="newCompany.address" class="mt-1 w-full rounded-lg border-gray-300">
                         </div>
-                        <div class="col-span-2">
+                        {{-- <div class="col-span-2">
                             <label class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" wire:model="newCompany.email" class="mt-1 w-full rounded-lg border-gray-300">
-                        </div>
+                        </div> --}}
                     </div>
 
                     <div class="mt-4 flex justify-end space-x-2">

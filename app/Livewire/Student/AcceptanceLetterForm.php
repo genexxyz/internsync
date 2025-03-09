@@ -16,20 +16,19 @@ class AcceptanceLetterForm extends ModalComponent
     use WithFileUploads;
     public $company_name;
     public $department_name;
-    public $name;
-    public $position;
+    public $supervisor_name;
     public $address;
     public $contact;
-    public $signed_letter;
+    public $email;
     public $acceptance_letter;
+
     protected $rules = [
         'company_name' => 'required|string|max:255',
         'department_name'=> 'nullable|string|max:255',
-        'name' => 'required|string|max:255',
-        'position' => 'required|string|max:255',
+        'supervisor_name' => 'required|string|max:255',
         'address' => 'required|string|max:255',
         'contact' => 'required|string|max:255',
-        'signed_letter' => 'nullable|file|mimes:pdf|max:10240', // 10MB max
+        'email'=> 'string|email|max:255',
     ];
 
     public function generatePDF()
@@ -53,10 +52,10 @@ class AcceptanceLetterForm extends ModalComponent
             'student_id' => $student->id,
             'company_name' => $this->company_name,
             'department_name' => $this->department_name,
-            'name' => $this->name,
-            'position' => $this->position,
+            'supervisor_name' => $this->supervisor_name,
             'address' => $this->address,
             'contact' => $this->contact,
+            'email' => $this->email,
             'is_generated' => true
         ]);
 
@@ -67,61 +66,61 @@ class AcceptanceLetterForm extends ModalComponent
         // Get required training hours
         $requiredHours = $student->deployment->custom_hours ?? 'N/A';
         $this->closeModal();
-        $pdf = PDF::loadView('pdfs.acceptance-letter', [
-            'letter' => $letter,
-            'student' => $student,
-            'programHead' => $programHead,
-            'requiredHours' => $requiredHours
-        ]);
+        // $pdf = PDF::loadView('pdfs.acceptance-letter', [
+        //     'letter' => $letter,
+        //     'student' => $student,
+        //     'programHead' => $programHead,
+        //     'requiredHours' => $requiredHours
+        // ]);
 
-        return response()->streamDownload(
-            fn() => print($pdf->output()),
-            $studentFullName . '_acceptance-letter.pdf'
-        );
+        // return response()->streamDownload(
+        //     fn() => print($pdf->output()),
+        //     $studentFullName . '_acceptance-letter.pdf'
+        // );
     }
 
-    public function uploadSignedLetter()
-    {
-        $this->validate([
-            'signed_letter' => 'required|file|mimes:pdf|max:10240'
-        ]);
+    // public function uploadSignedLetter()
+    // {
+    //     $this->validate([
+    //         'signed_letter' => 'required|file|mimes:pdf|max:10240'
+    //     ]);
 
-        try {
-            $student = Student::where('user_id', Auth::id())
-                ->with(['section.course'])
-                ->firstOrFail();
+    //     try {
+    //         $student = Student::where('user_id', Auth::id())
+    //             ->with(['section.course'])
+    //             ->firstOrFail();
 
-            $fileName = implode('-', [
-                $student->student_id,
-                $student->last_name,
-                $student->first_name,
-                $student->section->course->course_code,
-                'acceptance-letter-signed',
-                Str::random(8)
-            ]) . '.pdf';
+    //         $fileName = implode('-', [
+    //             $student->student_id,
+    //             $student->last_name,
+    //             $student->first_name,
+    //             $student->section->course->course_code,
+    //             'acceptance-letter-signed',
+    //             Str::random(8)
+    //         ]) . '.pdf';
 
-            // Store the file
-            $path = $this->signed_letter->storeAs(
-                'acceptance_letters',
-                $fileName,
-                'public'
-            );
+    //         // Store the file
+    //         $path = $this->signed_letter->storeAs(
+    //             'acceptance_letters',
+    //             $fileName,
+    //             'public'
+    //         );
 
-            // Update the acceptance letter record
-            AcceptanceLetter::where('student_id', $student->id)
-                ->update(['signed_path' => $path]);
+    //         // Update the acceptance letter record
+    //         AcceptanceLetter::where('student_id', $student->id)
+    //             ->update(['signed_path' => $path]);
 
-            $this->closeModal();
-            $this->dispatch('alert', type: 'success', text: 'Signed letter uploaded successfully!');
-            $this->dispatch('refreshDocument');
-        } catch (\Exception $e) {
-            logger()->error('Error uploading signed letter', [
-                'error' => $e->getMessage(),
-                'student_id' => Auth::id()
-            ]);
-            $this->dispatch('alert', type: 'error', text: 'Error uploading signed letter.');
-        }
-    }
+    //         $this->closeModal();
+    //         $this->dispatch('alert', type: 'success', text: 'Signed letter uploaded successfully!');
+    //         $this->dispatch('refreshDocument');
+    //     } catch (\Exception $e) {
+    //         logger()->error('Error uploading signed letter', [
+    //             'error' => $e->getMessage(),
+    //             'student_id' => Auth::id()
+    //         ]);
+    //         $this->dispatch('alert', type: 'error', text: 'Error uploading signed letter.');
+    //     }
+    // }
 
 
     public function mount()

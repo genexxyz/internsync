@@ -11,10 +11,10 @@ class AcceptanceLetter extends Model
         'student_id',
         'company_name',
         'department_name',
-        'name',
-        'position',
+        'supervisor_name',
         'address',
         'contact',
+        'email',
         'is_generated',
         'is_verified',
         'signed_path'

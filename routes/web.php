@@ -24,7 +24,9 @@ use App\Livewire\Student\AcceptanceLetterForm;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
-
+use App\Http\Livewire\Supervisor\CompleteProfileForm;
+use App\Http\Middleware\SupervisorFirstLoginMiddleware;
+use App\Livewire\Supervisor\Menu;
 
 Route::get('document/preview/{path}', function (Request $request, $path) {
     if (!$request->hasValidSignature()) {
@@ -121,11 +123,24 @@ Route::middleware(['auth', RoleMiddleware::class . ':instructor'])->group(functi
 
 // Supervisor dashboard
 Route::middleware(['auth', RoleMiddleware::class . ':supervisor'])->group(function () {
-    Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
-    Route::get('/supervisor/weekly-reports', [SupervisorController::class, 'weeklyReports'])->name('supervisor.weeklyReports');
-    Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])->name('supervisor.weekly-reports.view');
-    Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])->name('supervisor.evaluation');
-    Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])->name('supervisor.interns');
+    // First time profile completion - doesn't need the first login middleware check
+    // Route::get('/supervisor/complete-form', [SupervisorController::class, 'completeForm'])
+    //     ->name('supervisor.complete-form');
+    
+    // // Regular supervisor routes - add the first login middleware
+    // Route::middleware([SupervisorFirstLoginMiddleware::class])->group(function () {
+    // });
+        Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])
+            ->name('supervisor.dashboard');
+        Route::get('/supervisor/weekly-reports', [SupervisorController::class, 'weeklyReports'])
+            ->name('supervisor.weeklyReports');
+        Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])
+            ->name('supervisor.weekly-reports.view');
+        Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])
+            ->name('supervisor.evaluation');
+        Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])
+            ->name('supervisor.interns');
+    
 });
 
 // Profile management (accessible to all authenticated users)

@@ -6,7 +6,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Acceptance Letter -->
-            <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer">
+            <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
                 <div class="flex items-center gap-4">
                     <div class="bg-blue-100 p-3 rounded-lg">
                         <i class="fa fa-file-lines text-2xl text-blue-600"></i>
@@ -17,28 +17,32 @@
                     </div>
                 </div>
                 <div class="mt-4">
-
-                    @if($acceptance_letter && !empty($acceptance_letter->signed_path))
-                    <button @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
-                        detail: {
-                            url: '{{ Storage::url($acceptance_letter->signed_path) }}'
-                        }
-                    }))" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
-                                            <i class="fa fa-eye text-sm"></i>
-                                            <span class="text-sm font-medium">View</span>
-                                        </button>
-        @else
-        <button 
-        onclick="Livewire.dispatch('openModal', { component: 'student.acceptance-letter-form'})"
-class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
-<span class="text-sm font-medium">
-
-{{ $acceptance_letter && $acceptance_letter->is_generated ? 'Upload Signed Letter' : 'Generate Letter' }}
-</span>
-<i class="fa {{ $acceptance_letter && $acceptance_letter->is_generated ? 'fa-upload' : 'fa-arrow-right' }} text-sm"></i>
-</button>
-        @endif
-                    
+                    @if($acceptance_letter && $acceptance_letter->signed_path)
+                        <!-- If letter is signed, show view button -->
+                        <button @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
+                            detail: { url: '{{ Storage::url($acceptance_letter->signed_path) }}' }
+                        }))" 
+                        class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                            <i class="fa fa-eye text-sm"></i>
+                            <span class="text-sm font-medium">View Signed Letter</span>
+                        </button>
+                    @elseif($acceptance_letter && $acceptance_letter->is_generated)
+                        <!-- If letter is generated but not signed -->
+                        <button 
+                            onclick="Livewire.dispatch('openModal', { component: 'student.acceptance-letter-form'})"
+                            class="w-full py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                            <i class="fas fa-clock text-sm mr-2"></i>
+                            <span class="text-sm font-medium">Check Status</span>
+                        </button>
+                    @else
+                        <!-- If letter is not generated yet -->
+                        <button 
+                            onclick="Livewire.dispatch('openModal', { component: 'student.acceptance-letter-form'})"
+                            class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                            <span class="text-sm font-medium">Generate Letter</span>
+                            <i class="fa fa-arrow-right text-sm"></i>
+                        </button>
+                    @endif
                 </div>
             </div>
 

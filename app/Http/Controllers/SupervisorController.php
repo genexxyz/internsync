@@ -12,8 +12,10 @@ class SupervisorController extends Controller
 
     public function index(): View
     {
-$supervisor = Supervisor::where('user_id',Auth::id())->with([
-    'deployments'
+$supervisor = Supervisor::where('user_id',Auth::user()->id)->with([
+    'deployments' => function($query) {
+        $query->where('supervisor_id', Auth::user()->supervisor->id);
+    }
 ])
 ->firstOrFail();;
         
@@ -35,6 +37,11 @@ $supervisor = Supervisor::where('user_id',Auth::id())->with([
     public function evaluation(): View
     {
         return view('supervisor.evaluation');
+    }
+
+    public function completeForm(): View
+    {
+        return view('supervisor.complete-form');
     }
 
     

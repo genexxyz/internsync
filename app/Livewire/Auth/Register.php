@@ -75,6 +75,7 @@ class Register extends Component
     public $company_id;
     public $company_department;
     public $companyDepartments = [];
+    public $position;
 
 
     // Add a debug method
@@ -205,6 +206,7 @@ class Register extends Component
 
         if ($this->role === 'supervisor') {
             $rules['company_id'] = 'required|exists:companies,id';
+            $rules['position'] = 'required|string';
         }
 
         return $rules;
@@ -291,8 +293,8 @@ class Register extends Component
         $documentPath = $this->processDocument($user);
 
         // Generate and send OTP
-        $otp = $user->generateOTP();
-        $this->sendOtpEmail($user, $otp);
+        // $otp = $user->generateOTP();
+        // $this->sendOtpEmail($user, $otp);
 
         // Create role-specific profile
         $this->createRoleProfile($user, $documentPath);
@@ -391,6 +393,7 @@ class Register extends Component
             case 'supervisor':
                 $profileData['company_id'] = $this->company_id;
                 $profileData['company_department_id'] = $this->company_department;
+                $profileData['position'] = $this->position;
                 Supervisor::create($profileData);
                 break;
         }

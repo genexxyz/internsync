@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('position')->nullable();
             $table->string('address')->nullable();
             $table->string('contact')->nullable();
-            $table->boolean('is_generated')->default(false);
+            $table->boolean('is_generated')->default(false); //dont include this
             $table->boolean('is_verified')->default(false);
             $table->string('signed_path')->nullable();
             $table->timestamps();
