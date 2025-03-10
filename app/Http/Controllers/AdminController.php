@@ -22,7 +22,7 @@ class AdminController extends Controller
         $instructors = Instructor::all();
         $supervisors = Supervisor::all();
         $companies = Company::all();
-        $deployments = Deployment::all();
+        $deployments = Deployment::all()->where('supervisor_id', '!=', null);
         return view('admin.dashboard')
             ->with('courses', $courses)
             ->with('instructors', $instructors)

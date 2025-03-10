@@ -28,5 +28,13 @@ public function instructorCourses()
 {
     return $this->hasMany(Program::class);
 }
-
+public function students()
+{
+    return $this->hasManyThrough(
+        Student::class,
+        Section::class,
+        'course_id',
+        'year_section_id'
+    );
+}
 }

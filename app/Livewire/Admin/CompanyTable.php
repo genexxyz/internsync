@@ -37,19 +37,22 @@ class CompanyTable extends Component
     }
     public function render()
     {
-        $query = Company::query()->orderBy('company_name','asc');
+        $query = Company::query()
+            ->orderBy('company_name', 'asc')
+            ->withCount([
+                'deployments as students_count' => function ($query) {
+                    $query->whereNotNull('supervisor_id');
+                }
+            ]);
 
-        
-
-        
         if (!empty($this->search)) {
             $query->where(function ($q) {
                 $q->where('company_name', 'like', '%' . $this->search . '%');
             });
         }
 
-
         $companies = $query->paginate(10);
+        
         return view('livewire.admin.company-table', [
             'companies' => $companies,
         ]);

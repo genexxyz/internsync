@@ -23,4 +23,15 @@ class Company extends Model
     {
         return $this->hasMany(Department::class);
     }
+    public function deployments()
+    {
+        return $this->hasManyThrough(
+            Deployment::class,
+            Department::class,
+            'company_id', // Foreign key on departments table
+            'company_dept_id', // Foreign key on deployments table
+            'id', // Local key on companies table
+            'id' // Local key on departments table
+        );
+    }
 }

@@ -12,6 +12,9 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Models\AcceptanceLetter;
+use Illuminate\Support\Facades\DB;
 
 class AcceptStudents extends Component
 {
@@ -108,51 +111,115 @@ class AcceptStudents extends Component
     }
     
     public function acceptStudents()
-    {
-        if (empty($this->selectedStudents)) {
-            $this->dispatch('alert', type: 'error', text: 'Please select at least one student.');
-            return;
-        }
+{
+    if (empty($this->selectedStudents)) {
+        $this->dispatch('alert', type: 'error', text: 'Please select at least one student.');
+        return;
+    }
+    
+    // Validate signature if provided
+    if ($this->signature) {
+        $this->validate([
+            'signature' => 'image|max:2048', // 2MB max
+        ]);
         
-        // Validate signature if provided
-        if ($this->signature) {
-            $this->validate([
-                'signature' => 'image|max:2048', // 2MB max
-            ]);
+        // Store signature if uploaded
+        $filename = 'supervisor_signature_' . Auth::id() . '_' . time() . '.' . $this->signature->getClientOriginalExtension();
+        $path = $this->signature->storeAs('signatures', $filename, 'public');
+        
+        // Update supervisor with signature path
+        Auth::user()->supervisor->update([
+            'signature_path' => Storage::url($path)
+        ]);
+    }
+    
+    $supervisorId = Auth::user()->supervisor->id;
+    $accepted = 0;
+    
+    foreach ($this->selectedStudents as $deploymentId) {
+        $deployment = Deployment::with(['student.user', 'student.yearSection.course', 'department.company'])
+            ->find($deploymentId);
             
-            // Store signature if uploaded
-            $filename = 'supervisor_signature_' . Auth::id() . '_' . time() . '.' . $this->signature->getClientOriginalExtension();
-            $path = $this->signature->storeAs('signatures', $filename, 'public');
-            
-            // Update supervisor with signature path
-            Auth::user()->supervisor->update([
-                'signature_path' => Storage::url($path)
-            ]);
-        }
-        
-        $supervisorId = Auth::user()->supervisor->id;
-        $accepted = 0;
-        
-        foreach ($this->selectedStudents as $deploymentId) {
-            $deployment = Deployment::find($deploymentId);
-            if ($deployment && is_null($deployment->supervisor_id)) {
+        if ($deployment && is_null($deployment->supervisor_id)) {
+            try {
+                DB::beginTransaction();
+                
+                // Update deployment
                 $deployment->update([
                     'supervisor_id' => $supervisorId,
                     'accepted_at' => now(),
                 ]);
+
+                // Generate PDF data
+                $student = $deployment->student;
+                $studentName = ($student->user->first_name ?? $student->first_name) . ' ' . 
+                             ($student->user->last_name ?? $student->last_name);
+                
+                $data = [
+                    'student_name' => $studentName,
+                    'student_id' => $student->student_id ?? $student->student_number,
+                    'supervisor_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                    'supervisor_position' => Auth::user()->supervisor->position,
+                    'company_name' => Auth::user()->supervisor->department->company->name ?? 'Company',
+                    'department_name' => Auth::user()->supervisor->department->name ?? 'Department',
+                    'date' => now()->format('F d, Y'),
+                    'signature_path' => Auth::user()->supervisor->signature_path,
+                ];
+                
+                // Generate PDF
+                $pdf = Pdf::loadView('pdfs.supervisor-acceptance-letter', $data);
+                
+                // Create filename
+                $fileName = implode('-', [
+                    $student->student_id,
+                    $student->user->last_name ?? $student->last_name,
+                    $student->user->first_name ?? $student->first_name,
+                    $student->yearSection->course->course_code,
+                    'acceptance-letter-signed',
+                    Str::random(8)
+                ]) . '.pdf';
+                
+                // Store the PDF
+                Storage::put('public/acceptance_letters/' . $fileName, $pdf->output());
+                
+                // Create or update acceptance letter record
+                AcceptanceLetter::updateOrCreate(
+                    ['student_id' => $student->id],
+                    [
+                        'is_generated' => true,
+                        'signed_path' => 'acceptance_letters/' . $fileName,
+                        'supervisor_id' => $supervisorId,
+                        'company_name' => $data['company_name'],
+                        'department_name' => $data['department_name'],
+                        'supervisor_name' => $data['supervisor_name'],
+                        'supervisor_position' => $data['supervisor_position'],
+                        'signed_at' => now(),
+                    ]
+                );
+                
+                DB::commit();
                 $accepted++;
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                logger()->error('Error accepting student', [
+                    'error' => $e->getMessage(),
+                    'deployment_id' => $deploymentId
+                ]);
+                continue;
             }
         }
-        
-        // Clear selections and reload
-        $this->selectedStudents = [];
-        $this->loadAvailableStudents();
-        
-        // Dispatch events to update counts and notifications
-        $this->dispatch('alert', type: 'success', text: $accepted . ' student(s) accepted successfully!');
-        $this->dispatch('accept-students-updated');
-        $this->dispatch('refreshInternsTable');
     }
+    
+    // Clear selections and reload
+    $this->selectedStudents = [];
+    $this->loadAvailableStudents();
+    
+    // Dispatch events to update counts and notifications
+    $this->dispatch('alert', type: 'success', text: $accepted . ' student(s) accepted successfully!');
+    $this->dispatch('accept-students-updated');
+    $this->dispatch('refreshInternsTable');
+}
     
     public function generateAcceptanceLetter($deploymentId)
     {

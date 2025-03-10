@@ -103,9 +103,17 @@
                                         {{ $this->totalHours[$deployment->id]['formatted'] ?? '0' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="" class="text-blue-600 hover:text-blue-900">
+                                        <button 
+                                            wire:click="$dispatch('openModal', {
+                                                component: 'supervisor.intern-details-modal',
+                                                arguments: {
+                                                    deployment: {{ $deployment->id }}
+                                                }
+                                            })"
+                                            class="text-blue-600 hover:text-blue-900"
+                                        >
                                             View Details
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             @empty

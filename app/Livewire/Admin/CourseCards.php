@@ -28,8 +28,11 @@ class CourseCards extends Component
 
     public function render()
     {
-        // Start the query to order by course_name
-        $query = Course::query()->orderBy('course_name', 'asc');
+        // Start the query to order by course_name with sections and students count
+        $query = Course::query()
+            ->orderBy('course_name', 'asc')
+            ->with('sections.students')
+            ->withCount('students');
 
         // Apply search filter if search term is provided
         if (!empty($this->search)) {

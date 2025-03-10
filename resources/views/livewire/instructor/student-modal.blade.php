@@ -83,14 +83,22 @@
                         </p>
                     </div>
                 @else
-                    <button
-                        onclick="Livewire.dispatch('openModal', { 
-                                    component: 'instructor.assign-modal', 
-                                    arguments: { student: {{ $student->id }} } 
-                                })"
-                        class="bg-blue-500 px-4 py-2 rounded uppercase text-white font-semibold hover:bg-blue-600">
-                        Assign
-                    </button>
+                    @if($isProgramHead)
+                        <button
+                            onclick="Livewire.dispatch('openModal', { 
+                                component: 'instructor.assign-modal', 
+                                arguments: { student: {{ $student->id }} } 
+                            })"
+                            class="bg-blue-500 px-4 py-2 rounded uppercase text-white font-semibold hover:bg-blue-600">
+                            <i class="fas fa-building-user mr-1.5"></i>
+                            Assign
+                        </button>
+                    @else
+                        <div class="text-gray-500 italic">
+                            <i class="fas fa-info-circle mr-1.5"></i>
+                            Waiting for program head to assign company
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

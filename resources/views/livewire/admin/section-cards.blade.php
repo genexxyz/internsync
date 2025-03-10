@@ -18,7 +18,14 @@
                             <div class="flex items-center gap-2">
                                 <i class="fa fa-chalkboard-user text-white/80"></i>
                                 <p class="text-sm font-medium">
-                                    {{ $section->instructor ? $section->instructor->first_name . ' ' . $section->instructor->last_name : 'No Instructor' }}
+                                    @if($section->handles->whereNotNull('instructor.user')->where('instructor.user.is_verified', true)->count() > 0)
+                                        @foreach($section->handles->whereNotNull('instructor.user')->where('instructor.user.is_verified', true) as $handle)
+                                            {{ $handle->instructor->first_name }} {{ $handle->instructor->last_name }}
+                                            @if(!$loop->last), @endif
+                                        @endforeach
+                                    @else
+                                        No Verified Instructor
+                                    @endif
                                 </p>
                             </div>
                         </div>

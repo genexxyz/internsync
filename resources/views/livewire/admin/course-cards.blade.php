@@ -34,11 +34,11 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="text-center">
                                     <span class="text-sm text-gray-500">Sections</span>
-                                    <p class="text-lg font-semibold text-gray-700">{{ $course->sections_count ?? 0 }}</p>
+                                    <p class="text-lg font-semibold text-gray-700">{{ $course->sections->count() ?? 0 }}</p>
                                 </div>
                                 <div class="text-center">
                                     <span class="text-sm text-gray-500">Students</span>
-                                    <p class="text-lg font-semibold text-gray-700">{{ $course->students_count ?? 0 }}</p>
+                                    <p class="text-lg font-semibold text-gray-700">{{ $course->students_count }}</p>
                                 </div>
                             </div>
 

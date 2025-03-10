@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Course;
 use App\Models\Student;
 use App\Models\Supervisor;
+use Illuminate\Support\Facades\Auth;
 use LivewireUI\Modal\ModalComponent;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -16,7 +17,7 @@ class StudentModal extends ModalComponent
     public Student $user;
     public $company;
     public $supervisor;
-
+    public $isProgramHead = false;
     public static function modalMaxWidth(): string
     {
         return '2xl';
@@ -52,16 +53,16 @@ class StudentModal extends ModalComponent
             'yearSection',
         ]);
 
-        // Safely load the company associated with the deployment
+        // Check if current user is program head
+        $this->isProgramHead = Auth::user()->instructor->is_program_head ?? false;
+
         if ($this->user->deployment) {
             $this->company = Company::find($this->user->deployment->company_id);
-$this->supervisor = Supervisor::find($this->user->deployment->supervisor_id);
+            $this->supervisor = Supervisor::find($this->user->deployment->supervisor_id);
         } else {
-            $this->company = null; // Handle case where no deployment exists
+            $this->company = null;
             $this->supervisor = null;
         }
-        
-        
     }
 
     public function verifyStudent()

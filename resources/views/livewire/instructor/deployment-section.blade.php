@@ -134,7 +134,7 @@
                                     <i class="fas fa-eye mr-1.5"></i>
                                     View Details
                                 </button>
-                            @elseif($student->acceptance_letter)
+                                @elseif($student->acceptance_letter)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <i class="fas fa-check-circle mr-1"></i>
                                     Letter<span class="text-xs text-gray-400">
@@ -142,17 +142,24 @@
                                     </span>
                                 </span>
                                
-                                <!-- Assign Company Button -->
-                                <button 
-                                onclick="Livewire.dispatch('openModal', { 
-                                    component: 'instructor.assign-modal', 
-                                    arguments: { student: {{ $student->id }} } 
-                                })"
-                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium shadow-md text-white bg-green-600 rounded-lg hover:bg-green-800 transition-colors">
-                                    <i class="fas fa-building-user mr-1.5"></i>
-                                    Assign
-                                </button>
-                                
+                                @if($isProgramHead)
+                                    <!-- Assign Company Button - Only shown to program heads -->
+                                    <button 
+                                    onclick="Livewire.dispatch('openModal', { 
+                                        component: 'instructor.assign-modal', 
+                                        arguments: { student: {{ $student->id }} } 
+                                    })"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium shadow-md text-white bg-green-600 rounded-lg hover:bg-green-800 transition-colors">
+                                        <i class="fas fa-building-user mr-1.5"></i>
+                                        Assign
+                                    </button>
+                                @else
+                                    <!-- Message for regular instructors -->
+                                    <span class="text-xs text-gray-500 italic">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Waiting for program head
+                                    </span>
+                                @endif
                             @else
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                     <i class="fas fa-clock mr-1"></i>
