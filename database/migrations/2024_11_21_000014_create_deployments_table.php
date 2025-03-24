@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('academic_id');
             $table->integer('custom_hours')->nullable();
             $table->date('starting_date')->nullable();
+            $table->date('ending_date')->nullable();
             $table->enum('status', ['pending', 'ongoing', 'compeleted'])->default('pending');
             $table->boolean('is_verified')->default(false);
             $table->timestamps();

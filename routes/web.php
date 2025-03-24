@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DeploymentController;
+use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -39,9 +41,9 @@ Route::get('document/preview/{path}', function (Request $request, $path) {
 
     return Response::file(storage_path('app/public/' . $path));
 })
-->where('path', '.*')
-->name('document.preview')
-->middleware('web');
+    ->where('path', '.*')
+    ->name('document.preview')
+    ->middleware('web');
 
 Route::get('test-upload', [TestUploadController::class, 'showForm']);
 Route::post('test-upload', [TestUploadController::class, 'upload'])->name('test.upload');
@@ -52,7 +54,7 @@ Route::post('test-upload', [TestUploadController::class, 'upload'])->name('test.
 
 Route::get('/', function () {
     if (Auth::check()) {
-        
+
         // Redirect authenticated users based on their roles
         return match (Auth::user()->role) {
             'admin' => redirect()->route('admin.dashboard'),
@@ -96,6 +98,9 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function ()
         Route::get('/companies', [CompanyController::class, 'index'])->name('company');
         Route::get('/supervisors', [AdminController::class, 'supervisors'])->name('supervisors');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+        Route::get('/documents/acceptance-letters', [DocumentsController::class, 'index'])->name('documents.acceptance');
+        Route::get('/documents/endorsement-letters', [DocumentsController::class, 'endorsement'])->name('documents.endorsement');
+        Route::get('/documents/moa', [DocumentsController::class, 'moa'])->name('documents.moa');
     });
 });
 
@@ -115,7 +120,15 @@ Route::middleware(['auth', RoleMiddleware::class . ':student'])->group(function 
 // Instructor dashboard
 Route::middleware(['auth', RoleMiddleware::class . ':instructor'])->group(function () {
     Route::get('/instructor/dashboard', [InstructorController::class, 'index'])->name('instructor.dashboard');
-    Route::get('/instructor/task-and-attendance', [InstructorController::class, 'taskAttendance'])->name('instructor.taskAttendance');
+    // Task and Attendance routes
+    Route::get('/instructor/task-and-attendance/section', [InstructorController::class, 'taskAttendance'])
+        ->name('instructor.taskAttendance');
+
+    Route::get(
+        '/instructor/task-and-attendance/section/{course_code}/{year_level}{class_section}',
+        [AttendanceController::class, 'sectionAttendance']
+    )
+        ->name('instructor.taskAttendance.section.show');
     Route::get('/instructor/deployments/section', [InstructorController::class, 'deployments'])->name('instructor.deployments.section');
     Route::get('/instructor/deployments/section/{course_code}/{year_level}{class_section}', [DeploymentController::class, 'sectionDeployment'])->name('instructor.deployments.section.show');
     Route::get('/instructor/deployments/filter/{filter}', [InstructorController::class, 'filterDeployments'])->name('instructor.deployments.filter');
@@ -126,21 +139,20 @@ Route::middleware(['auth', RoleMiddleware::class . ':supervisor'])->group(functi
     // First time profile completion - doesn't need the first login middleware check
     // Route::get('/supervisor/complete-form', [SupervisorController::class, 'completeForm'])
     //     ->name('supervisor.complete-form');
-    
+
     // // Regular supervisor routes - add the first login middleware
     // Route::middleware([SupervisorFirstLoginMiddleware::class])->group(function () {
     // });
-        Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])
-            ->name('supervisor.dashboard');
-        Route::get('/supervisor/weekly-reports', [SupervisorController::class, 'weeklyReports'])
-            ->name('supervisor.weeklyReports');
-        Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])
-            ->name('supervisor.weekly-reports.view');
-        Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])
-            ->name('supervisor.evaluation');
-        Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])
-            ->name('supervisor.interns');
-    
+    Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])
+        ->name('supervisor.dashboard');
+    Route::get('/supervisor/weekly-reports', [SupervisorController::class, 'weeklyReports'])
+        ->name('supervisor.weeklyReports');
+    Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])
+        ->name('supervisor.weekly-reports.view');
+    Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])
+        ->name('supervisor.evaluation');
+    Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])
+        ->name('supervisor.interns');
 });
 
 // Profile management (accessible to all authenticated users)
@@ -148,7 +160,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::post('/logout', [AuthenticatedSessionController::class,'destroy'])->name('logout');
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
 
@@ -160,4 +172,4 @@ Route::get('/send-email-with-attachment', [EmailController::class, 'sendEmailWit
 
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

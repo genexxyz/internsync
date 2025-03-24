@@ -17,6 +17,7 @@ class Calendar extends Component
     public $selectedDate;
     public $selectedTask = null;
     public $showModal = false;
+    public $tasks = [];
 
     public function mount()
     {
@@ -34,6 +35,9 @@ class Calendar extends Component
         $journals = Journal::whereMonth('date', $this->currentMonth)
             ->whereYear('date', $this->currentYear)
             ->where('student_id', $studentId)
+            ->with(['taskHistories' => function($query) {
+                $query->orderBy('changed_at', 'desc');
+            }, 'taskHistories.task'])
             ->get();
 
         // Get attendances for current month
@@ -42,10 +46,7 @@ class Calendar extends Component
             ->where('student_id', $studentId)
             ->get();
 
-        // Create a lookup array for attendances by date
-        $attendanceLookup = $attendances->keyBy(function($attendance) {
-            return $attendance->date->format('Y-m-d');
-        });
+        $attendanceLookup = $attendances->keyBy(fn($attendance) => $attendance->date->format('Y-m-d'));
 
         // Organize events by date
         foreach ($journals as $journal) {
@@ -59,6 +60,23 @@ class Calendar extends Component
             $startBreak = $attendance?->start_break ? Carbon::parse($baseDate . $attendance->start_break)->format('h:i A') : null;
             $endBreak = $attendance?->end_break ? Carbon::parse($baseDate . $attendance->end_break)->format('h:i A') : null;
 
+            // Get tasks for this journal
+            $tasks = $journal->taskHistories->groupBy('task_id')
+                ->map(function($histories) {
+                    $latestHistory = $histories->first();
+                    return [
+                        'description' => $latestHistory->task->description,
+                        'status' => $latestHistory->status,
+                        'changed_at' => $latestHistory->changed_at->format('h:i A'),
+                        'history' => $histories->take(3)->map(function($history) {
+                            return [
+                                'status' => $history->status,
+                                'changed_at' => $history->changed_at->format('M d, Y h:i A')
+                            ];
+                        })
+                    ];
+                })->values()->all();
+
             $this->events[$date] = [
                 'text' => $journal->text,
                 'remarks' => $journal->remarks,
@@ -69,7 +87,8 @@ class Calendar extends Component
                 'start_break' => $startBreak,
                 'end_break' => $endBreak,
                 'total_hours' => $attendance?->total_hours ?? 0,
-                'status' => $attendance?->status ?? 'No Attendance'
+                'status' => $attendance?->status ?? 'No Attendance',
+                'tasks' => $tasks
             ];
         }
     }

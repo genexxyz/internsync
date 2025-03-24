@@ -38,7 +38,41 @@ class InternsTable extends Component
     public $viewingStudentId = null; // To track which student's letter is being viewed
     public $viewingDeploymentId = null; // To track which deployment's letter is being viewed
     public $showLetterModal = false; // Control letter modal visibility
+    public $showSignatureUpload = false;
+    public function uploadSignature()
+    {
+        $this->validate([
+            'signature' => 'required|image|max:2048',
+        ]);
 
+        try {
+            // Generate unique filename for signature
+            $extension = $this->signature->getClientOriginalExtension();
+            $randomString = Str::random(8);
+            $filename = sprintf(
+                '%s_%s_%s_%s_%s.%s',
+                Auth::id(),
+                'supervisor',
+                strtolower(Auth::user()->supervisor->last_name),
+                strtolower(Auth::user()->supervisor->first_name),
+                $randomString,
+                $extension
+            );
+            
+            // Store signature with custom filename
+            $path = $this->signature->storeAs('signatures', $filename, 'public');
+            
+            Auth::user()->supervisor->update([
+                'signature_path' => $path
+            ]);
+
+            $this->reset('signature');
+            $this->dispatch('alert', type: 'success', text: 'E-signature uploaded successfully! This will be used for acceptance letters and weekly reports.');
+            
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', text: 'Failed to upload signature. Please try again.');
+        }
+    }
 
     protected function rules()
     {
@@ -86,11 +120,24 @@ class InternsTable extends Component
             'signature' => 'image|max:2048',
         ]);
         
-        $filename = 'supervisor_signature_' . Auth::id() . '_' . time() . '.' . $this->signature->getClientOriginalExtension();
+        // Generate unique filename for signature
+        $extension = $this->signature->getClientOriginalExtension();
+        $randomString = Str::random(8);
+        $filename = sprintf(
+            '%s_%s_%s_%s_%s.%s',
+            Auth::id(),
+            'supervisor',
+            strtolower(Auth::user()->supervisor->last_name),
+            strtolower(Auth::user()->supervisor->first_name),
+            $randomString,
+            $extension
+        );
+        
+        // Store signature with custom filename
         $path = $this->signature->storeAs('signatures', $filename, 'public');
         
         Auth::user()->supervisor->update([
-            'signature_path' => Storage::url($path)
+            'signature_path' => $path
         ]);
     }
     
@@ -134,8 +181,8 @@ class InternsTable extends Component
                 // Create filename
                 $fileName = implode('-', [
                     $deployment->student->student_id,
-                    Str::slug($deployment->student->user->last_name),
-                    Str::slug($deployment->student->user->first_name),
+                    Str::slug($deployment->student->last_name),
+                    Str::slug($deployment->student->first_name),
                     $deployment->student->yearSection->course->course_code,
                     'acceptance-letter-signed',
                     Str::random(8)
@@ -218,49 +265,58 @@ class InternsTable extends Component
         $this->availableStudentCount = $query->count();
     }
     private function calculateTotalHours()
-    {
-        $deployments = Deployment::where('company_dept_id', Auth::user()->supervisor->company_department_id)
-            ->with(['student'])  // Include course relationship
+{
+    $deployments = Deployment::where('company_dept_id', Auth::user()->supervisor->company_department_id)
+        ->with(['student'])
+        ->get();
+
+    foreach ($deployments as $deployment) {
+        $totalMinutes = 0;
+        $requiredHours = $deployment->custom_hours ?? 500;
+        $completionDate = null;
+
+        // Get all approved attendances for this student, ordered by date
+        $attendances = Attendance::where('student_id', $deployment->student_id)
+            ->where('is_approved', true)
+            ->where('status', '!=', 'absent')
+            ->orderBy('date', 'asc')
             ->get();
 
-        foreach ($deployments as $deployment) {
-            $totalMinutes = 0;
-
-            // Get all approved attendances for this student
-            $attendances = Attendance::where('student_id', $deployment->student_id)
-                ->where('status', '!=', 'absent')
-                ->get();
-
-            foreach ($attendances as $attendance) {
-                if ($attendance->total_hours) {
-                    list($hours, $minutes) = array_pad(explode(':', $attendance->total_hours), 2, 0);
-                    $totalMinutes += ((int)$hours * 60) + (int)$minutes;
-                }
-            }
-
-            // Convert total minutes to hours and minutes format
-            $hours = floor($totalMinutes / 60);
-            $minutes = $totalMinutes % 60;
-            // Update deployment status based on required hours
-            $requiredHours = $deployment->custom_hours ?? 500;
-            // Store total hours for display
-            $this->totalHours[$deployment->id] = [
-                'hours' => $hours,
-                'minutes' => $minutes,
-                'formatted' => sprintf("%d/%d", $hours, $requiredHours)
-            ];
-
-
-
-            if ($this->status !== 'pending' && $deployment->starting_date) {
-                if ($hours >= $requiredHours) {
-                    $deployment->update(['status' => 'completed']);
-                } else {
-                    $deployment->update(['status' => 'ongoing']);
+        foreach ($attendances as $attendance) {
+            if ($attendance->total_hours) {
+                list($hours, $minutes) = array_pad(explode(':', $attendance->total_hours), 2, 0);
+                $totalMinutes += ((int)$hours * 60) + (int)$minutes;
+                
+                // Check if required hours were met on this day
+                if (floor($totalMinutes / 60) >= $requiredHours && !$completionDate) {
+                    $completionDate = $attendance->date;
                 }
             }
         }
+
+        // Convert total minutes to hours and minutes format
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
+
+        // Store total hours for display
+        $this->totalHours[$deployment->id] = [
+            'hours' => $hours,
+            'minutes' => $minutes,
+            'formatted' => sprintf("%d/%d", $hours, $requiredHours)
+        ];
+
+        if ($this->status !== 'pending' && $deployment->starting_date) {
+            if ($hours >= $requiredHours) {
+                $deployment->update([
+                    'status' => 'completed',
+                    'ending_date' => $completionDate
+                ]);
+            } else {
+                $deployment->update(['status' => 'ongoing']);
+            }
+        }
     }
+}
     public function saveStartDate()
     {
         $this->validate([

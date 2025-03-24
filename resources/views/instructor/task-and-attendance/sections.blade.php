@@ -23,7 +23,7 @@
                             <div class="flex flex-col space-y-3">
                                 <!-- Action Button -->
                                 <a 
-                                    href="{{ route('instructor.deployments.section.show', [
+                                    href="{{ route('instructor.taskAttendance.section.show', [
                                         'course_code' => $section->course->course_code,
                                         'year_level' => $section->year_level,
                                         'class_section' => $section->class_section

@@ -32,4 +32,8 @@ class Journal extends Model
 {
     return $this->hasOne(Attendance::class, 'date', 'date');
 }
+public function taskHistories()
+{
+    return $this->hasMany(TaskHistory::class);
+}
 }

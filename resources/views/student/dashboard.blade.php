@@ -114,52 +114,73 @@
         </div>
 
         <!-- Today's Attendance -->
-        <div class="bg-white rounded-xl shadow-sm">
-            <div class="bg-secondary text-white rounded-t-xl p-4">
-                <h3 class="font-bold text-lg">Today's Attendance</h3>
-            </div>
-            <div class="p-4">
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <p class="text-gray-900 font-medium">{{ now()->format('l, F d, Y') }}</p>
-                            @if($todayAttendance)
-                                <p class="text-gray-500 text-sm mt-1">
-                                    Time In: {{ $todayAttendance->time_in ? Carbon\Carbon::parse($todayAttendance->time_in)->format('h:i A') : 'Not yet' }}
+        @if($deployment && $deployment->starting_date && $deployment->starting_date->lte(now()))
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="bg-secondary text-white rounded-t-xl p-4">
+            <h3 class="font-bold text-lg">Today's Attendance</h3>
+        </div>
+        <div class="p-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-gray-900 font-medium">{{ now()->format('l, F d, Y') }}</p>
+                        @if($todayAttendance)
+                            <p class="text-gray-500 text-sm mt-1">
+                                Time In: {{ $todayAttendance->time_in ? Carbon\Carbon::parse($todayAttendance->time_in)->format('h:i A') : 'Not yet' }}
+                            </p>
+                            @if($todayAttendance->time_out)
+                                <p class="text-gray-500 text-sm">
+                                    Time Out: {{ Carbon\Carbon::parse($todayAttendance->time_out)->format('h:i A') }}
                                 </p>
-                                @if($todayAttendance->time_out)
-                                    <p class="text-gray-500 text-sm">
-                                        Time Out: {{ Carbon\Carbon::parse($todayAttendance->time_out)->format('h:i A') }}
-                                    </p>
-                                    <p class="text-gray-500 text-sm">
-                                        Total Hours: {{ $todayAttendance->total_hours }}
-                                    </p>
-                                @endif
-                            @else
-                                <p class="text-gray-500 text-sm mt-1">No attendance record yet</p>
+                                <p class="text-gray-500 text-sm">
+                                    Total Hours: {{ $todayAttendance->total_hours }}
+                                </p>
                             @endif
-                        </div>
-                        <div>
-                            @if(!$todayAttendance)
-                                <a href="{{ route('student.taskAttendance') }}" 
-                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                    Time In
-                                </a>
-                            @elseif(!$todayAttendance->time_out)
-                                <a href="{{ route('student.taskAttendance') }}" 
-                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
-                                    Time Out
-                                </a>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Completed
-                                </span>
-                            @endif
-                        </div>
+                        @else
+                            <p class="text-gray-500 text-sm mt-1">No attendance record yet</p>
+                        @endif
                     </div>
-                    
+                    <div>
+                        @if(!$todayAttendance)
+                            <a href="{{ route('student.taskAttendance') }}" 
+                               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                Time In
+                            </a>
+                        @elseif(!$todayAttendance->time_out)
+                            <a href="{{ route('student.taskAttendance') }}" 
+                               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                Time Out
+                            </a>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Completed
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+@else
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="bg-secondary text-white rounded-t-xl p-4">
+            <h3 class="font-bold text-lg">Today's Attendance</h3>
+        </div>
+        <div class="p-4">
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-circle-info text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            Attendance tracking will be available once your internship starts.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
     </div>
 </x-app-layout>

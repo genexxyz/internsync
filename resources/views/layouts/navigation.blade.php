@@ -1,24 +1,38 @@
-<div x-data="{ sidebarIsOpen: false }" class="relative flex w-full flex-col md:flex-row">
+<div x-data="{ 
+    sidebarIsOpen: false,
+    closeSidebarOnRoute() {
+        this.sidebarIsOpen = false;
+    }
+}" 
+x-init="
+    $watch('$store.app.url', () => closeSidebarOnRoute());
+    $nextTick(() => {
+        window.addEventListener('navigate', () => closeSidebarOnRoute())
+    });
+"
+class="relative flex w-full flex-col md:flex-row">
     <a class="sr-only focus:not-sr-only focus:p-4" href="#main-content">Skip to main content</a>
 
     <!-- Dark Overlay -->
-    <div x-cloak x-show="sidebarIsOpen"
-        class="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm md:hidden" 
-        aria-hidden="true"
-        x-on:click="sidebarIsOpen = false" 
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0">
-    </div>
+    <div x-cloak 
+    x-show="sidebarIsOpen"
+    x-transition:enter="transition-opacity ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-10 bg-black/50 backdrop-blur-sm md:hidden"
+    @click="sidebarIsOpen = false">
+</div>
 
     <!-- Sidebar -->
     <nav x-cloak
-        class="fixed left-0 z-30 flex h-svh w-64 shrink-0 flex-col bg-zinc-800 border-r border-r-zinc-700/50 shadow-xl transition-transform duration-300 md:translate-x-0 md:relative"
-        x-bind:class="sidebarIsOpen ? 'translate-x-0' : '-translate-x-64'"
-        aria-label="sidebar navigation">
+    class="fixed left-0 z-20 flex h-svh w-64 shrink-0 flex-col bg-zinc-800 border-r border-r-zinc-700/50 shadow-xl md:relative
+           transition-transform duration-300 ease-in-out md:translate-x-0"
+    :class="sidebarIsOpen ? 'translate-x-0' : '-translate-x-64'"
+    @keydown.escape.window="sidebarIsOpen = false"
+    aria-label="sidebar navigation">
         
         <!-- Logo -->
         <a href="/" class="flex items-center p-4 mb-6">
@@ -30,7 +44,7 @@
             </p>
         </a>
 
-        @livewire(Auth::user()->role . '.menu')
+        @livewire(name: Auth::user()->role . '.menu')
     </nav>
 
     <!-- Main Content Area -->

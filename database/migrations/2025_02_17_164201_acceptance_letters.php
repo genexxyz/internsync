@@ -16,10 +16,10 @@ return new class extends Migration
             $table->unsignedBigInteger('student_id')->nullable();
             $table->string('company_name')->nullable();
             $table->string('department_name')->nullable();
-            $table->string('name')->nullable();
-            $table->string('position')->nullable();
+            $table->string('supervisor_name')->nullable();
             $table->string('address')->nullable();
             $table->string('contact')->nullable();
+            $table->string('email')->nullable();
             $table->boolean('is_generated')->default(false); //dont include this
             $table->boolean('is_verified')->default(false);
             $table->string('signed_path')->nullable();

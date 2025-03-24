@@ -10,196 +10,287 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+
 class WeeklyReportGenerator extends Component
 {
     public $weekNumber;
     public $startDate;
     public $endDate;
     public $learningOutcomes;
-    public $currentWeek;
     public $deployment;
     public $showWeekDetails = false;
     public $weeklyJournals = [];
     public $weeklyTotal = 0;
-    public $dailyTotal = 0;
-    public $journalCount = 0;
     public $reportExists = false;
-    public $workDays = 5; // Default to Mon-Fri, can be 6 for Mon-Sat
     public $selectedReport = null;
+    public $currentReport = null;
+    public $latestReport;
+    public $minStartDate;
+    public $maxEndDate;
 
     protected $rules = [
-        'learningOutcomes' => 'required|min:30',
+        'startDate' => 'required|date|after_or_equal:minStartDate',
+        'endDate' => 'required|date|after_or_equal:startDate|before_or_equal:today|before_or_equal:maxEndDate',
+        'learningOutcomes' => 'required|min:50'
     ];
 
-// Update the mount() method
-public function mount()
+    protected $messages = [
+        'startDate.after_or_equal' => 'Start date must be after the last submitted report',
+        'endDate.after_or_equal' => 'End date must be after or equal to start date',
+        'endDate.before_or_equal' => 'End date cannot be more than 7 days from start date'
+    ];
+
+
+    public function mount()
 {
     $this->deployment = Auth::user()->student->deployment;
-    if (!$this->deployment || !$this->deployment->starting_date) {
+    // Check if deployment exists and has started
+    if (!$this->deployment || !$this->deployment->starting_date || $this->deployment->starting_date->gt(Carbon::today())) {
+        $this->addError('deployment', 'You cannot generate reports until your deployment has started.');
         return;
     }
 
-    // Get work days from deployment settings if available
-    $this->workDays = $this->deployment->work_days ?? 5;
+    // Check if there are any journals and attendances
+    $hasJournalsAndAttendance = Journal::where('student_id', Auth::user()->student->id)
+        ->whereHas('attendance', function($query) {
+            $query->where('is_approved', true);
+        })
+        ->exists();
 
-    $startDate = Carbon::parse($this->deployment->starting_date);
-    // Fix: Round the week number to whole number
-    $this->currentWeek = floor($startDate->diffInDays(now()) / 7) + 1;
-    
-    $this->weekNumber = $this->currentWeek;
-    $weekStart = $startDate->addWeeks($this->currentWeek - 1);
-    
-    // Ensure week starts on Monday
-    while ($weekStart->dayOfWeek !== Carbon::MONDAY) {
-        $weekStart->addDay();
+    if (!$hasJournalsAndAttendance) {
+        $this->addError('journal', 'You need to have at least one attendance and journal entry to generate reports.');
+        return;
     }
-    
-    $this->startDate = $weekStart->format('Y-m-d');
-    // Set end date based on work days (5 or 6)
-    $this->endDate = $weekStart->copy()->addDays($this->workDays - 1)->format('Y-m-d');
-    
-    $this->calculateWeeklyStats();
-    $this->checkReportExists();
+
+    $this->latestReport = Report::where('student_id', Auth::user()->student->id)
+        ->orderBy('end_date', 'desc')
+        ->first();
+
+    $today = Carbon::today();
+
+    if ($this->latestReport) {
+        $lastReportEnd = Carbon::parse($this->latestReport->end_date);
+        
+        if ($today->gt($lastReportEnd)) {
+            // New report period - start from day after last report
+            $this->minStartDate = $lastReportEnd->addDay()->format('Y-m-d');
+            $this->startDate = null; // Initialize as null
+            $this->endDate = null; // Initialize as null
+            $this->weekNumber = $this->latestReport->week_number + 1;
+        } else {
+            // Show existing report
+            $this->currentReport = $this->latestReport;
+            $this->startDate = $this->latestReport->start_date;
+            $this->endDate = $this->latestReport->end_date;
+            $this->weekNumber = $this->latestReport->week_number;
+            $this->reportExists = true;
+        }
+    } else {
+        // First report - start from deployment start date
+        $this->minStartDate = $this->deployment->starting_date;
+        $this->startDate = null; // Initialize as null
+        $this->endDate = null; // Initialize as null
+        $this->weekNumber = 1;
+    }
 }
 
-// Update the viewPastReport method
+public function updatedStartDate($value)
+{
+    if (!$value) {
+        $this->endDate = null;
+        $this->maxEndDate = null;
+        return;
+    }
+    
+    try {
+        $startDate = Carbon::parse($value);
+        $minDate = Carbon::parse($this->minStartDate);
+        
+        if ($startDate->lt($minDate)) {
+            $this->addError('startDate', 'Start date must be after the last submitted report');
+            $this->startDate = null;
+            return;
+        }
+        
+        if ($startDate->gt(Carbon::today())) {
+            $this->addError('startDate', 'Start date cannot be in the future');
+            $this->startDate = null;
+            return;
+        }
+
+        $this->startDate = $value;
+        $this->updateMaxEndDate();
+        $this->loadWeeklyData();
+        
+    } catch (\Exception $e) {
+        $this->addError('startDate', 'Invalid date format');
+        $this->startDate = null;
+    }
+}
+
+protected function updateMaxEndDate()
+{
+    if (!$this->startDate) {
+        $this->maxEndDate = null;
+        $this->endDate = null;
+        return;
+    }
+
+    $startDate = Carbon::parse($this->startDate);
+    $proposedEndDate = $startDate->copy()->addDays(6);
+    $today = Carbon::today();
+
+    // Set end date as the earlier of proposed end date or today
+    if ($proposedEndDate->gt($today)) {
+        $this->maxEndDate = $today->format('Y-m-d');
+        $this->endDate = null; // Don't set end date automatically
+    } else {
+        $this->maxEndDate = $proposedEndDate->format('Y-m-d');
+        $this->endDate = null; // Don't set end date automatically
+    }
+}
+
+public function updatedEndDate($value)
+{
+    if (!$value) return;
+
+    try {
+        $endDate = Carbon::parse($value);
+        $startDate = Carbon::parse($this->startDate);
+        
+        if ($endDate->lt($startDate)) {
+            $this->addError('endDate', 'End date must be after start date');
+            return;
+        }
+        
+        if ($endDate->diffInDays($startDate) > 6) {
+            $this->addError('endDate', 'Maximum range is 7 days');
+            return;
+        }
+
+        if ($endDate->gt(Carbon::today())) {
+            $this->addError('endDate', 'End date cannot be in the future');
+            return;
+        }
+
+        $this->endDate = $value;
+        $this->loadWeeklyData();
+        
+    } catch (\Exception $e) {
+        $this->addError('endDate', 'Invalid date format');
+    }
+}
+
+    public function loadWeeklyData()
+{
+    // Get all dates in range
+    $start = Carbon::parse($this->startDate);
+    $end = Carbon::parse($this->endDate);
+    
+    // Get journals with tasks and attendance
+    $journals = Journal::with(['attendance', 'taskHistories' => function($query) {
+            $query->orderBy('changed_at', 'desc');
+        }, 'taskHistories.task'])
+        ->where('student_id', Auth::user()->student->id)
+        ->whereBetween('date', [$this->startDate, $this->endDate])
+        ->get()
+        ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
+
+    // Calculate total hours
+    $this->weeklyTotal = $journals->sum(function($journal) {
+        if (!$journal->attendance?->total_hours) return 0;
+        list($h, $m) = explode(':', $journal->attendance->total_hours);
+        return ($h * 60) + $m;
+    });
+
+    // Create entries for all days in range
+    $this->weeklyJournals = collect();
+    $current = $start->copy();
+    while ($current <= $end) {
+        $dateString = $current->format('Y-m-d');
+        $this->weeklyJournals[$dateString] = $journals->get($dateString);
+        $current->addDay();
+    }
+}
+
 public function viewPastReport($reportId)
 {
-    $this->selectedReport = Report::with('student')->findOrFail($reportId);
+    $report = Report::findOrFail($reportId);
     
-    // Set the dates to match this report's time period
-    $this->startDate = $this->selectedReport->start_date;
-    $this->endDate = $this->selectedReport->end_date;
-    $this->weekNumber = $this->selectedReport->week_number;
+    // Update component properties to show selected report
+    $this->selectedReport = $report;
+    $this->startDate = $report->start_date;
+    $this->endDate = $report->end_date;
+    $this->weekNumber = $report->week_number;
+    $this->learningOutcomes = $report->learning_outcomes;
     
-    // Recalculate stats for this specific week
-    $this->calculateWeeklyStats();
-    
-    // Get journals for this past week
-    $this->viewWeekDetails();
-}
-// Add a new method to calculate weekly stats
-protected function calculateWeeklyStats()
-{
-    // Count journals
-    $journals = Journal::with('attendance')
+    // Load journals for the selected report's date range
+    $journals = Journal::with(['attendance', 'taskHistories' => function($query) {
+            $query->orderBy('changed_at', 'desc');
+        }, 'taskHistories.task'])
         ->where('student_id', Auth::user()->student->id)
-        ->whereBetween('date', [$this->startDate, $this->endDate]);
-    
-    // Apply work days filter
-    if ($this->workDays === 5) {
-        $journals->whereRaw("DAYOFWEEK(date) NOT IN (1, 7)");
-    } else {
-        $journals->whereRaw("DAYOFWEEK(date) != 1");
-    }
-    
-    $this->journalCount = $journals->count();
-    
-    // Calculate total hours for the selected date range
-    $attendances = Attendance::where('student_id', Auth::user()->student->id)
-        ->whereBetween('date', [$this->startDate, $this->endDate]);
-        
-    // Apply same work days filter
-    if ($this->workDays === 5) {
-        $attendances->whereRaw("DAYOFWEEK(date) NOT IN (1, 7)");
-    } else {
-        $attendances->whereRaw("DAYOFWEEK(date) != 1");
-    }
-    
-    // Sum up the hours
-    $totalMinutes = 0;
-    $attendances->get()->each(function($attendance) use (&$totalMinutes) {
-        if ($attendance->total_hours) {
-            list($hours, $minutes) = array_pad(explode(':', $attendance->total_hours), 2, 0);
-            $totalMinutes += ($hours * 60) + $minutes;
-        }
+        ->whereBetween('date', [$report->start_date, $report->end_date])
+        ->get()
+        ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
+
+    // Calculate total hours
+    $this->weeklyTotal = $journals->sum(function($journal) {
+        if (!$journal->attendance?->total_hours) return 0;
+        list($h, $m) = explode(':', $journal->attendance->total_hours);
+        return ($h * 60) + $m;
     });
-    
-    // Format the result
-    $hours = floor($totalMinutes / 60);
-    $minutes = $totalMinutes % 60;
-    $this->weeklyTotal = sprintf("%02d:%02d", $hours, $minutes);
-}
-public function viewWeekDetails()
-{
+
+    // Create entries for all days in range
     $this->weeklyJournals = collect();
-    $currentDate = Carbon::parse($this->startDate);
-    $endDate = Carbon::parse($this->endDate);
-
-    // Get all journals for the week with their attendances
-    $journals = Journal::with('attendance')
-        ->where('student_id', Auth::user()->student->id)
-        ->whereBetween('date', [$this->startDate, $this->endDate]);
-
-    // Apply work days filter
-    if ($this->workDays === 5) {
-        $journals->whereRaw("DAYOFWEEK(date) NOT IN (1, 7)");
-    } else {
-        $journals->whereRaw("DAYOFWEEK(date) != 1");
-    }
-
-    $journalsByDate = $journals->get()->keyBy(function ($journal) {
-        return $journal->date->format('Y-m-d');
-    });
-
-    // Create entries for each work day
-    while ($currentDate <= $endDate) {
-        if (($this->workDays === 5 && $currentDate->isWeekday()) || 
-            ($this->workDays === 6 && !$currentDate->isSunday())) {
-            $dateString = $currentDate->format('Y-m-d');
-            $journal = $journalsByDate->get($dateString);
-            
-            // Calculate daily total if attendance exists
-            $dailyTotal = '00:00';
-            if ($journal && $journal->attendance) {
-                $dailyTotal = $journal->attendance->total_hours ?? '00:00';
-            }
-
-            $this->weeklyJournals[$dateString] = [
-                'journal' => $journal,
-                'daily_total' => $dailyTotal
-            ];
-        }
-        $currentDate->addDay();
+    $current = Carbon::parse($report->start_date);
+    $end = Carbon::parse($report->end_date);
+    
+    while ($current <= $end) {
+        $dateString = $current->format('Y-m-d');
+        $this->weeklyJournals[$dateString] = $journals->get($dateString);
+        $current->addDay();
     }
 
     $this->showWeekDetails = true;
 }
 
-    
-public function hydrate()
-{
-    // Reset selected report when component re-renders
-    if (!$this->showWeekDetails) {
-        $this->selectedReport = null;
+    public function viewWeekDetails()
+    {
+        $this->loadWeeklyData();
+        $this->showWeekDetails = true;
     }
+
+    public function generatePdf()
+{
+    $report = $this->selectedReport ?? $this->currentReport;
+    
+    if (!$report) {
+        $this->dispatch('alert', ['type' => 'error', 'message' => 'No report found']);
+        return;
+    }
+
+    return redirect()->route('student.weekly-report.pdf', ['report' => $report->id]);
 }
 
+    public function submit()
+    {
+        if ($this->reportExists) return;
 
+        $this->validate();
 
+        Report::create([
+            'student_id' => Auth::user()->student->id,
+            'week_number' => $this->weekNumber,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+            'learning_outcomes' => $this->learningOutcomes,
+            'submitted_at' => now(),
+        ]);
 
-public function formatHoursAndMinutes($timeString)
-{
-    if (!$timeString || $timeString === '00:00') {
-        return '0 hours';
+        session()->flash('message', 'Weekly report submitted successfully.');
+        $this->checkReportExists();
+        $this->render();
     }
-
-    list($hours, $minutes) = array_pad(explode(':', $timeString), 2, 0);
-    
-    // Convert to integers and remove leading zeros
-    $hours = (int)$hours;
-    $minutes = (int)$minutes;
-    
-    if ($hours === 0) {
-        return "{$minutes} minute" . ($minutes !== 1 ? 's' : '');
-    }
-
-    if ($minutes === 0) {
-        return "{$hours} hour" . ($hours !== 1 ? 's' : '');
-    }
-
-    return "{$hours} hour" . ($hours !== 1 ? 's' : '') . " and {$minutes} minute" . ($minutes !== 1 ? 's' : '');
-}
 
     protected function checkReportExists()
     {
@@ -208,61 +299,12 @@ public function formatHoursAndMinutes($timeString)
             ->exists();
     }
 
-    public function submit()
-{
-    // Only validate if report doesn't exist
-    if ($this->reportExists) {
-        return;
-    }
-
-    $this->validate([
-        'learningOutcomes' => 'required|min:50'
-    ]);
-
-    Report::create([
-        'student_id' => Auth::user()->student->id,
-        'week_number' => $this->weekNumber,
-        'start_date' => $this->startDate,
-        'end_date' => $this->endDate,
-        'learning_outcomes' => $this->learningOutcomes,
-        'submitted_at' => now(),
-    ]);
-
-    session()->flash('message', 'Weekly report submitted successfully.');
-    $this->checkReportExists();
-    $this->render();
-}
-public function generatePdf()
-{
-    $reportId = $this->selectedReport ? $this->selectedReport->id : null;
-    
-    // If no selected report but report exists, find the report for current week
-    if (!$reportId && $this->reportExists) {
-        $report = Report::where('student_id', Auth::user()->student->id)
-            ->where('week_number', $this->weekNumber)
-            ->first();
-        
-        if ($report) {
-            $reportId = $report->id;
-        }
-    }
-    
-    if (!$reportId) {
-        $this->dispatch('alert', ['type' => 'error', 'message' => 'No report available to generate PDF']);
-        return;
-    }
-    
-    // Redirect to PDF route with report ID
-    return redirect()->route('student.weekly-report.pdf', ['report' => $reportId]);
-}
     public function render()
     {
-        $previousReports = Report::where('student_id', Auth::user()->student->id)
-            ->orderBy('week_number', 'desc')
-            ->get();
-
         return view('livewire.student.weekly-report-generator', [
-            'previousReports' => $previousReports
+            'previousReports' => Report::where('student_id', Auth::user()->student->id)
+                ->orderBy('week_number', 'desc')
+                ->get()
         ]);
     }
 }

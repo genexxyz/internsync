@@ -28,4 +28,11 @@ class AcceptanceLetter extends Model
 {
     return $this->belongsTo(Student::class)->with(['user', 'section.course']);
 }
+public function getStatusAttribute()
+    {
+        if (!$this->student->acceptance_letter) return 'pending';
+        if ($this->student->acceptance_letter && !$this->student->deployment->company_id) return 'for_review';
+        if (!$this->student->deployment->company_id && $this->student->deployment->supervisor_id) return 'pending_company';
+        return 'completed';
+    }
 }

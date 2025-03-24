@@ -87,12 +87,12 @@
                     <span class="text-3xl font-bold text-red-700">{{ $absentToday ?? 0 }}</span>
                 </div>
                 <div class="bg-green-50 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-green-600 font-semibold mb-1">Active Tasks</span>
-                    <span class="text-3xl font-bold text-green-700">{{ $activeTasks ?? 0 }}</span>
+                    <span class="text-green-600 font-semibold mb-1">Companies</span>
+                    <span class="text-3xl font-bold text-green-700">{{ $companies ?? 0 }}</span>
                 </div>
                 <div class="bg-orange-50 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span class="text-orange-600 font-semibold mb-1">Pending Tasks</span>
-                    <span class="text-3xl font-bold text-orange-700">{{ $pendingTasks ?? 0 }}</span>
+                    <span class="text-orange-600 font-semibold mb-1">Evaluated</span>
+                    <span class="text-3xl font-bold text-orange-700">{{ $evaluated ?? 0 }}</span>
                 </div>
             </div>
         </div>

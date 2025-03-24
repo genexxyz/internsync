@@ -23,6 +23,7 @@ class Report extends Model
         'end_date' => 'date',
         'submitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'status' => 'string',
     ];
 
     public function student()

@@ -29,7 +29,7 @@ class Supervisor extends Model
         'contact',
         'supporting_doc',
         'image',
-        'e_signature',
+        'signature_path',
     ];
 
     public function user()

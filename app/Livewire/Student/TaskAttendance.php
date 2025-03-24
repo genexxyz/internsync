@@ -254,6 +254,7 @@ class TaskAttendance extends Component
 
     public function toggleJournalModal()
     {
+        
         if (!$this->attendance) {
             return;
         }

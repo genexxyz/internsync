@@ -97,7 +97,7 @@
                     </div>
                 </div>
                 <p class="text-2xl font-semibold text-gray-900">
-                    {{ $deployment->end_date ? $deployment->end_date->format('M d, Y') : 'Not Set' }}
+                    {{ $deployment->ending_date ? $deployment->ending_date->format('M d, Y') : 'Not Set' }}
                 </p>
             </div>
         </div>

@@ -12,6 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
+        .livewire-modal {
+            z-index: 9999 !important;
+        }
         body {
             font-family: 'Poppins', sans-serif;
 
@@ -37,6 +40,7 @@
 
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
 </head>
 
@@ -54,16 +58,18 @@
 
 
         <!-- Livewire Scripts -->
-
+        
         @livewire('wire-elements-modal')
-
+        
         @livewireScripts
+        <script src="https://unpkg.com/@wotz/livewire-sortablejs@1.0.0/dist/livewire-sortable.js"></script>
         @yield('scripts')
         <script>
             Livewire.on('reloadPage', () => {
                 location.reload();
             });
         </script>
+        
         
     </div>
 </body>

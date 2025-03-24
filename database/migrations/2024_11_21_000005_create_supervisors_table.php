@@ -27,7 +27,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('supporting_doc')->nullable();
             $table->string('image')->nullable();
-            $table->string('e_signature')->nullable();
+            $table->string('signature_path')->nullable();
             $table->boolean('is_profile_complete')->default(false);
         });
         

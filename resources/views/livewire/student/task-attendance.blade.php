@@ -108,18 +108,18 @@
                                         <span class="italic">Absent</span>
                                     </div>
                                 @else
-                                    <button 
-                                        wire:click="toggleJournalModal"
-                                        @class([
-                                            'inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-300',
-                                            'bg-blue-600 hover:bg-blue-700 text-white' => !$isSubmitted && $attendance,
-                                            'bg-gray-100 text-gray-400 cursor-not-allowed' => !$attendance || $isSubmitted
-                                        ])
-                                        @if (!$attendance || $isSubmitted || ($attendance && $attendance->status === 'absent')) disabled @endif
-                                    >
-                                        <i class="fa fa-book mr-2"></i>
-                                        {{ $existingJournal ? 'Edit Journal' : 'Add Journal' }}
-                                    </button>
+                                <button 
+    onclick="Livewire.dispatch('openModal', { component: 'components.task-journal-modal' })"
+    @class([
+        'inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-300',
+        'bg-blue-600 hover:bg-blue-700 text-white' => !$isSubmitted && $attendance,
+        'bg-gray-100 text-gray-400 cursor-not-allowed' => !$attendance || $isSubmitted
+    ])
+    @if (!$attendance || $isSubmitted || ($attendance && $attendance->status === 'absent')) disabled @endif
+>
+    <i class="fa fa-book mr-2"></i>
+    {{ $existingJournal ? 'Edit Journal' : 'Add Journal' }}
+</button>
                                 @endif
                             
                                 @if ($existingJournal && $attendance->status !== 'absent')

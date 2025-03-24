@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('student_id');
             $table->date('date');
-            $table->text('text');
-            $table->text('remarks');
             $table->boolean('is_submitted')->default(false);
             $table->tinyInteger('is_approved')->default(0)->comment('0: pending, 1: approved, 2: rejected');
             $table->timestamps();

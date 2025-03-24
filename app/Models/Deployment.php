@@ -15,11 +15,13 @@ class Deployment extends Model
         'academic_id',
         'custom_hours',
         'starting_date',
+        'ending_date',
         'status',
     ];
 
     protected $casts = [
-        'starting_date' => 'date'
+        'starting_date' => 'date',
+        'ending_date' => 'date'
     ];
     public function student()
     {
@@ -57,6 +59,11 @@ public function department()
 {
     return $this->belongsTo(Department::class, 'company_dept_id');
     
+}
+
+public function evaluation()
+{
+    return $this->hasOne(Evaluation::class);
 }
 
 }

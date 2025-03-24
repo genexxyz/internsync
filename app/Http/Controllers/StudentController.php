@@ -84,53 +84,69 @@ return view('student.dashboard', compact(
         return view('student.ojt-document', compact('student', 'acceptance_letter'));
     }
 
-public function generateWeeklyReportPdf(Report $report)
-{
-    // Check if user owns this report
-    if ($report->student_id !== Auth::user()->student->id) {
-        abort(403);
-    }
-    
-    // Get journals for the week, excluding rejected entries
-    $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
-        ->where('student_id', $report->student_id)
-        ->where('is_approved', '!=', 2) // Exclude rejected journals
-        ->with('attendance')
-        ->orderBy('date')
-        ->get();
-    
-    // Calculate total hours (excluding rejected entries)
-    $totalMinutes = 0;
-    foreach ($journals as $journal) {
-        if ($journal->attendance && $journal->attendance->total_hours) {
-            list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
-            $totalMinutes += ((int)$hours * 60) + (int)$minutes;
+    public function generateWeeklyReportPdf(Report $report)
+    {
+        // Check if user owns this report
+        if ($report->student_id !== Auth::user()->student->id) {
+            abort(403);
         }
+        
+        // Get journals with tasks and attendance for the week, excluding rejected entries
+        $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
+            ->where('student_id', $report->student_id)
+            ->where('is_approved', '!=', 2) // Exclude rejected journals
+            ->with([
+                'attendance',
+                'taskHistories' => function($query) {
+                    $query->orderBy('created_at', 'asc'); // Get history in chronological order
+                },
+                'taskHistories.task' // Include the base task for description and remarks
+            ])
+            ->orderBy('date')
+            ->get();
+        
+        // Calculate total hours (excluding rejected entries)
+        $totalMinutes = 0;
+        foreach ($journals as $journal) {
+            if ($journal->attendance && $journal->attendance->total_hours) {
+                list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
+                $totalMinutes += ((int)$hours * 60) + (int)$minutes;
+            }
+        }
+        
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
+        $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
+        
+        $student = $report->student;
+        $deployment = $student->deployment;
+        $company = $deployment ? $deployment->department->company : null;
+        
+        // Group task histories by journal date
+        foreach ($journals as $journal) {
+            $journal->taskHistories = $journal->taskHistories->groupBy('task_id')->map(function ($histories) {
+                // Get the latest status for each task
+                $latestHistory = $histories->last();
+                $latestHistory->task->current_status = $latestHistory->status;
+                return $latestHistory;
+            })->values();
+        }
+        
+        $data = [
+            'report' => $report,
+            'journals' => $journals,
+            'student' => $student,
+            'deployment' => $deployment,
+            'company' => $company,
+            'totalHours' => $formattedTotal,
+            'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
+            'endDate' => Carbon::parse($report->end_date)->format('M d, Y')
+        ];
+        
+        $pdf = PDF::loadView('pdfs.weekly-report', $data);
+        
+        return $pdf->download('Weekly_Report_Week_' . $report->week_number . '_' .  $student->last_name . '-' . $student->first_name . '.pdf');
     }
-    
-    $hours = floor($totalMinutes / 60);
-    $minutes = $totalMinutes % 60;
-    $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
-    
-    $student = $report->student;
-    $deployment = $student->deployment;
-    $company = $deployment ? $deployment->department->company : null;
-    
-    $data = [
-        'report' => $report,
-        'journals' => $journals,
-        'student' => $student,
-        'deployment' => $deployment,
-        'company' => $company,
-        'totalHours' => $formattedTotal,
-        'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
-        'endDate' => Carbon::parse($report->end_date)->format('M d, Y')
-    ];
-    
-    $pdf = PDF::loadView('pdfs.weekly-report', $data);
-    
-    return $pdf->download('Weekly_Report_Week_' . $report->week_number . '_' .  $student->last_name . '-' . $student->first_name . '.pdf');
-}
 
 
 }
