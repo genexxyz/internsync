@@ -1,3 +1,9 @@
 <x-app-layout>
-    endorsement-letter
+
+    <x-under-construction 
+    message="Endorsement Letters Management Coming Soon" 
+    submessage="We're building a better way to manage your documents." 
+    class="bg-gray-50"
+/>
+
 </x-app-layout>

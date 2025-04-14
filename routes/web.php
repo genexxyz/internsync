@@ -132,6 +132,8 @@ Route::middleware(['auth', RoleMiddleware::class . ':instructor'])->group(functi
     Route::get('/instructor/deployments/section', [InstructorController::class, 'deployments'])->name('instructor.deployments.section');
     Route::get('/instructor/deployments/section/{course_code}/{year_level}{class_section}', [DeploymentController::class, 'sectionDeployment'])->name('instructor.deployments.section.show');
     Route::get('/instructor/deployments/filter/{filter}', [InstructorController::class, 'filterDeployments'])->name('instructor.deployments.filter');
+    Route::get('/instructor/evaluation', [InstructorController::class, 'evaluation'])->name('instructor.evaluation');
+    Route::get('/instructor/companies', [InstructorController::class, 'companies'])->name('instructor.company');
 });
 
 // Supervisor dashboard

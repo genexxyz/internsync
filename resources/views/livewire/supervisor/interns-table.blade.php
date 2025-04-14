@@ -137,6 +137,7 @@
 
             <!-- Accept Students View -->
             @if($currentView == 'acceptStudents')
+            @if(!Auth::user()->supervisor->signature_path)
     <div class="p-6">
         <!-- E-signature Upload Section -->
         <div class="bg-white border rounded-lg overflow-hidden mb-6">
@@ -145,98 +146,26 @@
                     <i class="fas fa-signature text-blue-700 mr-3 text-xl"></i>
                     <span class="font-medium text-blue-800">E-Signature</span>
                 </div>
-                @if(Auth::user()->supervisor->signature_path)
-                    <span class="text-sm text-blue-600">
-                        <i class="fas fa-check-circle mr-1"></i> Signature uploaded
-                    </span>
-                @endif
+                <a href="{{ route('profile.edit') }}" class="text-xs text-primary">Add Signature <i class="fa fa-arrow-right"></i></a>
             </div>
             <div class="p-4">
-                @if(Auth::user()->supervisor->signature_path)
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-4">
-                            <div x-data="{ revealed: false }" class="relative">
-                                <img 
-                                    src="{{ Storage::url(Auth::user()->supervisor->signature_path) }}" 
-                                    alt="Supervisor signature" 
-                                    class="h-16 w-auto transition-all duration-200"
-                                    :class="{ 'blur-md': !revealed }"
-                                >
-                                <button 
-                                    type="button"
-                                    @click="revealed = !revealed"
-                                    class="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full shadow-sm hover:bg-white transition-all duration-200"
-                                    :title="revealed ? 'Hide Signature' : 'Show Signature'"
-                                >
-                                    <i class="fas" :class="{ 'fa-eye-slash': revealed, 'fa-eye': !revealed }"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-info-circle text-yellow-400"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-yellow-700">
-                                        This signature will be used for signing acceptance letters and weekly reports. Please ensure it matches your official signature.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="space-y-4">
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                            <p class="text-sm text-yellow-700">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Please upload your signature before accepting students. This signature will be used for:
-                            </p>
-                            <ul class="mt-2 ml-6 text-sm text-yellow-700 list-disc">
-                                <li>Signing student acceptance letters</li>
-                                <li>Approving weekly reports</li>
-                                <li>Other official documents</li>
-                            </ul>
-                        </div>
-        
-                        <form wire:submit="uploadSignature" class="space-y-4">
-                            <div class="flex items-center gap-4">
-                                <div class="flex-1">
-                                    <input type="file" 
-                                        wire:model="signature" 
-                                        accept="image/*" 
-                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                        required
-                                    >
-                                    <div wire:loading wire:target="signature" class="text-xs text-blue-600 mt-1">
-                                        Uploading...
-                                    </div>
-                                    @error('signature') 
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                @if($signature)
-                                    <div class="flex-shrink-0 border rounded-md p-2 bg-white">
-                                        <img src="{{ $signature->temporaryUrl() }}" alt="Signature preview" class="h-16 w-auto object-contain">
-                                    </div>
-                                @endif
-                            </div>
-        
-                            <div class="flex justify-end">
-                                <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                    wire:loading.attr="disabled"
-                                >
-                                    <i class="fas fa-upload mr-2"></i>
-                                    Upload Signature
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                @endif
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                    <p class="text-sm text-yellow-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Please upload your signature before accepting students. This signature will be used for:
+                    </p>
+                    <ul class="mt-2 ml-6 text-sm text-yellow-700 list-disc">
+                        <li>Signing student acceptance letters</li>
+                        <li>Approving weekly reports</li>
+                        <li>Other official documents</li>
+                    </ul>
+                </div>
+                
+                    
             </div>
         </div>
-
+        @endif
         @if(count($availableStudents) > 0)
             <div class="bg-blue-50 p-4 rounded-lg mb-6 flex items-start space-x-3">
                 <div class="text-blue-400">

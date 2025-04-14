@@ -168,5 +168,22 @@ private function getInstructor(): Instructor
         ])
         ->firstOrFail();
 }
+
+public function companies(): View
+    {
+        $breadcrumbs = [
+            ['url' => route('instructor.company'), 'label' => 'Companies'], // Correct link to courses index page
+        ];
+        return view('instructor.companies', compact('breadcrumbs'));
+    }
+
+    public function evaluation(): View
+    {
+    
+
+        
+
+        return view('instructor.evaluation');
+    }
     
 }

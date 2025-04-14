@@ -38,16 +38,19 @@ class EmailVerification extends Component
             $user->markEmailAsVerified();
 
             // Log in the user
-            Auth::login($user);
+            // Auth::login($user);
 
-            // Redirect to profile completion or dashboard
-            return match ($user->role) {
-                'admin' => redirect()->route('admin.dashboard'),
-                'student' => redirect()->route('student.dashboard'),
-                'instructor' => redirect()->route('instructor.dashboard'),
-                'supervisor' => redirect()->route('supervisor.dashboard'),
-                default => redirect('/unauthorized'),
-            };
+            // // Redirect to profile completion or dashboard
+            // return match ($user->role) {
+            //     'admin' => redirect()->route('admin.dashboard'),
+            //     'student' => redirect()->route('student.dashboard'),
+            //     'instructor' => redirect()->route('instructor.dashboard'),
+            //     'supervisor' => redirect()->route('supervisor.dashboard'),
+            //     default => redirect('/unauthorized'),
+            // };
+            
+            redirect()->route('login');
+            
         }
 
         $this->addError('otp', 'Invalid or expired OTP');

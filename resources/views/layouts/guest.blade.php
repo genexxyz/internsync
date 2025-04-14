@@ -38,6 +38,12 @@
 </head>
 
 <body class=" text-gray-900 antialiased theme-{{ $settings->default_theme ?? 'blue' }} ">
+    @if(session()->has('alert'))
+        <div id="alert-data" 
+             data-alert="{{ json_encode(session('alert')) }}" 
+             style="display: none;">
+        </div>
+    @endif
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
         <div class="flex flex-row items-center justify-between w-auto mt-3">
             <div>
@@ -63,6 +69,18 @@
     </div>
 
     @livewireScripts
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    const alert = document.getElementById('alert-data');
+    if (alert) {
+        const data = JSON.parse(alert.dataset.alert);
+        Toast.fire({
+            icon: data.type,
+            title: data.message
+        });
+    }
+});
+    </script>
     @yield('scripts')
 </body>
 

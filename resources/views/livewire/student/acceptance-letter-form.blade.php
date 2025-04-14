@@ -103,6 +103,10 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <i class="fas fa-check-circle mr-1"></i> Signed
                             </span>
+                            @elseif(!$deployment?->company_id && !$deployment?->supervisor_id)
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-clock mr-1"></i> For Review
+                            </span>
                         @else
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                 <i class="fas fa-clock mr-1"></i> Awaiting Signature
@@ -112,8 +116,13 @@
                 </div>
             </dl>
         </div>
+@if (!$deployment?->company_id && !$deployment?->supervisor_id)
+            <p class="text-sm text-gray-500 italic mt-4">
+                Please wait for your program head to review and sign your acceptance letter. 
+                This may take some time depending on their availability.
+            </p>
 
-        @if(!$acceptance_letter->signed_path)
+        @elseif(!$acceptance_letter->signed_path)
             <p class="text-sm text-gray-500 italic mt-4">
                 Please wait for your supervisor to review and sign your acceptance letter. 
                 This may take some time depending on their availability.

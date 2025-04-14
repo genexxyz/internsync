@@ -129,7 +129,7 @@
                                 </span>
                                 <!-- View Deployment Button -->
                                 <button 
-                                    wire:click="viewDeployment({{ $student->id }})"
+                                    wire:click=""
                                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                                     <i class="fas fa-eye mr-1.5"></i>
                                     View Details

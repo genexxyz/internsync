@@ -21,6 +21,7 @@ class AcceptanceLetterForm extends ModalComponent
     public $contact;
     public $email;
     public $acceptance_letter;
+    public $deployment;
 
     protected $rules = [
         'company_name' => 'required|string|max:255',
@@ -65,7 +66,10 @@ class AcceptanceLetterForm extends ModalComponent
 
         // Get required training hours
         $requiredHours = $student->deployment->custom_hours ?? 'N/A';
+        
         $this->closeModal();
+        $this->dispatch('reloadPage');
+        $this->dispatch('alert', type: 'success', text: 'Acceptance letter generated successfully!');
         // $pdf = PDF::loadView('pdfs.acceptance-letter', [
         //     'letter' => $letter,
         //     'student' => $student,
@@ -125,8 +129,9 @@ class AcceptanceLetterForm extends ModalComponent
 
     public function mount()
 {
-    $student = Student::where('user_id', Auth::id())->firstOrFail();
+    $student = Student::where('user_id', Auth::id())->with('deployment')->firstOrFail();
     $this->acceptance_letter = AcceptanceLetter::where('student_id', $student->id)->first();
+    $this->deployment = $student->deployment;
 }
     public function render()
     {

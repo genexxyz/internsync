@@ -29,6 +29,9 @@ export default {
                 '2xl': '1536px', // Double extra large devices
                 '3xl': '1600px', // For very large screens
             },
+            animation: {
+                'spin-slow': 'spin 3s linear infinite',
+            }
             
         },
     },

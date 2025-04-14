@@ -63,12 +63,13 @@
         
         @livewireScripts
         <script src="https://unpkg.com/@wotz/livewire-sortablejs@1.0.0/dist/livewire-sortable.js"></script>
-        @yield('scripts')
         <script>
             Livewire.on('reloadPage', () => {
                 location.reload();
             });
         </script>
+        @yield('scripts')
+        
         
         
     </div>

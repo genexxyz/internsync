@@ -23,15 +23,15 @@
     </a>
 
     @if($isCourseHead)
-    <a wire:navigate href="#"
+    <a wire:navigate href="{{ route('instructor.company') }}"
         class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
         {{ request()->routeIs('supervisor.evaluation') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
         <i class="fa fa-building"></i>
         <span>Companies</span>
     </a>
-    <a wire:navigate href="#"
+    <a wire:navigate href="{{ route('instructor.evaluation') }}"
         class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
-        {{ request()->routeIs('supervisor.evaluation') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
+        {{ request()->routeIs('instructor.evaluation') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
         <i class="fa fa-list-check"></i>
         <span>Evaluation</span>
     </a>

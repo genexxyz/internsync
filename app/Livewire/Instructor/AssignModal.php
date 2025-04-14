@@ -123,10 +123,10 @@ class AssignModal extends ModalComponent
             ->pluck('department_name')
             ->toArray();
 
-        $this->dispatch('alert', [
-            'type' => 'success',
-            'message' => 'New department added successfully!'
-        ]);
+            $this->dispatch('alert',
+            type: 'success',
+            text: 'New department added successfully!'
+        );
     }
 
 public function createNewDepartment()
@@ -143,10 +143,10 @@ public function createNewDepartment()
     $this->existingCompanyDepartment = $department->name;
     $this->isNewDepartment = false;
 
-    $this->dispatch('alert', [
-        'type' => 'success',
-        'message' => 'New department added successfully!'
-    ]);
+    $this->dispatch('alert',
+            type: 'success',
+            text: 'New department added successfully!'
+        );
 }
 
     private function prepareNewCompany()
@@ -187,10 +187,10 @@ public function createNewDepartment()
         $this->selectCompany($company->id);
         $this->isCreatingCompany = false;
         
-        $this->dispatch('alert', [
-            'type' => 'success',
-            'message' => 'Company successfully added to the system!'
-        ]);
+        $this->dispatch('alert',
+            type: 'success',
+            text: 'Company successfully added to the system!'
+        );
     }
 
     public function selectCompany($companyId)

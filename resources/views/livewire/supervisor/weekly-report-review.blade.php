@@ -73,50 +73,109 @@
 
 
                             <!-- Daily Journal Entries -->
-                            <h4 class="font-medium text-gray-900 mb-3">Daily Activities</h4>
-                            <div class="border rounded-lg divide-y mb-6 overflow-hidden">
+                            <div>
+                                <h4 class="font-medium text-gray-900 mb-3">Daily Activities</h4>
+                                <div class="flex items-center gap-4">
+                                    <!-- Pending Status -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full shrink-0 bg-yellow-400"></div>
+                                        <span class="text-sm text-gray-600">Pending</span>
+                                    </div>
+                                    
+                                    <!-- Done Status -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full shrink-0 bg-green-400"></div>
+                                        <span class="text-sm text-gray-600">Done</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg divide-y mb-6 overflow-hidden text-sm">
                                 @foreach($weeklyJournals as $date => $data)
-                                    <div class="p-4 {{ !$data['journal'] ? 'bg-gray-50' : '' }}">
-                                        <div class="flex justify-between items-start">
+                                    <div class="p-3 {{ !$data['journal'] ? 'bg-gray-50' : 'hover:bg-gray-50' }}">
+                                        <div class="flex justify-between items-start gap-4">
+                                            <!-- Left: Date and Time -->
                                             <div class="flex-1">
-                                                <div class="flex justify-between items-start">
+                                                <div class="flex items-start justify-between">
                                                     <div>
                                                         <h5 class="font-medium text-gray-900">
                                                             {{ Carbon\Carbon::parse($date)->format('l, M d') }}
                                                         </h5>
                                                         @if($data['journal'] && $data['journal']->attendance)
-                                                            <p class="text-sm text-gray-500 mt-1">
-                                                                {{ $data['journal']->attendance->time_in ? Carbon\Carbon::parse($data['journal']->attendance->time_in)->format('h:i A') : 'No time in' }} - 
-                                                                {{ $data['journal']->attendance->time_out ? Carbon\Carbon::parse($data['journal']->attendance->time_out)->format('h:i A') : 'No time out' }}
-                                                            </p>
+                                                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                                                <span>
+                                                                    <i class="fas fa-clock mr-1"></i>
+                                                                    {{ $data['journal']->attendance->time_in ? Carbon\Carbon::parse($data['journal']->attendance->time_in)->format('h:i A') : 'No time in' }} - 
+                                                                    {{ $data['journal']->attendance->time_out ? Carbon\Carbon::parse($data['journal']->attendance->time_out)->format('h:i A') : 'No time out' }}
+                                                                </span>
+                                                                @if($data['daily_total'] !== '00:00')
+                                                                    <span class="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                                                        {{ $this->formatHoursAndMinutes($data['daily_total']) }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                         @else
-                                                            <p class="text-sm text-red-500 mt-1">No Entry</p>
+                                                            <p class="text-xs text-red-500 mt-0.5">No Entry</p>
                                                         @endif
                                                     </div>
-                                                    @if($data['daily_total'] !== '00:00')
-                                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                            {{ $this->formatHoursAndMinutes($data['daily_total']) }}
-                                                        </span>
-                                                    @endif
                                                 </div>
+                            
                                                 @if($data['journal'])
-                                                    <div class="mt-2 text-sm text-gray-700">
-                                                        {{ $data['journal']->text }}
-                                                    </div>
+                                                    <!-- Notes -->
+                                                    @if($data['journal']->text)
+                                                        <p class="mt-2 text-sm text-gray-600">{{ $data['journal']->text }}</p>
+                                                    @endif
+                            
+                                                    <!-- Tasks -->
+                                                    @if($data['tasks']->isNotEmpty())
+                                                        <div class="mt-3 space-y-2">
+                                                            @foreach($data['tasks'] as $task)
+                                                                <div class="bg-white p-2 rounded border border-gray-200 hover:border-gray-300">
+                                                                    <div class="flex items-start gap-2">
+                                                                        <!-- Task Status Icon -->
+                                                                        <div @class([
+                                                                            'mt-0.5 w-2 h-2 rounded-full shrink-0',
+                                                                            'bg-yellow-400' => $task['status'] === 'pending',
+                                                                            'bg-green-400' => $task['status'] === 'done',
+                                                                        ])></div>
+                                                                        
+                                                                        <!-- Task Details -->
+                                                                        <div class="min-w-0 flex-1">
+                                                                            <div class="flex items-center gap-2">
+                                                                                <h6 class="font-medium text-gray-900 truncate">{{ $task['title'] }}</h6>
+                                                                                <span class="text-xs text-gray-500">
+                                                                                    @if($task['worked_hours'])
+                                                                                        · {{ $task['worked_hours'] }}h
+                                                                                    @endif
+                                                                                </span>
+                                                                            </div>
+                                                                            @if($task['description'])
+                                                                                <p class="text-xs text-gray-600 line-clamp-2">{{ $task['description'] }}</p>
+                                                                            @endif
+                                                                            @if($task['remarks'])
+                                                                                <p class="text-xs text-gray-500 mt-1 italic">{{ $task['remarks'] }}</p>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                 @endif
                                             </div>
                             
+                                            <!-- Right: Status and Actions -->
                                             @if($data['journal'])
-                                                <div class="ml-4 flex flex-col items-end space-y-2">
+                                                <div class="flex flex-col items-end space-y-2 shrink-0">
                                                     <span @class([
-                                                        'px-2 py-1 text-xs font-medium rounded-full',
+                                                        'px-2 py-0.5 rounded-full text-xs font-medium',
                                                         'bg-yellow-100 text-yellow-800' => $dailyApprovals[$date]['journal_status'] === 0,
                                                         'bg-green-100 text-green-800' => $dailyApprovals[$date]['journal_status'] === 1,
                                                         'bg-red-100 text-red-800' => $dailyApprovals[$date]['journal_status'] === 2,
                                                     ])>
                                                         {{ ['Pending', 'Approved', 'Rejected'][$dailyApprovals[$date]['journal_status']] }}
                                                     </span>
-                                                    <div class="flex items-center space-x-2">
+                                                    <div class="flex items-center gap-1">
                                                         <button 
                                                             wire:click="approveDay('{{ $date }}')"
                                                             class="p-1 text-green-600 hover:text-green-800"

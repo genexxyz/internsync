@@ -293,8 +293,8 @@ class Register extends Component
         $documentPath = $this->processDocument($user);
 
         // Generate and send OTP
-        // $otp = $user->generateOTP();
-        // $this->sendOtpEmail($user, $otp);
+        $otp = $user->generateOTP();
+        $this->sendOtpEmail($user, $otp);
 
         // Create role-specific profile
         $this->createRoleProfile($user, $documentPath);

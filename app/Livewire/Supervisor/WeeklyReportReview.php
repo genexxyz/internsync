@@ -99,61 +99,85 @@ class WeeklyReportReview extends Component
             $attendance = $journal->attendance;
 
             if ($journal) {
-                $journal->update(['is_approved' => 2]);
+                $journal->update(['is_approved' => 0]);
             }
             if ($attendance) {
                 $attendance->update(['is_approved' => 2]);
             }
 
             $this->dailyApprovals[$date] = [
-                'journal_status' => 2,
+                'journal_status' => 0,
                 'attendance_status' => 2
             ];
         }
     }
     protected function loadJournals()
-    {
-        $this->weeklyJournals = collect();
-        $currentDate = Carbon::parse($this->report->start_date);
-        $endDate = Carbon::parse($this->report->end_date);
+{
+    $this->weeklyJournals = collect();
+    $currentDate = Carbon::parse($this->report->start_date);
+    $endDate = Carbon::parse($this->report->end_date);
 
-        // Get all journals for the week with their attendances
-        $journals = Journal::with('attendance')
-            ->where('student_id', $this->student->id)
-            ->whereBetween('date', [$this->report->start_date, $this->report->end_date]);
+    // Get all journals with relationships
+    $journals = Journal::with([
+        'attendance', 
+        'taskHistories.task'
+    ])
+    ->where('student_id', $this->student->id)
+    ->whereBetween('date', [$this->report->start_date, $this->report->end_date]);
 
-        // Apply work days filter
-        if ($this->workDays === 5) {
-            $journals->whereRaw("DAYOFWEEK(date) NOT IN (1, 7)");
-        } else {
-            $journals->whereRaw("DAYOFWEEK(date) != 1");
-        }
-
-        $journalsByDate = $journals->get()->keyBy(function ($journal) {
-            return $journal->date->format('Y-m-d');
-        });
-
-        // Create entries for each work day
-        while ($currentDate <= $endDate) {
-            if (($this->workDays === 5 && $currentDate->isWeekday()) || 
-                ($this->workDays === 6 && !$currentDate->isSunday())) {
-                $dateString = $currentDate->format('Y-m-d');
-                $journal = $journalsByDate->get($dateString);
-                
-                // Calculate daily total if attendance exists
-                $dailyTotal = '00:00';
-                if ($journal && $journal->attendance) {
-                    $dailyTotal = $journal->attendance->total_hours ?? '00:00';
-                }
-
-                $this->weeklyJournals[$dateString] = [
-                    'journal' => $journal,
-                    'daily_total' => $dailyTotal
-                ];
-            }
-            $currentDate->addDay();
-        }
+    // Apply work days filter
+    if ($this->workDays === 5) {
+        $journals->whereRaw("DAYOFWEEK(date) NOT IN (1, 7)");
+    } else {
+        $journals->whereRaw("DAYOFWEEK(date) != 1");
     }
+
+    $journalsByDate = $journals->get()->keyBy(function ($journal) {
+        return $journal->date->format('Y-m-d');
+    });
+
+    // Create entries for each work day
+    while ($currentDate <= $endDate) {
+        if (($this->workDays === 5 && $currentDate->isWeekday()) || 
+            ($this->workDays === 6 && !$currentDate->isSunday())) {
+            $dateString = $currentDate->format('Y-m-d');
+            $journal = $journalsByDate->get($dateString);
+            
+            // Calculate daily total if attendance exists
+            $dailyTotal = '00:00';
+            if ($journal && $journal->attendance) {
+                $dailyTotal = $journal->attendance->total_hours ?? '00:00';
+            }
+
+            // Process tasks for this journal
+            $tasks = collect();
+            if ($journal) {
+                $taskHistories = $journal->taskHistories;
+                $groupedHistories = $taskHistories->groupBy('task_id');
+                
+                $tasks = $groupedHistories->map(function($histories) {
+                    $latestHistory = $histories->sortByDesc('changed_at')->first();
+                    $task = $latestHistory->task;
+                    
+                    return [
+                        'title' => $task->title,
+                        'description' => $task->description,
+                        'status' => $latestHistory->status,
+                        'worked_hours' => $latestHistory->worked_hours,
+                        'remarks' => $latestHistory->remarks
+                    ];
+                })->values();
+            }
+
+            $this->weeklyJournals[$dateString] = [
+                'journal' => $journal,
+                'daily_total' => $dailyTotal,
+                'tasks' => $tasks
+            ];
+        }
+        $currentDate->addDay();
+    }
+}
 
     protected function calculateWeeklyTotal()
     {

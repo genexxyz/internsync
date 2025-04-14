@@ -141,7 +141,7 @@
         </form>
     </div>
 @else
-            <div class="p-6">
+            {{-- <div class="p-6">
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-sm font-medium text-gray-700">Report Summary</h4>
@@ -152,7 +152,7 @@
                         {{ Carbon\Carbon::parse($currentReport->submitted_at)->format('M d, Y h:i A') ?? 'N/A' }}
                     </p>
                 </div>
-            </div>
+            </div> --}}
         @endif
     </div>
 

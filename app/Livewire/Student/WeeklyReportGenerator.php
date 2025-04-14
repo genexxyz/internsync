@@ -52,9 +52,7 @@ class WeeklyReportGenerator extends Component
 
     // Check if there are any journals and attendances
     $hasJournalsAndAttendance = Journal::where('student_id', Auth::user()->student->id)
-        ->whereHas('attendance', function($query) {
-            $query->where('is_approved', true);
-        })
+        ->whereHas('attendance')
         ->exists();
 
     if (!$hasJournalsAndAttendance) {
@@ -265,11 +263,12 @@ public function viewPastReport($reportId)
     $report = $this->selectedReport ?? $this->currentReport;
     
     if (!$report) {
-        $this->dispatch('alert', ['type' => 'error', 'message' => 'No report found']);
+        $this->dispatch('alert',type: 'error', text: 'No report found');
         return;
     }
-
+    $this->showWeekDetails = false;
     return redirect()->route('student.weekly-report.pdf', ['report' => $report->id]);
+    
 }
 
     public function submit()
