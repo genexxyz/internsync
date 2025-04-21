@@ -14,6 +14,7 @@ class Setting extends Model
             'system_contact',
             'default_theme',
             'default_logo',
+            'minimum_minutes',
             'updated_by',
     ];
 }

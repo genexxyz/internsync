@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Notification;
 use App\Models\Supervisor;
 use Livewire\Component;
 use LivewireUI\Modal\ModalComponent;
@@ -39,7 +40,14 @@ class SupervisorModal extends ModalComponent
             $this->supervisor->user->update(['is_verified' => 1]);
             
             DB::commit();
-            
+            Notification::send(
+                $this->supervisor->user_id,
+                'supervisor_verified',
+                'Account Verified',
+                'Your account has been verified successfully.',
+                '',
+                'fa-user-check'
+            );
             $this->dispatch('refreshSupervisors');
             $this->dispatch('alert', type: 'success', text: 'The supervisor has been verified successfully!');
             $this->dispatch('closeModal');

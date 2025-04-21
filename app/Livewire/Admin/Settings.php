@@ -24,6 +24,7 @@ class Settings extends Component
     public $logo;
     public $uploadProgress = 0;  // Track upload progress
     public $uploadedLogoPath = null;
+    public $minimum_minutes;
 
     public function mount()
     {
@@ -38,6 +39,7 @@ class Settings extends Component
             $this->system_contact = $settings->system_contact;
             $this->default_theme = $settings->default_theme;
             $this->uploadedLogoPath = $settings->default_logo;
+            $this->minimum_minutes = $settings->minimum_minutes;
             
         }
     }
@@ -102,6 +104,7 @@ class Settings extends Component
             'system_email' => 'required|email|max:255',
             'system_contact' => 'required|string',
             'default_theme' => 'required|string|in:maroon,blue,green,gold',
+            'minimum_minutes' => 'required|integer|min:1|max:720',
         ]);
 
 

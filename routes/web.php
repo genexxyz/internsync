@@ -82,6 +82,7 @@ Route::get('/404', function () {
 
 // Admin dashboard
 Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function () {
+    
     Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard (custom route, since REST doesn't have "dashboard")
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
@@ -115,6 +116,8 @@ Route::middleware(['auth', RoleMiddleware::class . ':student'])->group(function 
     Route::get('/documents/acceptance-letter', AcceptanceLetterForm::class)->name('student.acceptance-letter');
     Route::get('/weekly-report/{report}/pdf', [StudentController::class, 'generateWeeklyReportPdf'])
         ->name('student.weekly-report.pdf');
+        Route::get('/student/dtr', [StudentController::class, 'generateDtr'])->name('student.dtr.generate');
+        Route::post('/student/endorsement-request', [StudentController::class, 'requestEndorsement'])->name('student.request-endorsement');
 });
 
 // Instructor dashboard
@@ -151,6 +154,8 @@ Route::middleware(['auth', RoleMiddleware::class . ':supervisor'])->group(functi
         ->name('supervisor.weeklyReports');
     Route::get('/weekly-reports/{report}', [SupervisorController::class, 'viewWeeklyReport'])
         ->name('supervisor.weekly-reports.view');
+    Route::get('/supervisor/daily-reports', [SupervisorController::class, 'dailyReports'])
+        ->name('supervisor.dailyReports');
     Route::get('/supervisor/evaluation', [SupervisorController::class, 'evaluation'])
         ->name('supervisor.evaluation');
     Route::get('/supervisor/interns', [SupervisorController::class, 'interns'])
@@ -160,6 +165,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':supervisor'])->group(functi
 // Profile management (accessible to all authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/notifications', \App\Livewire\Notifications::class)->name('notifications.index');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

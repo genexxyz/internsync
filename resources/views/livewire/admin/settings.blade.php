@@ -97,7 +97,32 @@
                     <x-input-error :messages="$errors->get('system_contact')" class="mt-2" />
                 </div>
             </div>
-
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Attendance Settings</h3>
+                
+                <div>
+                    <label for="minimum_minutes" class="block text-sm font-medium text-gray-700 mb-2">
+                        Minimum Duration Required
+                    </label>
+                    <div class="relative max-w-xs">
+                        <x-text-input 
+                            icon="fa fa-clock" 
+                            id="minimum_minutes" 
+                            class="block w-full" 
+                            type="number"
+                            min="1"
+                            max="720"
+                            wire:model="minimum_minutes" 
+                            name="minimum_minutes" 
+                            placeholder="(In Minutes e.g. 240)" 
+                        />
+                        <div class="mt-1 text-xs text-gray-500">
+                            Students must complete these minutes before they can time out (e.g. 240 = 4 hours)
+                        </div>
+                    </div>
+                    <x-input-error :messages="$errors->get('minimum_minutes')" class="mt-2" />
+                </div>
+            </div>
             <!-- Theme Selection -->
             <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
                 <label class="block text-sm font-medium text-gray-700 mb-3">System Theme</label>

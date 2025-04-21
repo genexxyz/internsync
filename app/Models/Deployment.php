@@ -14,9 +14,11 @@ class Deployment extends Model
         'company_dept_id',
         'academic_id',
         'custom_hours',
+        'student_type',
         'starting_date',
         'ending_date',
         'status',
+        'permit_path',
     ];
 
     protected $casts = [

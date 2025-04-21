@@ -1,4 +1,11 @@
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Attendance Calendar</h2>
+        <button wire:click="generateDtr()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 gap-2"><i class="fa fa-file-pdf"></i>Generate DTR</button>
+    </div>
+    <div class="p-6">
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <!-- Calendar Header -->
     <div class="px-6 py-4 border-b border-gray-100">
         <div class="flex justify-between items-center">
@@ -178,4 +185,7 @@
             </div>
         </div>
     @endif
+</div>
+
+</div>
 </div>

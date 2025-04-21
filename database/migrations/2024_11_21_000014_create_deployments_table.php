@@ -21,10 +21,12 @@ return new class extends Migration
             $table->unsignedBigInteger('company_dept_id')->nullable();
             $table->unsignedBigInteger('academic_id');
             $table->integer('custom_hours')->nullable();
+            $table->enum('student_type', ['regular', 'special'])->default('regular');
             $table->date('starting_date')->nullable();
             $table->date('ending_date')->nullable();
             $table->enum('status', ['pending', 'ongoing', 'compeleted'])->default('pending');
             $table->boolean('is_verified')->default(false);
+            $table->text('permit_path')->nullable();
             $table->timestamps();
         
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');

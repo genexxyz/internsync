@@ -4,6 +4,7 @@ namespace App\Livewire\Instructor;
 
 use App\Models\Company;
 use App\Models\Course;
+use App\Models\Notification;
 use App\Models\Student;
 use App\Models\Supervisor;
 use Illuminate\Support\Facades\Auth;
@@ -73,6 +74,14 @@ class StudentModal extends ModalComponent
         }
 
         $this->user->user->update(['is_verified' => 1]);
+        Notification::send(
+            $this->user->user_id,
+            'student_verified',
+            'Account Verified',
+            'Your account has been verified successfully.',
+            '',
+            'fa-user-check'
+        );
         $this->dispatch('alert', type: 'success', text: 'The student has been verified!');
     }
 

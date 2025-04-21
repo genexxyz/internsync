@@ -4,6 +4,8 @@ namespace App\Livewire\Student;
 
 use App\Models\Attendance;
 use App\Models\Journal;
+use App\Models\Notification;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -25,6 +27,14 @@ class TaskAttendance extends Component
     public $deployment;
     public $attendanceStatus = 'regular';
 
+    protected $listeners = ['refreshTaskAttendance' => 'refreshTask'];
+
+public function refreshTask()
+{
+    $this->loadAttendance();
+    $this->loadJournal();
+}
+   
     public function mount()
     {
         $this->deployment = Auth::user()->student->deployment;
@@ -48,7 +58,7 @@ class TaskAttendance extends Component
     {
         // Check if already timed in today
         if ($this->attendance) {
-            $this->addError('timeIn', 'Already timed in for today');
+            $this->addError('all', 'Already timed in for today');
             return;
         }
 
@@ -92,17 +102,17 @@ class TaskAttendance extends Component
         ]);
 
         if (!$this->attendance) {
-            $this->addError('break', 'Must time in first');
+            $this->addError('all', 'Must time in first');
             return;
         }
 
         if ($this->attendance->time_out) {
-            $this->addError('break', 'Cannot start break after time out');
+            $this->addError('all', 'Cannot start break after time out');
             return;
         }
 
         if ($this->attendance->start_break) {
-            $this->addError('break', 'Break already started');
+            $this->addError('all', 'Break already started');
             return;
         }
 
@@ -118,14 +128,14 @@ class TaskAttendance extends Component
             logger()->error('Error starting break', [
                 'error' => $e->getMessage()
             ]);
-            $this->addError('break', 'Failed to start break');
+            $this->addError('all', 'Failed to start break');
         }
     }
 
     public function endBreak()
     {
         if (!$this->attendance->start_break || $this->attendance->end_break) {
-            $this->addError('break', 'No break in progress');
+            $this->addError('all', 'No break in progress');
             return;
         }
 
@@ -139,36 +149,64 @@ class TaskAttendance extends Component
     }
 
     public function timeOut()
-    {
-        if (!$this->attendance) {
-            $this->addError('timeOut', 'Must time in first');
-            return;
-        }
-
-        if ($this->attendance->time_out) {
-            $this->addError('timeOut', 'Already timed out for today');
-            return;
-        }
-
-        if ($this->isOnBreak) {
-            $this->addError('timeOut', 'Please end your break first');
-            return;
-        }
-
-        $timeOut = now();
-        $totalHours = $this->calculateTotalHours(
-            $this->attendance->time_in,
-            $timeOut->format('H:i:s')
-        );
-
-        // Update attendance record
-        $this->attendance->update([
-            'time_out' => $timeOut->format('H:i:s'),
-            'total_hours' => $totalHours,
-        ]);
-
-        $this->loadAttendance();
+{
+    if (!$this->attendance) {
+        $this->addError('all', 'Must time in first');
+        return;
     }
+
+    if ($this->attendance->time_out) {
+        $this->addError('all', 'Already timed out for today');
+        return;
+    }
+
+    if ($this->isOnBreak) {
+        $this->addError('all', 'Please end your break first');
+        return;
+    }
+
+    // Get minimum minutes from settings
+    $minimumMinutes = Setting::first()->minimum_minutes ?? 240; // Default to 4 hours (240 minutes)
+
+    // Calculate elapsed minutes
+    $timeIn = Carbon::parse($this->attendance->time_in);
+    $now = now();
+    $elapsedMinutes = $timeIn->diffInMinutes($now);
+
+    // Consider break time if taken
+    if ($this->attendance->start_break && $this->attendance->end_break) {
+        $breakStart = Carbon::parse($this->attendance->start_break);
+        $breakEnd = Carbon::parse($this->attendance->end_break);
+        $breakMinutes = $breakStart->diffInMinutes($breakEnd);
+        $elapsedMinutes -= $breakMinutes;
+    }
+
+    // Check if minimum duration is met
+    if ($elapsedMinutes < $minimumMinutes) {
+        $remainingMinutes = $minimumMinutes - $elapsedMinutes;
+        $remainingHours = ceil($remainingMinutes / 60);
+        $remainingMinutes = $remainingMinutes % 60;
+        $this->addError('all', 
+            "You must complete at least {$minimumMinutes} minutes of work. " . 
+            "Please work for {$remainingMinutes} more minutes."
+        );
+        return;
+    }
+
+    $timeOut = now();
+    $totalHours = $this->calculateTotalHours(
+        $this->attendance->time_in,
+        $timeOut->format('H:i:s')
+    );
+
+    // Update attendance record
+    $this->attendance->update([
+        'time_out' => $timeOut->format('H:i:s'),
+        'total_hours' => $totalHours,
+    ]);
+
+    $this->loadAttendance();
+}
 
     private function calculateTotalHours($timeIn, $timeOut)
     {
@@ -325,7 +363,18 @@ class TaskAttendance extends Component
             ]);
 
             $this->isSubmitted = true;
-            session()->flash('message', 'Journal submitted successfully.');
+$fullname = Auth::user()->student->name();
+$currentDate = now()->format('F j, Y');
+            Notification::send(
+                $this->deployment->supervisor->user_id,
+                'journal_submitted',
+                'Daily Journal Entry Submitted',
+                'Journal entry of ' . $fullname . ' for ' . $currentDate . ' has been submitted for review.',
+                'supervisor.dailyReports',
+                'fa-calendar-days'
+            );
+            $this->dispatch('alert', type: 'success', text: 'Journal submitted successfully.');
+            
             $this->loadJournal(); // Reload journal to refresh the state
             
         } catch (\Exception $e) {
@@ -333,6 +382,7 @@ class TaskAttendance extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id()
             ]);
+            $this->dispatch('alert', type: 'error', text: 'Error submitting.');
             session()->flash('error', 'Failed to submit journal.');
         }
     }

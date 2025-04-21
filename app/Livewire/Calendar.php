@@ -107,7 +107,13 @@ class Calendar extends Component
         $this->updateCalendar();
     }
 
-    
+    public function generateDtr()
+{
+    return redirect()->route('student.dtr.generate', [
+        'month' => $this->currentMonth,
+        'year' => $this->currentYear
+    ]);
+}
 
     public function render()
     {

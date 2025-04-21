@@ -213,6 +213,12 @@ public function moveTaskToToday($taskId)
         return '2xl';
     }
 
+    public function taskJournalClose()
+    {
+        $this->closeModal();
+        $this->dispatch('refreshTaskAttendance');
+    }
+
     public function render()
     {
         return view('livewire.components.task-journal-modal');

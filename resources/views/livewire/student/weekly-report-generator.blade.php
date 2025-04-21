@@ -67,7 +67,7 @@
 
         @if(!$reportExists)
     <div class="p-6">
-        <form wire:submit.prevent="submit" class="space-y-6">
+        <form wire:submit.prevent="submit" wire:confirm="Are you sure you want to submit the report?" class="space-y-6">
             <!-- Date Selection Section -->
             <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="text-sm font-medium text-gray-700 mb-4">Report Period</h4>
@@ -131,7 +131,7 @@
             <!-- Submit Button -->
             <div class="flex justify-end pt-4 border-t border-gray-100">
                 <button 
-                    type="submit" 
+                    type="submit"  
                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-md shadow-sm transition-colors"
                 >
                     <i class="fas fa-paper-plane mr-2"></i>
@@ -218,7 +218,7 @@
 @endif
                                 </div>
                             </div>
-                            <button wire:click="$set('showWeekDetails', false)" class="text-gray-400 hover:text-gray-500">
+                            <button wire:click="closeWeekDetails()" class="text-gray-400 hover:text-gray-500">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -230,6 +230,7 @@
                         <div class="space-y-4">
                             @foreach($weeklyJournals as $date => $journal)
                                 <x-daily-entry :journal="$journal" :date="$date" />
+                                
                             @endforeach
                         </div>
                         @if($selectedReport || $reportExists)
@@ -255,7 +256,7 @@
                                         Generate PDF
                                     </button>
                                     <button 
-                                        wire:click="$set('showWeekDetails', false)"
+                                        wire:click="closeWeekDetails()"
                                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                                     >
                                         Close
@@ -263,7 +264,7 @@
                                 </div>
                             @else
                                 <button 
-                                    wire:click="$set('showWeekDetails', false)"
+                                    wire:click="closeWeekDetails()"
                                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                                 >
                                     Close

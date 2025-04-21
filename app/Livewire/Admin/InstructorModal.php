@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Course;
 use App\Models\Instructor;
+use App\Models\Notification;
 use Livewire\Component;
 use LivewireUI\Modal\ModalComponent;
 use Illuminate\Support\Facades\Storage;
@@ -59,7 +60,9 @@ public function mount(Instructor $instructor)
     $this->user = $instructor->load([
         'sections.course',
         'instructorCourse.course',
-        'handles'
+        'handles',
+        'user'
+
     ]);
     
 }
@@ -70,8 +73,18 @@ public function verifyInstructor()
         $this->dispatch('alert', type: 'error', text: 'Error verifying!');
         return;
     }
+ // Add more specific validation
+ if (!$this->user || !$this->user->user) {
+    $this->dispatch('alert', 
+        type: 'error', 
+        text: 'Cannot verify instructor: User account not found!'
+    );
+    return;
+}
 
-    try {
+
+
+try {
         // Begin transaction
         DB::beginTransaction();
 
@@ -95,14 +108,21 @@ public function verifyInstructor()
             $section->update(['is_verified' => 1]);
 
             // Delete duplicate section assignments for other instructors
-            DB::table('handles')
+            DB::table('instructor_sections')
                 ->where('year_section_id', $section->year_section_id)
                 ->where('instructor_id', '!=', $this->user->id)
                 ->delete();
         }
 
         DB::commit();
-
+Notification::send(
+            $this->user->user_id,
+            'instructor_verified',
+            'Account Verified',
+            'Your instructor account has been verified successfully.',
+            '',
+            'fa-user-check'
+        );
         $this->dispatch('refreshInstructors');
         $this->dispatch('alert', type: 'success', text: 'The instructor has been verified!');
         $this->dispatch('closeModal');
@@ -111,9 +131,14 @@ public function verifyInstructor()
         DB::rollBack();
         logger()->error('Error verifying instructor', [
             'error' => $e->getMessage(),
-            'instructor_id' => $this->user->id
+            'instructor_id' => $this->user->id,
+            'user_id' => $this->user->user->id ?? null,
+            'course_id' => $this->user->instructorCourse->course_id ?? null
         ]);
-        $this->dispatch('alert', type: 'error', text: 'Error verifying instructor!');
+        $this->dispatch('alert', 
+            type: 'error', 
+            text: 'Error verifying instructor: ' . $e->getMessage()
+        );
     }
 }
 

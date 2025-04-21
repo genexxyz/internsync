@@ -95,12 +95,9 @@ class="relative flex w-full flex-col md:flex-row">
             <div class="flex items-center space-x-6">
                 <!-- Notifications -->
                 <div class="relative">
-                    <button class="p-2 text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            2
-                        </span>
-                    </button>
+                    <div class="relative">
+                        @livewire('notification-dropdown')
+                    </div>
                 </div>
 
                 <!-- Profile Menu -->

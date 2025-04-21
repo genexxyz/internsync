@@ -13,17 +13,20 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('reference')->unique();
-            $table->unsignedBigInteger('user_id');
-            $table->string('type');
-            $table->text('message');
-            $table->timestamp('date_created')->useCurrent();
-            $table->timestamp('notif_read_at')->nullable();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('type');  // task_approved, moa_ready, etc.
+            $table->string('title');
+            $table->text('message')->nullable();
+            $table->string('link')->nullable();
+            $table->string('icon')->default('fa-bell');  // default font awesome icon
+            $table->boolean('is_read')->default(false);
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
-        
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
+            // Add index for common queries
+            $table->index(['user_id', 'is_read', 'is_archived']);
+            $table->index('type');
         });
-        
     }
 
     /**

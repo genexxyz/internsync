@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Setting;
+use App\Models\ReopenRequest;
 use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('http'); // Force HTTP in development
         }
 
+        
+        // Check and update expired reopen requests
+        ReopenRequest::where('status', 'PENDING')
+            ->where('expires_at', '<=', now())
+            ->update(['status' => 'EXPIRED']);
         
     }
 }

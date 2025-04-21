@@ -381,6 +381,7 @@ class Register extends Component
                     'year_section_id' => $this->year_section_id,
                     'academic_id' => $this->academic_year_id,
                     'custom_hours' => $this->getHours($this->year_section_id, $this->custom_hours),
+                    'student_type' => $this->custom_hours,
                     'instructor_id' => null, // This should be set later when assigned
                     'supervisor_id' => null, // This should be set later when assigned
                     'company_id' => null, // This should be set later when assigned

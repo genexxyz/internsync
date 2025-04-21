@@ -1,9 +1,7 @@
 <x-app-layout>
 
-    <x-under-construction 
-    message="Endorsement Letters Management Coming Soon" 
-    submessage="We're building a better way to manage your documents." 
-    class="bg-gray-50"
-/>
+    <x-breadcrumbs :breadcrumbs="[['url' => route('admin.documents.endorsement'), 'label' => 'Endorsement Letter']]" />
+
+        @livewire('admin.documents.endorsement-table')
 
 </x-app-layout>

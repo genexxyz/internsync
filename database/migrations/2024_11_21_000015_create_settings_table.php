@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('school_address');
             $table->string('system_email');
             $table->string('system_contact');
+            $table->integer('minimum_minutes')->default(0);
             $table->unsignedBigInteger('updated_by');
             $table->timestamps();
         

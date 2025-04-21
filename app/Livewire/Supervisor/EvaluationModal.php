@@ -6,6 +6,7 @@ use Livewire\Component;
 use LivewireUI\Modal\ModalComponent;
 use App\Models\Deployment;
 use App\Models\Evaluation;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -142,7 +143,14 @@ public function getTotalRatingProperty()
         
 
         DB::commit();
-
+Notification::send(
+            $this->deployment->student->user_id,
+            'student_evaluation',
+            'Performance Evaluation Report',
+            'Your performance evaluation report has been graded by your supervisor.',
+            'student.document',
+            'fa-list-check'
+        );
         // Show success notification
         $this->dispatch('alert', 
             type: 'success',
@@ -151,6 +159,7 @@ public function getTotalRatingProperty()
 
         // Close modal and refresh parent component
         $this->dispatch('evaluation-saved');
+        $this->dispatch('refreshEvaluation');
         $this->closeModal();
 
     } catch (\Exception $e) {

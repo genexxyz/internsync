@@ -53,6 +53,9 @@
             <!-- Content -->
             <div class="p-6">
                 <div class="overflow-x-auto">
+                    @error('all')
+                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                @enderror
                     <table class="w-full">
                         <thead>
                             <tr class="border-b-2 border-gray-200">
@@ -220,7 +223,7 @@
                                         </div>
                                     @endif
                                 @elseif (!$isSubmitted && $attendance && $attendance->time_out && $existingJournal)
-                                    <button wire:click="submitJournal" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-300">
+                                    <button wire:click="submitJournal" wire:confirm="Are you sure you want to submit this entry for today?" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-300">
                                         <i class="fa fa-paper-plane mr-2"></i>
                                         Submit
                                     </button>

@@ -1,7 +1,5 @@
 <x-app-layout>
-    <x-under-construction 
-    message="MOA Management Coming Soon" 
-    submessage="We're building a better way to manage your documents." 
-    class="bg-gray-50"
-/>
+    <x-breadcrumbs :breadcrumbs="[['url' => route('admin.documents.moa'), 'label' => 'Memorandum of Agreement']]" />
+
+    @livewire('admin.documents.moa-table')
 </x-app-layout>

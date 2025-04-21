@@ -60,7 +60,54 @@
                         </div>
                         @error('contact') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
-
+                    @if($student->deployment && $student->deployment->student_type === 'special')
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Special Student Permit</label>
+        <div class="mt-1 flex items-center space-x-4">
+            @if($student->deployment->permit_path)
+                <div class="flex items-center space-x-2">
+                    <a href="{{ Storage::url($student->deployment->permit_path) }}" 
+                       target="_blank"
+                       class="text-sm text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-file-pdf mr-1"></i>
+                        View Current Permit
+                    </a>
+                    
+                    <button type="button"
+                            wire:click="deletePermit"
+                            wire:confirm="Are you sure you want to delete this permit?"
+                            class="text-sm text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            @endif
+                            
+                            <div class="flex items-center">
+                                <label for="permit" 
+                                       class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    {{ $student->permit_path ? 'Update Permit' : 'Upload Permit' }}
+                                    <input type="file" 
+                                           wire:model="permitFile" 
+                                           id="permit" 
+                                           class="hidden"
+                                           accept=".pdf,.jpg,.jpeg,.png">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            @if($permitFile)
+                                <span class="text-sm text-gray-500">Selected: {{ $permitFile->getClientOriginalName() }}</span>
+                            @endif
+                            @error('permitFile') 
+                                <span class="text-red-500 text-xs block">{{ $message }}</span> 
+                            @enderror
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Accepted file types: PDF, JPG, PNG (Max 2MB)
+                        </p>
+                    </div>
+                @endif
                     <!-- Update Profile Button -->
                     <div class="flex justify-end">
                         <button type="submit"

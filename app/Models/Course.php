@@ -26,7 +26,7 @@ public function instructor()
 
 public function instructorCourses()
 {
-    return $this->hasMany(Program::class);
+    return $this->hasMany(Program::class, 'course_id');
 }
 public function students()
 {
@@ -37,4 +37,5 @@ public function students()
         'year_section_id'
     );
 }
+
 }

@@ -103,56 +103,148 @@
                     @endforelse
                 </tbody>
                  <!-- Journal Modal -->
-                 @if($showJournalModal)
-                 <div
-                     class="fixed inset-0 z-50 overflow-y-auto"
-                     aria-labelledby="modal-title"
-                     role="dialog"
-                     aria-modal="true"
-                 >
-                     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-             
-                     <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-                             <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                 <!-- Modal Header -->
-                                 <div class="flex justify-between items-center pb-4 border-b">
-                                     <h3 class="text-lg font-semibold text-gray-900">
-                                         Journal Entries
-                                     </h3>
-                                     <button 
-                                         wire:click="$set('showJournalModal', false)" 
-                                         class="text-gray-400 hover:text-gray-500"
-                                     >
-                                         <i class="fas fa-times"></i>
-                                     </button>
-                                 </div>
-             
-                                 <!-- Journal Content -->
-                                 <div class="mt-4 max-h-[60vh] overflow-y-auto">
-                                     @foreach($students as $student)
-                                         @if($student->id === $selectedStudentId)
-                                             <div class="space-y-4">
-                                                 @foreach($student->journals as $journal)
-                                                     <div class="bg-gray-50 rounded-lg p-4">
-                                                         <p class="text-sm text-gray-900 whitespace-pre-line">
-                                                             {{ $journal->text }}
-                                                         </p>
-                                                         <div class="mt-2 text-xs text-gray-500">
-                                                             <i class="fas fa-clock mr-1"></i>
-                                                             {{ Carbon\Carbon::parse($journal->updated_at)->format('h:i A') }}
-                                                         </div>
-                                                     </div>
-                                                 @endforeach
-                                             </div>
-                                         @endif
-                                     @endforeach
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             @endif
+                <!-- Replace the Journal Modal section -->
+@if($showJournalModal && $selectedStudent)
+<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <!-- Header -->
+            <div class="bg-white px-6 py-4 border-b">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Daily Activity Record</h3>
+                        <div class="mt-1 flex items-center gap-4 text-sm text-gray-500">
+                            <span class="flex items-center">
+                                <i class="fas fa-user mr-1.5"></i>
+                                {{ $selectedStudent->first_name }} {{ $selectedStudent->last_name }}
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fas fa-calendar mr-1.5"></i>
+                                {{ Carbon\Carbon::parse($selectedDate)->format('l, F d, Y') }}
+                            </span>
+                            @if($selectedStudent->attendances->isNotEmpty())
+                            @php $attendance = $selectedStudent->attendances->first(); @endphp
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ 
+                                        $attendance->is_approved === 1 ? 'bg-green-100 text-green-800' : 
+                                        ($attendance->is_approved === 2 ? 'bg-red-100 text-red-800' : 
+                                        'bg-yellow-100 text-yellow-800')
+                                    }}">
+                                        {{ $attendance->is_approved === 1 ? 'Approved' : 
+                                           ($attendance->is_approved === 2 ? 'Rejected' : 'Pending Approval') }}
+                                    </span>
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    <button wire:click="closeModal" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 max-h-[calc(100vh-16rem)] overflow-y-auto">
+                <!-- Attendance Section -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">
+                        <i class="fas fa-clock mr-2 text-gray-400"></i>
+                        Attendance Record
+                    </h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        @if($selectedStudent->attendances->isNotEmpty())
+                            @php $attendance = $selectedStudent->attendances->first(); @endphp
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">Time In</p>
+                                    <p class="text-sm font-medium">
+                                        {{ $attendance->time_in ? Carbon\Carbon::parse($attendance->time_in)->format('h:i A') : '-' }}
+                                    </p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">Time Out</p>
+                                    <p class="text-sm font-medium">
+                                        {{ $attendance->time_out ? Carbon\Carbon::parse($attendance->time_out)->format('h:i A') : '-' }}
+                                    </p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">Total Hours</p>
+                                    <p class="text-sm font-medium">{{ $attendance->total_hours ?? '00:00' }}</p>
+                                </div>
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500 text-center py-2">No attendance record for this day</p>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Journal Entries with Task Histories -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">
+                        <i class="fas fa-book-open mr-2 text-gray-400"></i>
+                        Daily Activities
+                    </h4>
+                    <div class="space-y-4">
+                        @forelse($selectedStudent->journals as $journal)
+                            <div class="bg-white rounded-lg shadow-sm p-4">
+                                <!-- Journal Content -->
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-900 whitespace-pre-line">{{ $journal->text ?? '' }}</p>
+                                    
+                                </div>
+
+                                <!-- Task Updates -->
+                                @if($journal->taskHistories->isNotEmpty())
+                                    <div class="mt-3 pt-3 border-t border-gray-100">
+                                        <h5 class="text-xs font-medium text-gray-500 mb-2">Task Updates</h5>
+                                        <div class="space-y-2">
+                                            @foreach($journal->taskHistories as $history)
+                                                <div class="flex items-start gap-2">
+                                                    <div @class([
+                                                        'mt-1.5 w-2 h-2 rounded-full shrink-0',
+                                                        'bg-green-400' => $history->status === 'done',
+                                                        'bg-yellow-400' => $history->status === 'pending'
+                                                    ])></div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm text-gray-900">{{ $history->task->description }}</p>
+                                                        @if($history->remarks)
+                                                            <p class="text-sm text-gray-500 mt-1">{{ $history->remarks }}</p>
+                                                        @endif
+                                                        <div class="flex items-center gap-3 mt-1">
+                                                            <span class="text-xs text-gray-500">
+                                                                {{ ucfirst($history->status) }}
+                                                            </span>
+                                                            @if($history->worked_hours)
+                                                                <span class="text-xs text-gray-500">
+                                                                    <i class="fas fa-clock mr-1"></i>
+                                                                    {{ $history->worked_hours }}h worked
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @empty
+                            <div class="bg-gray-50 rounded-lg p-8 text-center">
+                                <i class="fas fa-book-open text-gray-400 text-3xl mb-2"></i>
+                                <p class="text-sm text-gray-500">No activities recorded for this day</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 </div>
             </table>
         </div>

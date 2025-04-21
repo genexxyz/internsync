@@ -13,6 +13,9 @@ class Journal extends Model
         'remarks',
         'is_submitted',
         'is_approved',
+        'feedback',
+        'is_reopened',
+        'reviewed_at',
     ];
 
     protected $dates = ['date'];
@@ -20,7 +23,7 @@ class Journal extends Model
     protected $casts = [
         'date' => 'date',
         'is_submitted' => 'boolean',
-    'is_approved' => 'boolean'
+    
     ];
 
     public function student()
@@ -38,6 +41,8 @@ public function taskHistories()
 }
 public function tasks()
 {
-    return $this->belongsToMany(Task::class);
+    return $this->belongsToMany(Task::class, 'task_histories')
+        ->withPivot('id', 'status', 'created_at', 'updated_at')
+        ->withTimestamps();
 }
 }

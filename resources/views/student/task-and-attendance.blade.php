@@ -3,7 +3,55 @@
     
     <div class="m-6">
         <!-- Task & Attendance Section -->
-        
+        @php
+            $reopenRequests = Auth::user()->student->reopenRequests()
+                ->where('status', 'PENDING')
+                ->latest('created_at')
+                ->get();
+            $reopenCount = $reopenRequests->count();
+        @endphp
+
+        @if($reopenCount > 0)
+            <div class="mb-6 bg-white shadow-sm rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-black mb-2 flex items-center">
+                            <i class="fas fa-clock-rotate-left mr-2"></i>
+                            Reopened Daily Entries
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($reopenRequests->take(5) as $request)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ Carbon\Carbon::parse($request->reopened_date)->format('M d, Y') }}
+                                </span>
+                            @endforeach
+                            @if($reopenCount > 5)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    +{{ $reopenCount - 5 }} more
+                                </span>
+                            @endif
+                        </div>
+                        <p class="mt-2 text-sm text-blue-700">
+                            Your supervisor has requested revisions for {{ $reopenCount }} {{ Str::plural('entry', $reopenCount) }}.
+                            Please review and update them.
+                        </p>
+                    </div>
+                    <div class="ml-4">
+                        <button 
+                            onclick="Livewire.dispatch('openModal', { component: 'student.reopen-entry-modal' })"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        >
+                            <i class="fas fa-pen-to-square mr-2"></i>
+                            Edit Entries
+                            <span class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-800 rounded-full">
+                                {{ $reopenCount }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
             @livewire('student.task-attendance')
             <div class="mx-6">
                 <livewire:student.weekly-report-generator />

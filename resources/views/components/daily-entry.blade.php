@@ -3,6 +3,29 @@
         <div>
             <h4 class="font-medium text-gray-900">
                 {{ Carbon\Carbon::parse($date)->format('l, M d') }}
+
+
+
+                @if($journal)
+                                <span @class([
+                                    'px-2 py-1 text-xs font-medium rounded-full',
+                                    'bg-yellow-100 text-yellow-800' => !$journal->is_approved === 0,
+                                    'bg-green-100 text-green-800' => $journal->is_approved === 1,
+                                    'bg-red-100 text-red-800' => $journal->is_approved === 2,
+                                ])>
+                                    @if($journal->is_approved === 1)
+                                        Approved
+                                    @elseif($journal->is_approved === 2)
+                                        Rejected
+                                    @else
+                                        Pending
+                                    @endif
+                                </span>
+                            @else
+                                <span class="text-sm text-gray-500"></span>
+                            @endif
+
+
                 @if(Carbon\Carbon::parse($date)->isWeekend())
                     <span class="text-xs font-normal text-yellow-600 ml-2">(Weekend)</span>
                 @endif

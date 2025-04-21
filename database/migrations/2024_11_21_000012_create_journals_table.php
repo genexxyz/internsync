@@ -17,6 +17,9 @@ return new class extends Migration
             $table->date('date');
             $table->boolean('is_submitted')->default(false);
             $table->tinyInteger('is_approved')->default(0)->comment('0: pending, 1: approved, 2: rejected');
+            $table->text('feedback')->nullable();
+            $table->tinyInteger('is_reopened')->default(0)->comment('0: no, 1: yes');
+            $table->datetime('reviewed_at')->nullable();
             $table->timestamps();
         
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');

@@ -19,4 +19,6 @@ class Kernel extends HttpKernel
         // ...existing middleware...
         'supervisor.first.login' => \App\Http\Middleware\SupervisorFirstLoginMiddleware::class,
     ];
+
+    
 }

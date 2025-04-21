@@ -158,7 +158,7 @@
     <div class="mt-6 pt-4 border-t flex justify-between items-center">
         <div class="flex-1"></div>
         <button 
-            wire:click="$dispatch('closeModal')"
+            wire:click="taskJournalClose()"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
             Close

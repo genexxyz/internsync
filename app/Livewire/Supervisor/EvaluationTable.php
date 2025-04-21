@@ -9,6 +9,7 @@ use Livewire\Component;
 
 class EvaluationTable extends Component
 {
+    protected $listeners = ['refreshEvaluation' => '$render'];
     public function getFinishedStudents()
     {
         return Deployment::with(['student.user', 'department'])

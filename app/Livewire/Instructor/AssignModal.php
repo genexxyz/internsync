@@ -8,6 +8,7 @@ use App\Models\CompanyDepartment;
 use App\Models\Department;
 use App\Models\Deployment;
 use App\Models\Handle;
+use App\Models\Notification;
 use App\Models\Student;
 use App\Models\Supervisor;
 use LivewireUI\Modal\ModalComponent;
@@ -96,16 +97,30 @@ class AssignModal extends ModalComponent
     }
 
     private function handleExistingCompany($company)
-    {
-        $this->companyExists = true;
-        $this->selectedCompany = $company;
-        
-        // Load all departments for this company
-        $this->existingDepartments = Department::where('company_id', $company->id)
-            ->pluck('department_name')
-            ->toArray();
-            $this->assignButton = true;
+{
+    $this->companyExists = true;
+    $this->selectedCompany = $company;
+    
+    // Load all departments for this company, ensure "No Department" exists
+    $noDepartment = Department::firstOrCreate(
+        [
+            'company_id' => $company->id,
+            'department_name' => 'No Department'
+        ]
+    );
+    
+    // Load all departments including "No Department"
+    $this->existingDepartments = Department::where('company_id', $company->id)
+        ->pluck('department_name')
+        ->toArray();
+
+    // If no department was provided in acceptance letter, select "No Department" by default
+    if (empty($this->acceptanceLetter->department_name)) {
+        $this->selectedDepartment = 'No Department';
     }
+    
+    $this->assignButton = true;
+}
 
     public function addNewDepartment()
     {
@@ -157,41 +172,42 @@ public function createNewDepartment()
     }
 
     public function createAndSelectCompany()
-    {
-        $this->validate([
-            'newCompany.company_name' => 'required|min:3|unique:companies,company_name',
-            'newCompany.address' => 'required',
-            // 'newCompany.contact_number' => 'required',
-            // 'newCompany.contact_person' => 'required',
-        ]);
+{
+    $this->validate([
+        'newCompany.company_name' => 'required|min:3|unique:companies,company_name',
+        'newCompany.address' => 'required',
+    ]);
 
-        // Create company
-        $company = Company::create([
-            'company_name' => $this->newCompany['company_name'],
-            'address' => $this->newCompany['address'],
-            // 'contact' => $this->newCompany['contact_number'],
-            // 'contact_person' => $this->newCompany['contact_person'],
-            
+    // Create company
+    $company = Company::create([
+        'company_name' => $this->newCompany['company_name'],
+        'address' => $this->newCompany['address'],
+    ]);
+    
+    // Always create "No Department" first
+    Department::create([
+        'company_id' => $company->id,
+        'department_name' => 'No Department'
+    ]);
+
+    // Create department if provided
+    if (!empty($this->newCompany['department'])) {
+        $department = Department::create([
+            'company_id' => $company->id,
+            'department_name' => $this->newCompany['department']
         ]);
         
-        // Create department if provided
-        if ($this->newCompany['department']) {
-            $department = Department::create([
-                'company_id' => $company->id,
-                'department_name' => $this->newCompany['department']
-            ]);
-            
-            $this->existingCompanyDepartment = $department->name;
-        }
-
-        $this->selectCompany($company->id);
-        $this->isCreatingCompany = false;
-        
-        $this->dispatch('alert',
-            type: 'success',
-            text: 'Company successfully added to the system!'
-        );
+        $this->existingCompanyDepartment = $department->name;
     }
+
+    $this->selectCompany($company->id);
+    $this->isCreatingCompany = false;
+    
+    $this->dispatch('alert',
+        type: 'success',
+        text: 'Company successfully added to the system!'
+    );
+}
 
     public function selectCompany($companyId)
     {
@@ -253,11 +269,18 @@ public function createNewDepartment()
         $deploymentData['student_id'] = $this->student->id;
         Deployment::create($deploymentData);
     }
-
+Notification::send(
+        $this->student->user_id,
+        'student_deployment',
+        'Deployment Assigned',
+        "You have been assigned to {$this->selectedCompany->company_name}.",
+        'student.journey',
+        'fa-building'
+    );
     $this->closeModal();
 
     
-    $this->dispatch('refreshAllStudents');
+    $this->dispatch('refreshStudents');
     $this->dispatch('alert', type: 'success', text: "{$this->student->first_name} successfully assigned to {$this->selectedCompany->company_name}!");
 }
 

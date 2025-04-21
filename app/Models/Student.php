@@ -92,6 +92,10 @@ class Student extends Model
         return $this->hasMany(Report::class);
     }
 
-    
+    public function reopenRequests()
+{
+    return $this->hasMany(ReopenRequest::class);
+}
 
+    
 }

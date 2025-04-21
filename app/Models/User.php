@@ -190,4 +190,9 @@ class User extends Authenticatable
         /// Dynamically call the relationship based on the role
         return $this->{$this->role} ?? null;
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }

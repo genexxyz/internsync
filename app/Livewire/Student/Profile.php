@@ -20,6 +20,7 @@ class Profile extends Component
     public $showSignatureModal = false;
     public $currentSignature;
     public $name;
+    public $permitFile;
 
     protected $listeners = [
         'signature-saved' => 'closeSignatureModal'
@@ -28,6 +29,7 @@ class Profile extends Component
     protected $rules = [
         'contact' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
         'signature_path' => 'nullable|image|max:1024',
+        'permitFile' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
     ];
 
     public function mount()
@@ -38,6 +40,57 @@ class Profile extends Component
         $this->name = $this->student->name();
 
     }
+
+    public function updatedPermitFile()
+{
+    $this->validateOnly('permitFile');
+
+    try {
+        // Generate filename with student info
+        $extension = $this->permitFile->getClientOriginalExtension();
+        $randomString = \Illuminate\Support\Str::random(8);
+        $filename = sprintf(
+            '%s_%s_%s_%s.%s',
+            $this->student->student_id,
+            strtolower($this->student->first_name),
+            strtolower($this->student->last_name),
+            $randomString,
+            $extension
+        );
+
+        // Store file with custom name
+        $path = $this->permitFile->storeAs('permits', $filename, 'public');
+        
+        // Delete old permit if exists
+        if ($this->student->deployment->permit_path) {
+            Storage::disk('public')->delete($this->student->deployment->permit_path);
+        }
+
+        // Update deployment record
+        $this->student->deployment->update([
+            'permit_path' => $path
+        ]);
+
+        $this->permitFile = null;
+        session()->flash('message', 'Permit uploaded successfully.');
+
+    } catch (\Exception $e) {
+        session()->flash('error', 'Failed to upload permit. Please try again.');
+    }
+}
+
+public function deletePermit()
+{
+    try {
+        if ($this->student->deployment->permit_path) {
+            Storage::disk('public')->delete($this->student->deployment->permit_path);
+            $this->student->deployment->update(['permit_path' => null]);
+            session()->flash('message', 'Permit deleted successfully.');
+        }
+    } catch (\Exception $e) {
+        session()->flash('error', 'Failed to delete permit. Please try again.');
+    }
+}
 
     public function closeSignatureModal()
     {

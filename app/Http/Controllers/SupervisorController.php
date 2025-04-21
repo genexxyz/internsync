@@ -34,6 +34,11 @@ $supervisor = Supervisor::where('user_id',Auth::user()->id)->with([
         return view('supervisor.weekly-reports');
     }
 
+    public function dailyReports(): View
+    {
+        return view('supervisor.daily-reports');
+    }
+
     public function evaluation(): View
     {
         return view('supervisor.evaluation');

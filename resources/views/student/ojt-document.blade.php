@@ -47,28 +47,88 @@
             </div>
 
             <!-- Memorandum of Agreement -->
-            <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer">
-                <div class="flex items-center gap-4">
-                    <div class="bg-green-100 p-3 rounded-lg">
-                        <i class="fa fa-file-contract text-2xl text-green-600"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800">Memorandum of Agreement</h3>
-                        <p class="text-sm text-gray-500">Training agreement document</p>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <button
-                        class="w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors duration-200 flex items-center justify-center gap-2">
-                        <i class="fa fa-eye text-sm"></i>
-                        <span class="text-sm font-medium">View</span>
-                        
-                    </button>
-                </div>
+            <!-- Memorandum of Agreement Card -->
+<div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+    <div class="flex items-center gap-4">
+        <div class="bg-green-100 p-3 rounded-lg">
+            <i class="fa fa-file-contract text-2xl text-green-600"></i>
+        </div>
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Memorandum of Agreement</h3>
+            <p class="text-sm text-gray-500">Training agreement document</p>
+        </div>
+    </div>
+    <div class="mt-4">
+        @if($moaRequest)
+            @php
+                $statusConfig = [
+                    'requested' => [
+                        'bg' => 'bg-blue-50',
+                        'text' => 'text-blue-600',
+                        'icon' => 'fa-clock',
+                        'label' => 'Request Pending'
+                    ],
+                    'for_pickup' => [
+                        'bg' => 'bg-yellow-50',
+                        'text' => 'text-yellow-600',
+                        'icon' => 'fa-box',
+                        'label' => 'Ready for Pickup'
+                    ],
+                    'picked_up' => [
+                        'bg' => 'bg-purple-50',
+                        'text' => 'text-purple-600',
+                        'icon' => 'fa-truck',
+                        'label' => 'Picked Up'
+                    ],
+                    'received_by_company' => [
+                        'bg' => 'bg-green-50',
+                        'text' => 'text-green-600',
+                        'icon' => 'fa-check-circle',
+                        'label' => 'Received by Company'
+                    ]
+                ];
+                $status = $statusConfig[$moaRequest->status] ?? [
+                    'bg' => 'bg-gray-50',
+                    'text' => 'text-gray-600',
+                    'icon' => 'fa-info-circle',
+                    'label' => 'Unknown Status'
+                ];
+            @endphp
+            
+            <div class="w-full py-2 {{ $status['bg'] }} {{ $status['text'] }} rounded-lg flex items-center justify-center gap-2">
+                <i class="fas {{ $status['icon'] }} text-sm"></i>
+                <span class="text-sm font-medium">{{ $status['label'] }}</span>
             </div>
+            @if($moaRequest->status === 'for_pickup')
+                <button 
+                    onclick="Livewire.dispatch('openModal', { component: 'student.moa-request-form'})"
+                    class="w-full mt-2 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-download text-sm"></i>
+                    <span class="text-sm font-medium">Pickup Status</span>
+                </button>
+            @endif
+        @else
+            <button
+                onclick="Livewire.dispatch('openModal', { component: 'student.moa-request-form'})"
+                class="w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                <i class="fa fa-plus text-sm"></i>
+                <span class="text-sm font-medium">Request MOA</span>
+            </button>
+        @endif
+
+        @if($moaRequest && $moaRequest->admin_remarks)
+            <div class="mt-2 p-2 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-600">
+                    <i class="fas fa-comment-alt mr-1"></i>
+                    {{ $moaRequest->admin_remarks }}
+                </p>
+            </div>
+        @endif
+    </div>
+</div>
 
             <!-- Endorsement Letter -->
-            <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer">
+            <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
                 <div class="flex items-center gap-4">
                     <div class="bg-purple-100 p-3 rounded-lg">
                         <i class="fa fa-file-signature text-2xl text-purple-600"></i>
@@ -79,12 +139,84 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <button
-                        class="w-full py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-200 flex items-center justify-center gap-2">
-                        <i class="fa fa-eye text-sm"></i>
-                        <span class="text-sm font-medium">View</span>
+                    @if (session('error'))
+                        <div class="mb-4 p-2 bg-red-50 text-red-600 rounded-lg text-sm">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+            
+                    @if (session('success'))
+                        <div class="mb-4 p-2 bg-green-50 text-green-600 rounded-lg text-sm">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+            
+                    @if($endorsementRequest)
+                        @php
+                            $statusConfig = [
+                                'requested' => [
+                                    'bg' => 'bg-blue-50',
+                                    'text' => 'text-blue-600',
+                                    'icon' => 'fa-clock',
+                                    'label' => 'Request Pending'
+                                ],
+                                'for_pickup' => [
+                                    'bg' => 'bg-yellow-50',
+                                    'text' => 'text-yellow-600',
+                                    'icon' => 'fa-box',
+                                    'label' => 'Ready for Pickup'
+                                ],
+                                'picked_up' => [
+                                    'bg' => 'bg-green-50',
+                                    'text' => 'text-green-600',
+                                    'icon' => 'fa-check-circle',
+                                    'label' => 'Picked Up'
+                                ]
+                            ];
+                            $status = $statusConfig[$endorsementRequest->status] ?? [
+                                'bg' => 'bg-gray-50',
+                                'text' => 'text-gray-600',
+                                'icon' => 'fa-info-circle',
+                                'label' => 'Unknown Status'
+                            ];
+                        @endphp
                         
-                    </button>
+                        <div class="w-full py-2 {{ $status['bg'] }} {{ $status['text'] }} rounded-lg flex items-center justify-center gap-2">
+                            <i class="fas {{ $status['icon'] }} text-sm"></i>
+                            <span class="text-sm font-medium">{{ $status['label'] }}</span>
+                        </div>
+            
+                        @if($endorsementRequest->picked_up_at)
+                            <div class="mt-2 p-2 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-600">
+                                    <i class="fas fa-user mr-1"></i>
+                                    Received by: {{ $endorsementRequest->received_by }}
+                                </p>
+                                <p class="text-xs text-gray-600">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    Picked up on: {{ $endorsementRequest->picked_up_at->format('M d, Y g:i A') }}
+                                </p>
+                            </div>
+                        @endif
+            
+                        @if($endorsementRequest->admin_remarks)
+                            <div class="mt-2 p-2 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-600">
+                                    <i class="fas fa-comment-alt mr-1"></i>
+                                    {{ $endorsementRequest->admin_remarks }}
+                                </p>
+                            </div>
+                        @endif
+                    @else
+                        <form action="{{ route('student.request-endorsement') }}" method="POST">
+                            @csrf
+                            <button type="submit"
+                                class="w-full py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                                <i class="fa fa-plus text-sm"></i>
+                                <span class="text-sm font-medium">Request Letter</span>
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

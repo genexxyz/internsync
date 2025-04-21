@@ -105,13 +105,13 @@
     </div>
     <!-- Supporting Documents -->
     <div class="mb-6">
-        <h4 class="font-semibold text-gray-800 mb-4">Supporting Documents</h4>
+        <h4 class="font-semibold text-gray-800 m-4">Supporting Documents</h4>
         @if($student->supporting_doc)
             <div class="bg-gray-50 rounded-lg p-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <i class="fa fa-file-image text-red-500 text-xl"></i>
-                        <span class="text-gray-600">{{ basename($student->supporting_doc) }}</span>
+                        <span class="text-gray-600">Student ID</span>
                     </div>
                     <button 
                     x-data
@@ -124,7 +124,25 @@
                 </div>
             </div>
         @else
-            <p class="text-gray-500">No supporting documents available</p>
+            <p class="text-gray-500 p-4">No Student ID available</p>
+        @endif
+        @if($student->deployment->permit_path && $student->deployment->student_type === 'special')
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fa fa-file-image text-red-500 text-xl"></i>
+                        <span class="text-gray-600">Special Student Document</span>
+                    </div>
+                    <button 
+                    x-data
+                    @click="$dispatch('open-preview', { url: '{{ Storage::url($student->deployment->permit_path) }}' })"
+                    class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+                >
+                    <i class="fa fa-eye mr-2"></i>
+                    View Document
+                </button>
+                </div>
+            </div>
         @endif
     </div>
     <!-- Footer -->

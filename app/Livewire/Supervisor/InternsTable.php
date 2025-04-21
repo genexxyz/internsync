@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use App\Models\AcceptanceLetter;
+use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
@@ -154,6 +155,18 @@ class InternsTable extends Component
 
         if ($deployment && is_null($deployment->supervisor_id)) {
             try {
+                $supervisorName = Auth::user()->supervisor->getFullNameAttribute();
+                    $companyName = Auth::user()->supervisor->department->company->company_name ?? 'Company';
+
+                    // Notification for student
+                    Notification::send(
+                        $deployment->student->user_id,
+                        'student_acceptance',
+                        'Supervisor Assigned',
+                        "Welcome! {$supervisorName} from {$companyName} has accepted you as their intern. Your acceptance letter is now available.",
+                        'student.document',
+                        'fa-handshake'
+                    );
                 DB::beginTransaction();
 
                 // Update deployment
