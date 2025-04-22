@@ -219,6 +219,49 @@
                     @endif
                 </div>
             </div>
+            <!-- Evaluation Report -->
+    <div class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+        <div class="flex items-center gap-4">
+            <div class="bg-indigo-100 p-3 rounded-lg">
+                <i class="fa fa-clipboard-list text-2xl text-indigo-600"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Evaluation Report</h3>
+                <p class="text-sm text-gray-500">Performance evaluation</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            @if($student->deployment?->evaluation)
+                <button 
+                    @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
+                        detail: { url: '{{ route('student.evaluation.view', ['evaluation' => $student->deployment->evaluation->id]) }}' }
+                    }))"
+                    class="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                    <i class="fa fa-eye text-sm"></i>
+                    <span class="text-sm font-medium">View Evaluation</span>
+                </button>
+
+                @if($student->deployment->evaluation->created_at)
+                    <div class="mt-2 p-2 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-calendar mr-1"></i>
+                            Evaluated on: {{ $student->deployment->evaluation->created_at->format('M d, Y') }}
+                        </p>
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-star mr-1"></i>
+                            Score: {{ $student->deployment->evaluation->total_score }}/100
+                        </p>
+                    </div>
+                @endif
+            @else
+                <div class="w-full py-2 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-clock text-sm"></i>
+                    <span class="text-sm font-medium">Pending Evaluation</span>
+                </div>
+            @endif
+        </div>
+    </div>
         </div>
     </div>
 

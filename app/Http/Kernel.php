@@ -18,6 +18,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         // ...existing middleware...
         'supervisor.first.login' => \App\Http\Middleware\SupervisorFirstLoginMiddleware::class,
+        
     ];
 
     

@@ -65,7 +65,7 @@
 
 
                     <!-- Actions -->
-                    <div class="flex items-center justify-between">
+                    {{-- <div class="flex items-center justify-between">
                         @if (Route::has('password.request'))
                             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                                 href="{{ route('password.request') }}">
@@ -74,7 +74,7 @@
                         @endif
 
 
-                    </div>
+                    </div> --}}
                 </form>
                 <hr class="mt-5">
                 <div class="flex justify-center mt-5 text-sm">

@@ -1,4 +1,4 @@
-<div class="relative bg-white rounded-xl shadow-xl max-w-4xl mx-auto">
+<div class="relative bg-white h-full rounded-xl shadow-xl max-w-4xl mx-auto">
     <!-- Sticky Header -->
     <div class="sticky top-0 z-20 bg-white px-6 py-4 border-b">
         <div class="flex justify-between items-center">
@@ -12,7 +12,7 @@
     <!-- Content Container -->
     <div class="relative">
         <!-- Scrollable Content -->
-        <div class="p-6 max-h-[calc(100vh-16rem)] overflow-y-auto">
+        <div class="p-6">
         <!-- Status Timeline -->
         <div class="mb-6">
             <h4 class="font-medium text-gray-700 mb-3">Request Timeline</h4>
@@ -222,6 +222,5 @@
                 </button>
             @endif
         </div>
-        <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-300 via-white/50 to-transparent pointer-events-none"></div>
     </div>
 </div>

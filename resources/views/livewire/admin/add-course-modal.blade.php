@@ -84,7 +84,7 @@
                     name="academic_year" 
                     icon="fa fa-calendar" 
                     :options="$academicYear->mapWithKeys(fn($year) => [
-                        $year->id => $year->academic_year . ' (Semester ' . $year->semester . ')'
+                        $year->id => $year->academic_year . ' (' . $year->semester . ')'
                     ])->toArray()" 
                     :selected="old('academic_year')" 
                     placeholder="A.Y. & Semester" 

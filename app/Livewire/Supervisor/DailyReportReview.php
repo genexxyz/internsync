@@ -4,6 +4,7 @@
 namespace App\Livewire\Supervisor;
 
 use App\Models\Journal;
+use App\Models\Notification;
 use App\Models\Report;
 use App\Models\ReopenRequest;
 use Carbon\Carbon;
@@ -62,7 +63,15 @@ class DailyReportReview extends ModalComponent
                     'is_approved' => 1,
                 ]);
             }
-
+            Notification::send(
+                $this->journal->student->user->id,
+                'approved_entry',
+                'Entry Approved',
+                "Your journal entry for " . Carbon::parse($this->journal->date)->format('F d, Y') . " has been approved.",
+                'student.taskAttendance',
+                'fa-check-circle',
+            );
+            $this->dispatch('alert', type: 'success', text: 'Entry approved!');
             $this->dispatch('dailyEntryUpdated');
             $this->closeModal();
         }
@@ -119,8 +128,26 @@ class DailyReportReview extends ModalComponent
                         'message' => $this->feedbackNote,
                         'status' => 'PENDING'
                     ]);
+                    Notification::send(
+                        $this->journal->student->user->id,
+                        'reopen_rejected_entry',
+                        'Entry Rejected',
+                        "Your journal entry for " . Carbon::parse($this->journal->date)->format('F d, Y') . "has been rejected. Please review the feedback provided and take action immediately.",
+                        'student.taskAttendance',
+                        'fa-circle-exclamation',
+                    );
                 }
-    
+                else {
+                    Notification::send(
+                        $this->journal->student->user->id,
+                        'rejected_entry',
+                        'Entry Rejected',
+                        "Your journal entry for " . Carbon::parse($this->journal->date)->format('F d, Y') . " has been rejected. Please review the feedback provided.",
+                        'student.taskAttendance',
+                        'fa-xmark',
+                    );
+                }
+    $this->dispatch('alert', type: 'success', text: 'Entry rejected!');
                 $this->dispatch('dailyEntryUpdated');
                 $this->closeModal();
     

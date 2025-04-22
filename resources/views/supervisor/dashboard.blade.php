@@ -92,52 +92,47 @@
                 <h2 class="text-lg font-semibold text-gray-900">Recent Notifications</h2>
             </div>
             <div class="divide-y divide-gray-100">
-                <!-- Notification Item -->
-                <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                                <i class="fa fa-file-lines text-blue-500"></i>
+                @forelse($recentNotifications as $notification)
+                    <div @class([
+                        'px-6 py-4 flex items-center justify-between hover:bg-gray-50',
+                        'bg-blue-50/50' => !$notification->is_read
+                    ])>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <i class="fas {{ $notification->icon }} text-primary"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <p @class([
+                                    'text-sm text-gray-600',
+                                    'font-semibold' => !$notification->is_read
+                                ])>
+                                    {{ $notification->message }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    {{ $notification->created_at->diffForHumans() }}
+                                </p>
                             </div>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-600">
-                                Juan Dela Cruz submitted his report
-                                <span class="text-gray-400">from 09/16/2024 to 9/20/2024</span>
-                            </p>
-                            <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
-                        </div>
+                        @if($notification->link)
+                            <a href="{{ route($notification->link) }}" 
+                               class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20">
+                                View Details
+                            </a>
+                        @endif
                     </div>
-                    <a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        View Report
-                    </a>
-                </div>
-
-                <!-- Notification Item -->
-                <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                                <i class="fa fa-file-lines text-blue-500"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">
-                                Danilo Cruz submitted his report
-                                <span class="text-gray-400">from 09/16/2024 to 9/20/2024</span>
-                            </p>
-                            <p class="text-xs text-gray-400 mt-1">3 hours ago</p>
-                        </div>
+                @empty
+                    <div class="p-8 text-center">
+                        <p class="text-gray-500">No recent notifications</p>
                     </div>
-                    <a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        View Report
-                    </a>
-                </div>
+                @endforelse
             </div>
-
+    
             <!-- View All Link -->
             <div class="px-6 py-4 border-t border-gray-100">
-                <a href="#" class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center">
+                <a href="{{ route('notifications.index') }}" 
+                   class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center">
                     View All Notifications <i class="fa fa-arrow-right ml-2"></i>
                 </a>
             </div>

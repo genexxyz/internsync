@@ -15,8 +15,9 @@
     <div class="px-6 py-4">
         <!-- Profile Section -->
         <div class="flex flex-col lg:flex-row items-center lg:items-start gap-6 mb-6">
-            <img src="/images/default_avatar.jpg"
-                class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm" alt="Profile Picture">
+            <img src="{{ $supervisor->image ? Storage::url($supervisor->image) : '/images/default_avatar.jpg' }}"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm mx-auto lg:mx-0" 
+                    alt="Profile Picture">
 
             <div class="flex-1 text-center lg:text-left">
                 <div class="flex items-center justify-center lg:justify-start gap-2 mb-2">

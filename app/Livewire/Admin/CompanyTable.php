@@ -26,7 +26,9 @@ class CompanyTable extends Component
     protected $queryString = ['search'];
 
     
-
+protected $listeners = [
+        'refreshCompanies' => 'render',
+    ];
     public function closeModal()
     {
         $this->selectedCompany = null;

@@ -240,6 +240,24 @@
                                     {{ $selectedReport?->learning_outcomes ?? $currentReport?->learning_outcomes }}
                                 </p>
                             </div>
+                            @if(($selectedReport?->status ?? $currentReport?->status) === 'rejected')
+        <div class="mb-6 bg-red-50 border border-red-100 rounded-lg p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-sm font-medium text-red-800">Supervisor's Feedback:</h4>
+                    <p class="mt-1 text-sm text-red-700">
+                        {{ $selectedReport?->supervisor_feedback ?? $currentReport?->supervisor_feedback }}
+                    </p>
+                    <p class="mt-2 text-xs text-red-600">
+                        Rejected on: {{ Carbon\Carbon::parse($selectedReport?->reviewed_at ?? $currentReport?->reviewed_at)->format('M d, Y h:i A') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
                         @endif
                     </div>
 

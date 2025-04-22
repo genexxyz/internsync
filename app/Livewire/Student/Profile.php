@@ -107,18 +107,18 @@ public function deletePermit()
         ];
     }
 
-    // public function updatePassword()
-    // {
-    //     $this->validate($this->passwordRules());
+    public function updatePassword()
+    {
+        $this->validate($this->passwordRules());
 
-    //     Auth::user()->update([
-    //         'password' => Hash::make($this->new_password)
-    //     ]);
+        Auth::user()->update([
+            'password' => Hash::make($this->new_password)
+        ]);
 
-    //     $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
+        $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
 
-    //     $this->dispatch('alert', type: 'success', text: 'Password changed successfully!');
-    // }
+        $this->dispatch('alert', type: 'success', text: 'Password changed successfully!');
+    }
 
     public function updateProfile()
     {

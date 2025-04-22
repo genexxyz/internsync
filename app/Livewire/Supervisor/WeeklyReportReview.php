@@ -5,6 +5,7 @@ namespace App\Livewire\Supervisor;
 use App\Models\Report;
 use App\Models\Journal;
 use App\Models\Attendance;
+use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -291,7 +292,16 @@ class WeeklyReportReview extends Component
         $this->report->reviewed_at = now();
         $this->report->supervisor_feedback = $this->feedbackNote;
         $this->report->save();
-
+        $start = Carbon::parse($this->report->start_date)->format('F j, Y');
+        $end = Carbon::parse($this->report->end_date)->format('F j, Y');
+        Notification::send(
+            $this->report->student->user->id,
+            'approved_weekly_report',
+            'Weekly Report Approved',
+            "Your Week {$this->report->week_number} ({$start}-{$end}) has been approved.",
+            'student.taskAttendance',
+            'fa-check-circle',
+        );
         $this->closeModal();
         $this->dispatch('reportStatusChanged');
     }
@@ -306,7 +316,16 @@ class WeeklyReportReview extends Component
         $this->report->reviewed_at = now();
         $this->report->supervisor_feedback = $this->feedbackNote;
         $this->report->save();
-
+        $start = Carbon::parse($this->report->start_date)->format('F j, Y');
+        $end = Carbon::parse($this->report->end_date)->format('F j, Y');
+        Notification::send(
+            $this->report->student->user->id,
+            'rejected_weekly_report',
+            'Weekly Report Rejected',
+            "Your Week {$this->report->week_number} ({$start}-{$end}) has been rejected. Please review the feedback provided.",
+            'student.taskAttendance',
+            'fa-check-circle',
+        );
         $this->closeModal();
         $this->dispatch('reportStatusChanged');
     }

@@ -1,5 +1,5 @@
 <?php
-namespace App\Livewire\Instructor;
+namespace App\Livewire\Admin;
 
 use App\Models\Journal;
 use App\Models\Report;
@@ -375,6 +375,6 @@ public function deleteStudent()
 }
     public function render()
     {
-        return view('livewire.instructor.student-modal');
+        return view('livewire.admin.student-modal');
     }
 }

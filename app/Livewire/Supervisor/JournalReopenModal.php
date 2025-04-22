@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\ReopenRequest;
 use App\Models\Report;
 
+use function PHPSTORM_META\type;
 
 class JournalReopenModal extends ModalComponent
 {
@@ -22,86 +23,86 @@ class JournalReopenModal extends ModalComponent
     public function mount($date)
     {
         $this->date = $date;
-        
+
         // Get students assigned to the supervisor
-        $this->students = Student::whereHas('deployment', function($query) {
-            $query->where('supervisor_id', Auth::user()->supervisor->id)
-                  ;
+        $this->students = Student::whereHas('deployment', function ($query) {
+            $query->where('supervisor_id', Auth::user()->supervisor->id);
         })
-        ->with(['user', 'deployment.department'])
-        ->get()
-        ->map(function($student) {
-            return [
-                'id' => $student->id,
-                'name' => $student->first_name . ' ' . $student->last_name,
-            ];
-        });
+            ->with(['user', 'deployment.department'])
+            ->get()
+            ->map(function ($student) {
+                return [
+                    'id' => $student->id,
+                    'name' => $student->first_name . ' ' . $student->last_name,
+                ];
+            });
     }
 
-    
-    
-public function reopen()
-{
-    $this->validate([
-        'selectedStudent' => 'required|exists:students,id',
-        'date' => 'required|date|before:today',
-        'message' => 'nullable|string|max:500'
-    ]);
 
-    try {
-        // Check if date is in an approved weekly report
-        $isInApprovedReport = Report::where('student_id', $this->selectedStudent)
-            ->where('status', 'approved')
-            ->where(function($query) {
-                $query->whereDate('start_date', '<=', $this->date)
-                      ->whereDate('end_date', '>=', $this->date);
-            })
-            ->exists();
 
-        if ($isInApprovedReport) {
-            $this->addError('date', 'This date is part of an approved weekly report and cannot be reopened.');
-            return;
-        }
-
-        // Check for existing pending or expired request
-        $existingRequest = ReopenRequest::where('student_id', $this->selectedStudent)
-            ->where('reopened_date', $this->date)
-            ->whereIn('status', ['PENDING', 'EXPIRED'])
-            ->first();
-
-        if ($existingRequest) {
-            $statusMessage = $existingRequest->status === 'PENDING' 
-                ? 'There is already a pending reopen request for this date.'
-                : 'This date has an expired reopen request and cannot be reopened again.';
-            
-            $this->addError('date', $statusMessage);
-            return;
-        }
-
-        // Create new reopen request
-        ReopenRequest::create([
-            'student_id' => $this->selectedStudent,
-            'supervisor_id' => Auth::user()->supervisor->id,
-            'reopened_date' => $this->date,
-            'expires_at' => now()->addHours(24),
-            'message' => $this->message,
-            'status' => 'PENDING'
+    public function reopen()
+    {
+        $this->validate([
+            'selectedStudent' => 'required|exists:students,id',
+            'date' => 'required|date|before:today',
+            'message' => 'nullable|string|max:500'
         ]);
-Notification::send(
-            $this->selectedStudent,
-            'reopen_request',
-            'Reopen Request Submitted',
-            "Your request to reopen the journal entry for {$this->date} has been submitted. Please wait for the supervisor's approval.",
-            'student.journal',
-            'fa-calendar-check'
-        );
-        $this->dispatch('dailyEntryUpdated');
-        $this->dispatch('closeModal');
-        
-        session()->flash('message', 'Journal entry has been reopened for editing.');
-        
-    } catch (\Exception $e) {
-        $this->addError('general', 'Failed to reopen journal entry. Please try again.');
+
+        try {
+            // Check if date is in an approved weekly report
+            $isInApprovedReport = Report::where('student_id', $this->selectedStudent)
+                ->where('status', 'approved')
+                ->where(function ($query) {
+                    $query->whereDate('start_date', '<=', $this->date)
+                        ->whereDate('end_date', '>=', $this->date);
+                })
+                ->exists();
+
+            if ($isInApprovedReport) {
+                $this->addError('date', 'This date is part of an approved weekly report and cannot be reopened.');
+                return;
+            }
+
+            // Check for existing pending or expired request
+            $existingRequest = ReopenRequest::where('student_id', $this->selectedStudent)
+                ->where('reopened_date', $this->date)
+                ->whereIn('status', ['PENDING', 'EXPIRED'])
+                ->first();
+
+            if ($existingRequest) {
+                $statusMessage = $existingRequest->status === 'PENDING'
+                    ? 'There is already a pending reopen request for this date.'
+                    : 'This date has an expired reopen request and cannot be reopened again.';
+
+                $this->addError('date', $statusMessage);
+                return;
+            }
+
+            // Create new reopen request
+            ReopenRequest::create([
+                'student_id' => $this->selectedStudent,
+                'supervisor_id' => Auth::user()->supervisor->id,
+                'reopened_date' => $this->date,
+                'expires_at' => now()->addHours(24),
+                'message' => $this->message,
+                'status' => 'PENDING'
+            ]);
+            $studentId = Student::find($this->selectedStudent)->user->id;
+            $date = Carbon::parse($this->date)->format('F d, Y');
+            Notification::send(
+                $studentId,
+                'reopen_request',
+                'Reopen Journal Entry',
+                "Your request to reopen the journal entry for {$date} has been granted.",
+                'student.taskAttendance',
+                'fa-lock-open'
+
+            );
+            $this->dispatch('alert', type: 'success', text: 'Reopen request sent successfully!');
+            $this->dispatch('dailyEntryUpdated');
+            $this->dispatch('closeModal');
+        } catch (\Exception $e) {
+            $this->addError('general', 'Failed to reopen journal entry. Please try again.');
+        }
     }
-}
 }

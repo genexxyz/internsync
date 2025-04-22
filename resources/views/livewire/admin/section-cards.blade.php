@@ -12,8 +12,51 @@
                     <!-- Card Header -->
                     <div class="bg-secondary text-white rounded-t-xl px-4 py-3">
                         <div class="flex flex-col items-center space-y-1">
-                            <h3 class="text-xl font-bold">
-                                {{$courses->course_code}} {{ $section->year_level }}{{ $section->class_section }}
+                            <h3 class="text-xl font-bold flex items-center gap-2">
+                                {{$courses->course_code}} {{ $section->year_level }}
+                                @if($editingSection === $section->id)
+    <div class="flex items-center gap-1">
+        <input 
+            type="text" 
+            wire:model="editableData.class_section"
+            class="w-12 text-center bg-white/10 border-white/20 rounded text-white placeholder-white/50 uppercase"
+            maxlength="1"
+            placeholder="A"
+        >
+        <div class="flex items-center gap-1">
+            <button 
+                wire:click="saveSectionChanges"
+                class="p-1 hover:bg-white/20 rounded transition-colors"
+                title="Save Changes"
+            >
+                <i class="fas fa-check text-white text-sm"></i>
+            </button>
+            <button 
+                wire:click="cancelEditing"
+                class="p-1 hover:bg-white/20 rounded transition-colors"
+                title="Cancel"
+            >
+                <i class="fas fa-times text-white text-sm"></i>
+            </button>
+            <button 
+                wire:click="deleteSection({{ $section->id }})"
+                wire:confirm="Are you sure you want to delete this section? This action cannot be undone."
+                class="p-1 hover:bg-red-500/20 rounded transition-colors"
+                title="Delete Section"
+            >
+                <i class="fas fa-trash text-red-300 hover:text-red-400 text-sm"></i>
+            </button>
+        </div>
+    </div>
+@else
+                                    <span>{{ $section->class_section }}</span>
+                                    <button 
+                                        wire:click="startEditing({{ $section->id }})"
+                                        class="p-1 hover:bg-white/20 rounded transition-colors"
+                                    >
+                                        <i class="fas fa-pen text-white/80 text-sm"></i>
+                                    </button>
+                                @endif
                             </h3>
                             <div class="flex items-center gap-2">
                                 <i class="fa fa-chalkboard-user text-white/80"></i>

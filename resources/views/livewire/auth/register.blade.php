@@ -161,7 +161,7 @@
                     <div>
                         <x-select-input wire:model="academic_year_id" name="academic_year_id" icon="fa fa-calendar"
                             placeholder="A.Y. & Semester" :options="$academicYear
-                ->mapWithKeys(fn($year) => [$year->id => $year->academic_year . ' (Semester ' . $year->semester . ')'])
+                ->mapWithKeys(fn($year) => [$year->id => $year->academic_year . ' (' . $year->semester . ')'])
                 ->toArray()" :selected="old('academic_year_id')" />
                         <x-input-error :messages="$errors->get('academic_year_id')" class="mt-2" />
                     </div>
@@ -203,7 +203,7 @@
                         <x-select-input wire:model="academic_year_id" name="academic_year_id" icon="fa fa-calendar"
                             placeholder="A.Y. & Semester" :options="$academicYear
                 ->mapWithKeys(fn($year) => [
-                    $year->id => $year->academic_year . ' (Semester ' . $year->semester . ')'
+                    $year->id => $year->academic_year . ' ('. $year->semester . ')'
                 ])
                 ->toArray()"
                             :selected="old('academic_year_id')" />

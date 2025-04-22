@@ -4,22 +4,22 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">Student Profile</h2>
             <div class="flex items-center gap-2">
-                @if(!$student->user->is_verified)
+                @unless($student->user->is_verified)
                 <button wire:click="verifyStudent"
                     wire:confirm="Are you sure you want to verify this student?"
                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
                 <i class="fa fa-check mr-2"></i>
                 Verify Student
             </button>
-                @endif
-                {{-- <button 
+                @endunless
+                <button 
                     wire:click="deleteStudent"
                     wire:confirm="Are you sure you want to delete this student? This action cannot be undone."
                     class="p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
                     title="Delete Student"
                 >
                     <i class="fa fa-trash"></i>
-                </button> --}}
+                </button>
                 <button 
                     wire:click="$dispatch('closeModal')"
                     class="p-2 rounded-full hover:bg-gray-200 transition-colors"
@@ -105,9 +105,9 @@
                         @if ($student->user->is_verified)
                             <i class="fa fa-circle-check text-green-500 text-xl" title="Verified"></i>
                         @endif
-                        {{-- <button wire:click="toggleEdit" class="p-2 hover:bg-gray-100 rounded-full">
+                        <button wire:click="toggleEdit" class="p-2 hover:bg-gray-100 rounded-full">
                             <i class="fa {{ $isEditing ? 'fa-times' : 'fa-pen' }} text-gray-500"></i>
-                        </button> --}}
+                        </button>
                     </div>
                 </div>
         
@@ -215,11 +215,11 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="font-semibold text-gray-800">Deployment Details</h4>
-                            {{-- @if($student->deployment)
+                            @if($student->deployment)
                                 <button wire:click="toggleDeploymentEdit" class="p-2 hover:bg-gray-100 rounded-full">
                                     <i class="fa {{ $isEditingDeployment ? 'fa-times' : 'fa-pen' }} text-gray-500"></i>
                                 </button>
-                            @endif --}}
+                            @endif
                         </div>
                         @if($student->deployment)
                             <div class="space-y-4">

@@ -14,6 +14,15 @@ use Illuminate\Support\Facades\DB;
 class InstructorModal extends ModalComponent
 {
     public Instructor $user;
+    public $isEditing = false;
+    public $editableData = [
+        'first_name' => '',
+        'middle_name' => '',
+        'last_name' => '',
+        'suffix' => '',
+        'instructor_id' => '',
+        'contact' => '',
+    ];
 
     public static function modalMaxWidth(): string
     {
@@ -56,17 +65,73 @@ class InstructorModal extends ModalComponent
 
 
 public function mount(Instructor $instructor)
+    {
+        $this->user = $instructor->load([
+            'sections.course',
+            'instructorCourse.course',
+            'handles',
+            'user'
+        ]);
+        
+        $this->editableData = [
+            'first_name' => $this->user->first_name,
+            'middle_name' => $this->user->middle_name,
+            'last_name' => $this->user->last_name,
+            'suffix' => $this->user->suffix,
+            'instructor_id' => $this->user->instructor_id,
+            'contact' => $this->user->contact,
+        ];
+    }
+    public function toggleEdit()
+    {
+        $this->isEditing = !$this->isEditing;
+    }
+
+    public function saveChanges()
 {
-    $this->user = $instructor->load([
-        'sections.course',
-        'instructorCourse.course',
-        'handles',
-        'user'
-
+    $this->validate([
+        'editableData.first_name' => 'required|string|max:255',
+        'editableData.last_name' => 'required|string|max:255',
+        'editableData.instructor_id' => [
+            'required',
+            'string',
+            'max:255',
+            function ($attribute, $value, $fail) {
+                $exists = Instructor::where('instructor_id', $value)
+                    ->where('id', '!=', $this->user->id)
+                    ->exists();
+                
+                if ($exists) {
+                    $fail('This instructor ID is already taken.');
+                }
+            },
+        ],
+        'editableData.contact' => 'required|string|max:255',
     ]);
-    
-}
 
+    try {
+        $this->user->update([
+            'first_name' => $this->editableData['first_name'],
+            'middle_name' => $this->editableData['middle_name'],
+            'last_name' => $this->editableData['last_name'],
+            'suffix' => $this->editableData['suffix'],
+            'instructor_id' => $this->editableData['instructor_id'],
+            'contact' => $this->editableData['contact'],
+        ]);
+        
+        $this->isEditing = false;
+        $this->dispatch('alert', type: 'success', text: 'Profile updated successfully!');
+        $this->dispatch('refreshInstructors');
+        
+    } catch (\Exception $e) {
+        logger()->error('Error updating instructor', [
+            'error' => $e->getMessage(),
+            'instructor' => $this->user->id,
+            'data' => $this->editableData
+        ]);
+        $this->dispatch('alert', type: 'error', text: 'Error updating profile.');
+    }
+}
 public function verifyInstructor()
 {
     if (!$this->user->user) {

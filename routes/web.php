@@ -29,6 +29,7 @@ use Illuminate\Http\Request;
 use App\Http\Livewire\Supervisor\CompleteProfileForm;
 use App\Http\Middleware\SupervisorFirstLoginMiddleware;
 use App\Livewire\Supervisor\Menu;
+use App\Models\Report;
 
 Route::get('document/preview/{path}', function (Request $request, $path) {
     if (!$request->hasValidSignature()) {
@@ -67,6 +68,11 @@ Route::get('/', function () {
     return view('auth.login'); // Login page for unauthenticated users
 });
 
+Route::get('/semester-notice', function() {
+    $currentAcademic = \App\Models\Academic::where('ay_default', true)->first();
+    return view('semester-notice', ['currentAcademic' => $currentAcademic]);
+})->name('semester.notice')->middleware('auth');
+
 
 Route::get('/auth/verify-email/{email}', EmailVerification::class)->name('verify.email');
 
@@ -102,6 +108,11 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function ()
         Route::get('/documents/acceptance-letters', [DocumentsController::class, 'index'])->name('documents.acceptance');
         Route::get('/documents/endorsement-letters', [DocumentsController::class, 'endorsement'])->name('documents.endorsement');
         Route::get('/documents/moa', [DocumentsController::class, 'moa'])->name('documents.moa');
+        Route::get('/weekly-report/{report}/pdf', function(Report $report) {
+            return app()->make(\App\Livewire\Admin\StudentModal::class)->generateWeeklyReport($report);
+        })->name('admin.weekly-report.pdf');
+        Route::get('/academic-year', \App\Livewire\Admin\AcademicYear::class)->name('academic-year');
+        Route::get('/academic-year/{academic}', App\Livewire\Admin\AcademicYearShow::class)->name('academic-year.show');
     });
 });
 
@@ -118,6 +129,8 @@ Route::middleware(['auth', RoleMiddleware::class . ':student'])->group(function 
         ->name('student.weekly-report.pdf');
         Route::get('/student/dtr', [StudentController::class, 'generateDtr'])->name('student.dtr.generate');
         Route::post('/student/endorsement-request', [StudentController::class, 'requestEndorsement'])->name('student.request-endorsement');
+        Route::get('/evaluation/{evaluation}/view', [StudentController::class, 'viewEvaluation'])
+        ->name('student.evaluation.view');
 });
 
 // Instructor dashboard

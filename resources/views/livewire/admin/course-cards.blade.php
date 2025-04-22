@@ -22,8 +22,59 @@
                     <!-- Card Header -->
                     <div class="bg-secondary text-white rounded-t-xl p-4">
                         <div class="text-center space-y-1">
-                            <h3 class="text-lg font-bold tracking-wide">{{ $course->course_code }}</h3>
-                            <p class="text-sm text-white/90">{{ $course->course_name }}</p>
+                            @if($editingCourse === $course->id)
+    <div class="space-y-2">
+        <input 
+            type="text" 
+            wire:model="editableData.course_code"
+            class="w-full text-center bg-white/10 border-white/20 rounded text-white placeholder-white/50"
+            placeholder="Course Code"
+        >
+        <input 
+            type="text" 
+            wire:model="editableData.course_name"
+            class="w-full text-center bg-white/10 border-white/20 rounded text-white placeholder-white/50"
+            placeholder="Course Name"
+        >
+        <div class="flex items-center justify-center gap-2 mt-2">
+            <button 
+                wire:click="saveCourseChanges"
+                class="p-1 hover:bg-white/20 rounded transition-colors"
+                title="Save Changes"
+            >
+                <i class="fas fa-check text-white"></i>
+            </button>
+            <button 
+                wire:click="cancelEditing"
+                class="p-1 hover:bg-white/20 rounded transition-colors"
+                title="Cancel"
+            >
+                <i class="fas fa-times text-white"></i>
+            </button>
+            <button 
+                wire:click="deleteCourse({{ $course->id }})"
+                wire:confirm="Are you sure you want to delete this course? This action cannot be undone."
+                class="p-1 hover:bg-red-500/20 rounded transition-colors"
+                title="Delete Course"
+            >
+                <i class="fas fa-trash text-red-300 hover:text-red-400"></i>
+            </button>
+        </div>
+    </div>
+@else
+                                <div class="flex items-center justify-center gap-2">
+                                    <div class="flex-1 text-left">
+                                        <h3 class="text-lg font-bold tracking-wide">{{ $course->course_code }}</h3>
+                                        <p class="text-sm text-white/90">{{ $course->course_name }}</p>
+                                    </div>
+                                    <button 
+                                        wire:click="startEditing({{ $course->id }})"
+                                        class="p-1.5 hover:bg-white/20 rounded transition-colors"
+                                    >
+                                        <i class="fas fa-pen text-white/80 text-sm"></i>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     </div>
 

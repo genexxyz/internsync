@@ -13,43 +13,128 @@
     <!-- Content -->
     <div class="px-6 py-4">
         <!-- Profile Section -->
-        <div class="flex flex-col lg:flex-row items-center lg:items-start gap-6 mb-6">
-            <img src="/images/default_avatar.jpg"
-                class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm" alt="Profile Picture">
-
-            <div class="flex-1 text-center lg:text-left">
-                <div class="flex items-center justify-center lg:justify-start gap-2 mb-2">
-                    <h3 class="text-2xl font-bold text-gray-800">
-                        {{ $instructor->first_name ?? '' }}
-                        {{ $instructor->middle_name ?? '' }}
-                        {{ $instructor->last_name ?? '' }}
-                        {{ $instructor->suffix ?? '' }}
-                    </h3>
-                    @if ($instructor->user->is_verified)
-                        <i class="fa fa-circle-check text-green-500 text-xl" title="Verified"></i>
-                    @endif
-                </div>
-
-                <p class="text-gray-600 mb-2">
-                    <i class="fa fa-id-card text-gray-400 mr-2"></i>
-                    Instructor ID: {{$instructor->instructor_id}}
-                </p>
-
-                @if ($instructor->instructorCourse)
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
-                        <i class="fa fa-star-of-life text-sm"></i>
-                        <span class="font-medium">Program Head</span>
-                    </div>
-                    <p class="text-gray-600 mt-2">
-                        {{ optional($instructor->instructorCourse->course)->course_name ?: 'N/A' }}
+        <div class="flex flex-col items-center lg:flex-row lg:items-start gap-6 mb-6">
+            <!-- Left Column -->
+            <div class="lg:w-1/4">
+                <img src="{{ $user->image ? Storage::url($user->image) : '/images/default_avatar.jpg' }}"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm mx-auto lg:mx-0" 
+                    alt="Profile Picture">
+                
+                <!-- Basic Info -->
+                <div class="mt-6 space-y-3">
+                    <p class="flex items-center gap-2 text-gray-600">
+                        <i class="fa fa-id-card w-5 text-gray-400"></i>
+                        @if(!$isEditing)
+                            <span>{{ $user->instructor_id }}</span>
+                        @else
+                            <input type="text" 
+                                wire:model="editableData.instructor_id" 
+                                placeholder="Instructor ID"
+                                class="w-full border-gray-300 rounded-lg">
+                        @endif
                     </p>
+                </div>
+            </div>
+    
+            <!-- Right Column -->
+            <div class="flex-1">
+                <!-- Name Section -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex-1">
+                        @if(!$isEditing)
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800">
+                                    {{ $user->first_name }}
+                                    {{ $user->middle_name }}
+                                    {{ $user->last_name }}
+                                    {{ $user->suffix }}
+                                </h3>
+                                @if($user->instructorCourse)
+                                    <p class="mt-1 text-sm font-medium text-primary">
+                                        Program Head - {{ $user->instructorCourse->course->course_code }}
+                                    </p>
+                                @endif
+                            </div>
+                        @else
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <input type="text" wire:model="editableData.first_name" 
+                                            class="w-full border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                        <input type="text" wire:model="editableData.middle_name" 
+                                            class="w-full border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                        <input type="text" wire:model="editableData.last_name" 
+                                            class="w-full border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                                        <input type="text" wire:model="editableData.suffix" 
+                                            class="w-full border-gray-300 rounded-lg">
+                                    </div>
+                                </div>
+                                @if($user->instructorCourse)
+                                    <p class="text-sm font-medium text-primary flex items-center gap-2">
+                                        <i class="fas fa-user-tie"></i>
+                                        Program Head - {{ $user->instructorCourse->course->course_code }}
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-3">
+                        @if ($user->user->is_verified)
+                            <i class="fa fa-circle-check text-green-500 text-xl" title="Verified"></i>
+                        @endif
+                        <button wire:click="toggleEdit" class="p-2 hover:bg-gray-100 rounded-full">
+                            <i class="fa {{ $isEditing ? 'fa-times' : 'fa-pen' }} text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+    
+                <!-- Contact Information -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-4">Contact Information</h4>
+                    <div class="space-y-3">
+                        <p class="flex items-center gap-2 text-gray-600">
+                            <i class="fa fa-envelope w-5"></i>
+                            <span>{{ $user->user->email }}</span>
+                        </p>
+                        <p class="flex items-center gap-2 text-gray-600">
+                            <i class="fa fa-phone w-5"></i>
+                            @if(!$isEditing)
+                                <span>{{ $user->contact }}</span>
+                            @else
+                                <input type="text" 
+                                    wire:model="editableData.contact" 
+                                    placeholder="Contact Number"
+                                    class="w-full border-gray-300 rounded-lg">
+                            @endif
+                        </p>
+                    </div>
+                </div>
+    
+                <!-- Save Changes Button -->
+                @if($isEditing)
+                    <div class="flex justify-end">
+                        <button wire:click="saveChanges"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+                            <i class="fa fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
                 @endif
             </div>
         </div>
-
         <!-- Info Grid -->
-        <div class="grid lg:grid-cols-2 gap-6 mb-6">
-            <!-- Contact Information -->
+        <div class=" mb-6">
+            {{-- <!-- Contact Information -->
             <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-800 mb-4">Contact Information</h4>
                 <div class="space-y-2">
@@ -62,7 +147,7 @@
                         <span>{{ $instructor->contact ?? '' }}</span>
                     </p>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Sections -->
             <div class="bg-gray-50 rounded-lg p-4">

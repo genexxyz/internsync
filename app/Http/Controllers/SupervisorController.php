@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\Supervisor;
 use Illuminate\Support\Facades\Auth;
@@ -12,15 +13,23 @@ class SupervisorController extends Controller
 
     public function index(): View
     {
-$supervisor = Supervisor::where('user_id',Auth::user()->id)->with([
-    'deployments' => function($query) {
-        $query->where('supervisor_id', Auth::user()->supervisor->id);
-    }
-])
-->firstOrFail();;
+        $supervisor = Supervisor::where('user_id', Auth::user()->id)
+            ->with([
+                'deployments' => function($query) {
+                    $query->where('supervisor_id', Auth::user()->supervisor->id);
+                }
+            ])
+            ->firstOrFail();
+            
+        $recentNotifications = Notification::where('user_id', Auth::id())
+            ->where('is_archived', false)
+            ->latest()
+            ->take(3)
+            ->get();
         
         return view('supervisor.dashboard', [
-            'supervisor' => $supervisor
+            'supervisor' => $supervisor,
+            'recentNotifications' => $recentNotifications
         ]);
     }
 

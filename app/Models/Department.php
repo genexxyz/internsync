@@ -13,4 +13,13 @@ class Department extends Model
     {
         return $this->belongsTo(Company::class);
     }
+    public function supervisor()
+    {
+        return $this->hasMany(Supervisor::class);
+    }
+    public function deployments()
+    {
+        return $this->hasMany(Deployment::class, 'company_dept_id');
+    }
+    
 }

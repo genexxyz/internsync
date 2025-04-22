@@ -65,9 +65,28 @@
                         </div>
                        
                     </div>
+                    
                 @endforeach
             </div>
         @endif
+        @if($journal->is_approved === 2 && $journal->feedback)
+        <div class="mb-6 bg-red-50 border border-red-100 rounded-lg p-2">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-xs font-medium text-red-800">Supervisor's Feedback:</h4>
+                    <p class="mt-1 text-xs text-red-700">
+                        {{ $journal->feedback }}
+                    </p>
+                    <p class="mt-2 text-xs text-red-600">
+                        Rejected on: {{ Carbon\Carbon::parse($journal->reviewed_at)->format('M d, Y h:i A') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
     @else
         <p class="text-sm text-gray-500 italic">No entries for this day</p>
     @endif

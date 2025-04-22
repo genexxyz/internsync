@@ -18,6 +18,8 @@ return new class extends Migration
             $table->boolean('ay_default')->default(false);
             $table->boolean('status')->default(true);
             $table->string('description')->nullable();
+            $table->date('start_date')->nullable(); // New field for semester date range
+            $table->date('end_date')->nullable(); // New field for semester date range
             $table->timestamps();
         });
         

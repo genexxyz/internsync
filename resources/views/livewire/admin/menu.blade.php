@@ -77,6 +77,11 @@
                 </a>
             </div>
         </div>
+        <a wire:navigate href="{{ route('admin.academic-year') }}" class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
+    {{ request()->routeIs('admin.academic-year') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
+            <i class="fa fa-calendar"></i>
+            <span>Academic Year</span>
+        </a>
     </div>
     
 

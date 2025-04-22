@@ -6,6 +6,7 @@ use App\Models\AcceptanceLetter;
 use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\EndorsementRequest;
+use App\Models\Evaluation;
 use App\Models\Journal;
 use App\Models\MoaRequest;
 use App\Models\Report;
@@ -79,7 +80,12 @@ return view('student.dashboard', compact(
     public function ojtDocument(): View
 {
     $student = Student::where('user_id', Auth::user()->id)
-        ->with(['acceptance_letter', 'deployment.supervisor', 'deployment.company'])
+        ->with([
+            'acceptance_letter', 
+            'deployment.supervisor', 
+            'deployment.company',
+            'deployment.evaluation'  // Add this line
+        ])
         ->firstOrFail();
         
     $acceptance_letter = AcceptanceLetter::where('student_id', $student->id)->first();
@@ -102,7 +108,12 @@ return view('student.dashboard', compact(
             ->first();
     }
     
-    return view('student.ojt-document', compact('student', 'acceptance_letter', 'moaRequest', 'endorsementRequest'));
+    return view('student.ojt-document', compact(
+        'student', 
+        'acceptance_letter', 
+        'moaRequest', 
+        'endorsementRequest'
+    ));
 }
 
 
@@ -130,7 +141,52 @@ public function requestEndorsement(Request $request)
     return back();
 }
 
+public function viewEvaluation(Evaluation $evaluation)
+{
+    // Security check
+    if ($evaluation->deployment->student_id !== Auth::user()->student->id) {
+        abort(403);
+    }
 
+    $data = [
+        'deployment' => $evaluation->deployment,
+        'ratings' => [
+            'quality_work' => $evaluation->quality_work,
+            'completion_time' => $evaluation->completion_time,
+            'dependability' => $evaluation->dependability,
+            'judgment' => $evaluation->judgment,
+            'cooperation' => $evaluation->cooperation,
+            'attendance' => $evaluation->attendance,
+            'personality' => $evaluation->personality,
+            'safety' => $evaluation->safety,
+        ],
+        'maxRatings' => [
+            'quality_work' => 20,
+            'completion_time' => 15,
+            'dependability' => 15,
+            'judgment' => 10,
+            'cooperation' => 10,
+            'attendance' => 10,
+            'personality' => 10,
+            'safety' => 10,
+        ],
+        'recommendation' => $evaluation->recommendation,
+        'totalScore' => $evaluation->total_score,
+        'criteria' => [
+            'quality_work' => 'Quality of Work (thoroughness, accuracy, neatness, effectiveness)',
+            'completion_time' => 'Quality of Work (able to complete work in allotted time)',
+            'dependability' => 'Dependability, Reliability, and Resourcefulness',
+            'judgment' => 'Judgment (sound decisions, ability to evaluate factors)',
+            'cooperation' => 'Cooperation (teamwork, working well with others)',
+            'attendance' => 'Attendance (punctuality, regularity)',
+            'personality' => 'Personality (grooming, disposition)',
+            'safety' => 'Safety (awareness of safety practices)',
+        ],
+    ];
+
+    $pdf = PDF::loadView('pdfs.evaluation-report', $data);
+    return $pdf->stream('Evaluation_Report.pdf');
+}
     public function generateWeeklyReportPdf(Report $report)
     {
         // Check if user owns this report

@@ -105,9 +105,15 @@ class="relative flex w-full flex-col md:flex-row">
                     <button type="button"
                         class="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/10 transition-colors"
                         x-on:click="userDropdownIsOpen = !userDropdownIsOpen">
+                        @if(Auth::user()->roleInfo->image)
+                            <img src="{{ asset('storage/' . Auth::user()->roleInfo->image) }}"
+                                class="w-10 h-10 rounded-full object-cover shadow-md" 
+                                alt="Profile photo">
+                        @else
                         <img src="/images/default_avatar.jpg"
                             class="w-10 h-10 rounded-full object-cover shadow-md" 
                             alt="Profile photo">
+                        @endif
                         <div class="hidden md:flex flex-col items-start">
                             <span class="text-white text-sm font-semibold">
                                 {{ Auth::user()->roleInfo->first_name ?? 'N/A' }} {{ Auth::user()->roleInfo->last_name ?? 'N/A' }}
