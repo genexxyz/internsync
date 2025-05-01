@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Auth;
 
+use App\Mail\OtpMail;
 use Livewire\Component;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Services\PHPMailerService;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
 
 class EmailVerification extends Component
@@ -64,12 +66,14 @@ class EmailVerification extends Component
             $otp = $user->generateOTP();
 
             // Use PHPMailerService to send OTP
-            $mailer = new PHPMailerService();
-            $sent = $mailer->send(
-                $user->email,
-                'Email Verification',
-                "Your new OTP for email verification is: {$otp}"
-            );
+            // $mailer = new PHPMailerService();
+            // $sent = $mailer->send(
+            //     $user->email,
+            //     'Email Verification',
+            //     "Your new OTP for email verification is: {$otp}"
+            // );
+
+            $sent = Mail::to($user->email)->send(new OtpMail($user, $otp));
 
             if ($sent) {
                 session()->flash('status', 'New OTP has been sent to your email');

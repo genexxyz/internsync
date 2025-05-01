@@ -43,28 +43,28 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse ($companies as $company)
                         <tr class="hover:bg-gray-50 transition-colors duration-200">
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-4 sm:px-6 whitespace-nowrap text-sm text-gray-500">
                                 {{ $loop->iteration + ($companies->currentPage() - 1) * $companies->perPage() }}
                             </td>
-                            <td class="px-4 sm:px-6 py-4">
+                            <td class="px-4 sm:px-6">
                                 <div class="flex flex-col">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ $company->company_name }}
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 sm:px-6whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ $company->students_count ?? 0 }}
                                 </span>
                             </td>
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <td class="px-4 sm:px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
                                 <button
                                     onclick="Livewire.dispatch('openModal', { 
                                         component: 'admin.company-modal', 
                                         arguments: { company: {{ $company->id }} } 
                                     })"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                                 >
                                     <i class="fa fa-eye mr-2"></i>
                                     <span class="hidden sm:inline">View Details</span>

@@ -193,77 +193,77 @@ protected $messages = [
     }
 
     public function loadWeeklyData()
-    {
-        // Get all dates in range
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
+{
+    if (!$this->startDate || !$this->endDate) return;
 
-        // Get journals with tasks and attendance
-        $journals = Journal::with(['attendance', 'taskHistories' => function ($query) {
-            $query->orderBy('changed_at', 'desc');
-        }, 'taskHistories.task'])
-            ->where('student_id', Auth::user()->student->id)
-            ->whereBetween('date', [$this->startDate, $this->endDate])
-            ->get()
-            ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
+    // Get journals with tasks and attendance
+    $journals = Journal::with(['attendance', 'tasks' => function ($query) {
+        $query->orderBy('order', 'asc');
+    }])
+        ->where('student_id', Auth::user()->student->id)
+        ->whereBetween('date', [$this->startDate, $this->endDate])
+        ->get()
+        ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
 
-        // Calculate total hours
-        $this->weeklyTotal = $journals->sum(function ($journal) {
-            if (!$journal->attendance?->total_hours) return 0;
-            list($h, $m) = explode(':', $journal->attendance->total_hours);
-            return ($h * 60) + $m;
-        });
+    // Calculate total hours
+    $this->weeklyTotal = $journals->sum(function ($journal) {
+        if (!$journal->attendance?->total_hours) return 0;
+        list($h, $m) = explode(':', $journal->attendance->total_hours);
+        return ($h * 60) + $m;
+    });
 
-        // Create entries for all days in range
-        $this->weeklyJournals = collect();
-        $current = $start->copy();
-        while ($current <= $end) {
-            $dateString = $current->format('Y-m-d');
-            $this->weeklyJournals[$dateString] = $journals->get($dateString);
-            $current->addDay();
-        }
+    // Create entries for all days in range
+    $this->weeklyJournals = collect();
+    $current = Carbon::parse($this->startDate);
+    $end = Carbon::parse($this->endDate);
+    
+    while ($current <= $end) {
+        $dateString = $current->format('Y-m-d');
+        $this->weeklyJournals[$dateString] = $journals->get($dateString);
+        $current->addDay();
+    }
+}
+
+public function viewPastReport($reportId)
+{
+    $report = Report::findOrFail($reportId);
+
+    // Update component properties
+    $this->selectedReport = $report;
+    $this->startDate = $report->start_date;
+    $this->endDate = $report->end_date;
+    $this->weekNumber = $report->week_number;
+    $this->learningOutcomes = $report->learning_outcomes;
+
+    // Load journals for the selected report's date range
+    $journals = Journal::with(['attendance', 'tasks' => function ($query) {
+        $query->orderBy('order', 'asc');
+    }])
+        ->where('student_id', Auth::user()->student->id)
+        ->whereBetween('date', [$report->start_date, $report->end_date])
+        ->get()
+        ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
+
+    // Calculate total hours
+    $this->weeklyTotal = $journals->sum(function ($journal) {
+        if (!$journal->attendance?->total_hours) return 0;
+        list($h, $m) = explode(':', $journal->attendance->total_hours);
+        return ($h * 60) + $m;
+    });
+
+    // Create entries for all days in range
+    $this->weeklyJournals = collect();
+    $current = Carbon::parse($report->start_date);
+    $end = Carbon::parse($report->end_date);
+
+    while ($current <= $end) {
+        $dateString = $current->format('Y-m-d');
+        $this->weeklyJournals[$dateString] = $journals->get($dateString);
+        $current->addDay();
     }
 
-    public function viewPastReport($reportId)
-    {
-        $report = Report::findOrFail($reportId);
-
-        // Update component properties to show selected report
-        $this->selectedReport = $report;
-        $this->startDate = $report->start_date;
-        $this->endDate = $report->end_date;
-        $this->weekNumber = $report->week_number;
-        $this->learningOutcomes = $report->learning_outcomes;
-
-        // Load journals for the selected report's date range
-        $journals = Journal::with(['attendance', 'taskHistories' => function ($query) {
-            $query->orderBy('changed_at', 'desc');
-        }, 'taskHistories.task'])
-            ->where('student_id', Auth::user()->student->id)
-            ->whereBetween('date', [$report->start_date, $report->end_date])
-            ->get()
-            ->keyBy(fn($journal) => $journal->date->format('Y-m-d'));
-
-        // Calculate total hours
-        $this->weeklyTotal = $journals->sum(function ($journal) {
-            if (!$journal->attendance?->total_hours) return 0;
-            list($h, $m) = explode(':', $journal->attendance->total_hours);
-            return ($h * 60) + $m;
-        });
-
-        // Create entries for all days in range
-        $this->weeklyJournals = collect();
-        $current = Carbon::parse($report->start_date);
-        $end = Carbon::parse($report->end_date);
-
-        while ($current <= $end) {
-            $dateString = $current->format('Y-m-d');
-            $this->weeklyJournals[$dateString] = $journals->get($dateString);
-            $current->addDay();
-        }
-
-        $this->showWeekDetails = true;
-    }
+    $this->showWeekDetails = true;
+}
 
     public function viewWeekDetails()
     {

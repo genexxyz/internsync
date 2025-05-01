@@ -14,6 +14,9 @@ use App\Models\Supervisor;
 use LivewireUI\Modal\ModalComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\SupervisorMail;
+use Illuminate\Support\Facades\Mail;
+
 
 class AssignModal extends ModalComponent
 {
@@ -101,22 +104,14 @@ class AssignModal extends ModalComponent
     $this->companyExists = true;
     $this->selectedCompany = $company;
     
-    // Load all departments for this company, ensure "No Department" exists
-    $noDepartment = Department::firstOrCreate(
-        [
-            'company_id' => $company->id,
-            'department_name' => 'No Department'
-        ]
-    );
-    
-    // Load all departments including "No Department"
+    // Load all departments for this company
     $this->existingDepartments = Department::where('company_id', $company->id)
         ->pluck('department_name')
         ->toArray();
 
-    // If no department was provided in acceptance letter, select "No Department" by default
-    if (empty($this->acceptanceLetter->department_name)) {
-        $this->selectedDepartment = 'No Department';
+    // If department from acceptance letter exists, select it
+    if (!empty($this->acceptanceLetter->department_name)) {
+        $this->selectedDepartment = $this->acceptanceLetter->department_name;
     }
     
     $this->assignButton = true;
@@ -183,12 +178,6 @@ public function createNewDepartment()
         'company_name' => $this->newCompany['company_name'],
         'address' => $this->newCompany['address'],
     ]);
-    
-    // Always create "No Department" first
-    Department::create([
-        'company_id' => $company->id,
-        'department_name' => 'No Department'
-    ]);
 
     // Create department if provided
     if (!empty($this->newCompany['department'])) {
@@ -235,10 +224,10 @@ public function createNewDepartment()
         ->first();
 
     if (!$instructor) {
-        $this->dispatch('alert', [
-            'type' => 'error',
-            'message' => 'No instructor assigned to this section.'
-        ]);
+        $this->dispatch('alert',
+            type: 'error',
+            text: "Please assign an instructor to this students' section first."
+        );
         return;
     }
 
@@ -277,6 +266,26 @@ Notification::send(
         'student.journey',
         'fa-building'
     );
+    // Send email to supervisor if one is assigned
+    if ($deployment) {
+        try {
+            Mail::to($this->acceptanceLetter->email)
+                ->send(new SupervisorMail(
+                    $this->acceptanceLetter->supervisor_name,
+                    $this->selectedCompany,
+                    $this->selectedDepartment,
+                    $this->acceptanceLetter->address,
+                    $this->acceptanceLetter->reference_link
+                ));
+        } catch (\Exception $e) {
+            logger()->error('Failed to send supervisor email', [
+                'error' => $e->getMessage(),
+                'supervisor_email' => $this->acceptanceLetter->email,
+                'student_id' => $this->student->id,
+                'reference_link' => $this->acceptanceLetter->reference_link
+            ]);
+        }
+    }
     $this->closeModal();
 
     

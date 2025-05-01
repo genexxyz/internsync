@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Course;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Instructor;
@@ -22,6 +23,7 @@ class InstructorTable extends Component
     public $filter = 'all'; // Default filter value
     public $modalOpen = false;
     public $selectedInstructor = null; // For the modal data
+    public $courses = [];
 
     protected $queryString = ['search', 'filter'];
 
@@ -39,6 +41,9 @@ class InstructorTable extends Component
         
 
         // Set to null to close the modal
+    }
+    public function mount(){
+        $this->courses = Course::all();
     }
     public function render()
     {
@@ -68,10 +73,12 @@ class InstructorTable extends Component
             });
         }
 
+        
         $instructors = $query->paginate(10);
         return view('livewire.admin.instructor-table', [
             'instructors' => $instructors,
         ]);
+
     }
 
     public function updatedSearch()

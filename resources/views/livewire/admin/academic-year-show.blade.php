@@ -127,7 +127,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm text-gray-900">
-                                        {{ $deployment->company->company_name }}
+                                        {{ $deployment->company->company_name ?? '-' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
@@ -137,7 +137,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <button 
-                                        wire:click="$dispatch('openModal', { component: 'admin.student-modal', arguments: { student: {{ $deployment->student->id }} }})"
+                                        wire:click="$dispatch('openModal', { component: 'student-modal', arguments: { student: {{ $deployment->student->id }} }})"
                                         class="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
                                         title="View Details"
                                     >

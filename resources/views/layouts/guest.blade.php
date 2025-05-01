@@ -16,14 +16,36 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-
+            position: relative;
+            height: 100vh;
+        }
+    
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: url('/images/default_bg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            height: 100vh;
-
+            opacity: 0.9; /* Adjust darkness level here */
+            z-index: -1;
+        }
+    
+        /* Optional: Add additional darkness with a black overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Black overlay with 50% opacity */
+            z-index: -1;
         }
     </style>
     <!-- Styles -->
@@ -57,13 +79,14 @@
             <div class="flex flex-col ml-5">
                 <div><x-header class="text-5xl ">{{ $settings->system_name ?? 'InternSync' }}</x-header></div>
                 <div>
-                    <p class="text-white">{{ $settings->school_name ?? 'InternSync' }}</p>
+                    <p class="text-white text-xl">{{ $settings->school_name ?? 'InternSync' }}</p>
                 </div>
                 </div>
                 
                 
         </div>
-        <div class="w-full mx-6 p-6 overflow-hidden sm:rounded-lg">
+        <div class="w-full p-6">
+
             {{ $slot }}
         </div>
     </div>

@@ -95,33 +95,46 @@ class InstructorController extends Controller
     ));
 }
 
-    public function taskAttendance(): View
-    {
-        $instructor = $this->getInstructor();
 
-    // Initialize query builder
-    $sectionsQuery = Section::query()
-        ->with(['course', 'students']);
-
-    if ($instructor->instructorCourse && $instructor->instructorCourse->is_verified) {
-        // For verified program head - get all sections in their course
-        $sectionsQuery->where('course_id', $instructor->instructorCourse->course_id);
-    } else {
-        // For regular instructors or unverified program heads - get only sections they handle
-        $sectionsQuery->whereHas('handles', function($query) use ($instructor) {
-            $query->where('instructor_id', $instructor->id)
-                ->where('is_verified', true);
-        });
+public function taskAttendance(): View
+{
+    $instructor = $this->getInstructor();
+    
+    $sections = collect();
+    $programHeadCourses = $instructor->instructorCourse()
+        ->where('is_verified', true)
+        ->with('course')
+        ->get();
+    
+    // Get all sections for program head courses
+    foreach ($programHeadCourses as $programHead) {
+        $courseSections = Section::where('course_id', $programHead->course_id)
+            ->with(['course', 'students', 'handles' => function($query) use ($instructor) {
+                $query->where('instructor_id', $instructor->id);
+            }])
+            ->get();
+        $sections = $sections->concat($courseSections);
     }
+    
+    // Get additional handled sections if any
+    $handledSections = Section::whereHas('handles', function($query) use ($instructor) {
+        $query->where('instructor_id', $instructor->id)
+            ->where('is_verified', true);
+    })
+    ->with(['course', 'students', 'handles' => function($query) use ($instructor) {
+        $query->where('instructor_id', $instructor->id);
+    }])
+    ->get();
+    
+    // Merge all sections and remove duplicates
+    $sections = $sections->concat($handledSections)->unique('id');
 
-    $sections = $sectionsQuery->get();
-
-        return view('instructor.task-and-attendance.sections', [
-            'instructor' => $instructor,
+    return view('instructor.task-and-attendance.sections', [
+        'instructor' => $instructor,
         'sections' => $sections,
-        'isProgramHead' => (bool) ($instructor->instructorCourse?->is_verified)
-        ]);
-    }
+        'programHeadCourses' => $programHeadCourses
+    ]);
+}
 
     public function deployments(): View
 {

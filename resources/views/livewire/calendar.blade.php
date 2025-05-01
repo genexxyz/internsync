@@ -86,24 +86,42 @@
                                 <div class="space-y-4">
                                     <!-- Journal Section -->
                                     <div class="border-b border-gray-200 pb-4">
+                                        <div class="flex items-center justify-between">
+                                            
+                                            
                                         <h4 class="text-sm font-medium text-gray-500 mb-2">Journal Entry</h4>
-                                        <div class="mt-2 flex items-center space-x-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
-                                                $selectedTask['is_submitted'] 
-                                                    ? 'bg-blue-100 text-blue-800' 
-                                                    : 'bg-gray-100 text-gray-800' 
-                                            }}">
-                                                {{ $selectedTask['is_submitted'] ? 'Submitted' : 'Draft' }}
-                                            </span>
-                                            @if($selectedTask['is_submitted'])
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
-                                                    $selectedTask['is_approved'] 
-                                                        ? 'bg-green-100 text-green-800' 
-                                                        : 'bg-yellow-100 text-yellow-800' 
-                                                }}">
-                                                    {{ $selectedTask['is_approved'] ? 'Approved' : 'Pending Approval' }}
-                                                </span>
-                                            @endif
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
+                                            $selectedTask['is_approved'] === 1 ? 'bg-green-100 text-green-800' : 
+                                            ($selectedTask['is_approved'] === 2 ? 'bg-red-100 text-red-800' : 
+                                            'bg-yellow-100 text-yellow-800') 
+                                        }}">
+                                            {{ $selectedTask['is_approved'] === 1 ? 'Approved' : 
+                                               ($selectedTask['is_approved'] === 2 ? 'Rejected' : 'Pending') }}
+                                        </span>
+                                    </div>
+                                        <div class="mt-2">
+                                            
+                                            @if($selectedTask && !empty($selectedTask['tasks']))
+    
+
+    <div class="mt-1 text-gray-800 font-semibold">
+        {{ $selectedTask['text'] }}
+    </div>
+
+
+<!-- Tasks List -->
+    <div class="">
+        <ul class="list-disc list-inside">
+            @foreach($selectedTask['tasks'] as $task)
+                <li class="text-gray-800 text-sm">
+                    {{ $task['description'] }}
+                </li>
+            @endforeach
+        </ul>
+    </div>
+
+@endif
+                                            
                                         </div>
                                     </div>
                         
@@ -144,37 +162,7 @@
                                         </div>
                                     </div>
                         
-                                    @if($selectedTask && !empty($selectedTask['tasks']))
-    <div class="mt-4 border-t border-gray-200 pt-4">
-        <h4 class="text-sm font-medium text-gray-500 mb-2">Tasks</h4>
-        <div class="space-y-2">
-            @foreach($selectedTask['tasks'] as $task)
-                <div class="bg-white p-3 rounded-lg border border-gray-200">
-                    <div class="flex justify-between items-start">
-                        <p class="text-sm text-gray-900">{{ $task['description'] }}</p>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
-                            $task['status'] === 'done' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' 
-                        }}">
-                            {{ ucfirst($task['status']) }}
-                        </span>
-                    </div>
-                    @if(!empty($task['history']))
-                        <div class="mt-2 space-y-1">
-                            @foreach($task['history'] as $history)
-                                <p class="text-xs text-gray-500">
-                                    {{ $history['changed_at'] }} - 
-                                    <span class="font-medium {{ $history['status'] === 'done' ? 'text-green-600' : 'text-orange-600' }}">
-                                        {{ ucfirst($history['status']) }}
-                                    </span>
-                                </p>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    </div>
-@endif
+                                    
                                 </div>
                             @else
                                 <p class="text-gray-500 text-center">No records for this day.</p>

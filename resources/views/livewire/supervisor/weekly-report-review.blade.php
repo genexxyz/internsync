@@ -81,7 +81,7 @@
                                              wire:click="toggleDailyDetails('{{ $date }}')"> --}}
                                              <div class="p-3 {{ !$data['journal'] ? 'bg-gray-50' : 'hover:bg-gray-50' }}"
                                              >
-                                            <div class="flex justify-between items-start gap-4">
+                                            <div class="">
                                                 <!-- Left: Date -->
                                                 <div class="flex-1">
                                                     <h5 class="font-medium text-gray-900">
@@ -93,21 +93,26 @@
                                                 </div>
                             
                                                 <!-- Right: Status and Toggle Icon -->
-                                                @if($data['journal'])
-                                                    <div class="flex items-center gap-3">
-                                                        <span @class([
-                                                            'px-2 py-0.5 rounded-full text-xs font-medium',
-                                                            'bg-yellow-100 text-yellow-800' => $dailyApprovals[$date]['journal_status'] === 0,
-                                                            'bg-green-100 text-green-800' => $dailyApprovals[$date]['journal_status'] === 1,
-                                                            'bg-red-100 text-red-800' => $dailyApprovals[$date]['journal_status'] === 2,
-                                                        ])>
-                                                            {{ ['Pending', 'Approved', 'Rejected'][$dailyApprovals[$date]['journal_status']] }}
-                                                        </span>
-                                                        {{-- <i class="fas fa-chevron-{{ $selectedDate === $date ? 'up' : 'down' }} text-gray-400"></i> --}}
-                                                    </div>
-                                                @else
-                                                <p class="text-xs text-red-500 mt-0.5">No Entry</p>
-                                                @endif
+                                                <div class="mt-4">
+                                                    @if($data['journal'])
+                                                        <div class="mt-1 text-gray-800 font-semibold">
+                                                            {{ $data['journal']->text }}
+                                                        </div>
+                                                
+                                                        <!-- Tasks List -->
+                                                        @if($data['journal']->tasks->isNotEmpty())
+                                                            <div class="mt-2">
+                                                                <ul class="list-disc list-inside">
+                                                                    @foreach($data['journal']->tasks as $task)
+                                                                        <li class="text-gray-800 text-sm">
+                                                                            {{ $task->description }}
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            </div>
+                                                        @endif
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                             

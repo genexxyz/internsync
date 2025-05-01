@@ -11,6 +11,8 @@ use LivewireUI\Modal\ModalComponent;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use App\Models\Setting;
+use App\Services\DocumentGeneratorService;
+use Illuminate\Support\Str;
 class StudentModal extends ModalComponent
 {
     public Student $student;
@@ -35,6 +37,11 @@ class StudentModal extends ModalComponent
     public static function modalMaxWidth(): string
     {
         return '2xl';
+    }
+    protected $documentGenerator;
+    public function boot(DocumentGeneratorService $documentGenerator)
+    {
+        $this->documentGenerator = $documentGenerator;
     }
 
     public function mount(Student $student)
@@ -179,14 +186,42 @@ class StudentModal extends ModalComponent
     }
 
     public function downloadAcceptanceLetter()
-    {
-        if ($this->student->acceptance_letter?->signed_path) {
-            return Storage::disk('public')->download(
-                $this->student->acceptance_letter->signed_path,
-                "acceptance-letter-{$this->student->student_id}_{$this->student->last_name}_{$this->student->first_name}.pdf"
-            );
+{
+    try {
+        if (!$this->student->deployment->supervisor_id) {
+            $this->dispatch('alert', type: 'error', text: 'Student is not yet deployed.');
+            return;
         }
+
+        // if (!$this->student->deployment->acceptance_letter_signed) {
+        //     $this->dispatch('alert', type: 'error', text: 'Acceptance letter is not yet signed.');
+        //     return;
+        // }
+
+        $pdf = $this->documentGenerator->generateAcceptanceLetter($this->student->deployment);
+        
+        $filename = sprintf(
+            'acceptance_letter_%s_%s_%s.pdf',
+            $this->student->student_id,
+            Str::slug($this->student->last_name),
+            Str::slug($this->student->first_name)
+        );
+
+        return response()->streamDownload(
+            function() use ($pdf) { 
+                echo $pdf->output(); 
+            },
+            $filename
+        );
+    } catch (\Exception $e) {
+        logger()->error('Error generating acceptance letter', [
+            'error' => $e->getMessage(),
+            'student_id' => $this->student->id,
+            'deployment_id' => $this->student->deployment?->id
+        ]);
+        $this->dispatch('alert', type: 'error', text: 'Error generating acceptance letter.');
     }
+}
 
     
     public function generateWeeklyReport(Report $report)

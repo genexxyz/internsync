@@ -16,22 +16,7 @@
                         {{ $student->yearSection->year_level }}{{ $student->yearSection->class_section }}
                     </p>
                 </div>
-                <!-- Acceptance Letter Preview -->
-                <div class="col-span-2 border-t mt-4 pt-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-medium text-gray-700">Acceptance Letter</h3>
-
-
-                        <button @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
-        detail: {
-            url: '{{ Storage::url($acceptanceLetter->signed_path) }}'
-        }
-    }))" class="inline-flex items-center text-blue-600 hover:text-blue-700">
-                            <i class="far fa-file-pdf mr-2"></i>
-                            View PDF
-                        </button>
-                    </div>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -114,52 +99,42 @@
         </div>
 
         <!-- Department Selection (only if company exists) -->
-        @if($companyExists)
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">Department Selection</h2>
-            <div class="bg-gray-50 p-4 rounded-lg space-y-3">
-                <!-- No Department option -->
-                <label class="flex items-start p-3 {{ $selectedDepartment === 'No Department' ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg cursor-pointer">
-                    <input type="radio" wire:model="selectedDepartment" value="No Department"
+@if($companyExists)
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">Department Selection</h2>
+    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+        <!-- Student's provided department -->
+        @if(!empty($acceptanceLetter->department_name))
+            <label class="flex items-start p-3 {{ $selectedDepartment === $acceptanceLetter->department_name ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg cursor-pointer">
+                <input type="radio" wire:model="selectedDepartment" value="{{ $acceptanceLetter->department_name }}"
+                    class="mt-1 text-primary focus:ring-primary">
+                <div class="ml-3">
+                    <p class="text-sm font-medium {{ $selectedDepartment === $acceptanceLetter->department_name ? 'text-blue-900' : 'text-gray-900' }}">
+                        {{ $acceptanceLetter->department_name }}
+                    </p>
+                    <p class="text-xs {{ $selectedDepartment === $acceptanceLetter->department_name ? 'text-blue-700' : 'text-gray-600' }}">
+                        Provided by student
+                    </p>
+                </div>
+            </label>
+        @endif
+
+        <!-- Other existing departments -->
+        @foreach($existingDepartments as $dept)
+            @if($dept !== $acceptanceLetter->department_name)
+                <label class="flex items-start p-3 {{ $selectedDepartment === $dept ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg cursor-pointer">
+                    <input type="radio" wire:model="selectedDepartment" value="{{ $dept }}"
                         class="mt-1 text-primary focus:ring-primary">
                     <div class="ml-3">
-                        <p class="text-sm font-medium {{ $selectedDepartment === 'No Department' ? 'text-blue-900' : 'text-gray-900' }}">No Department</p>
-                        <p class="text-xs {{ $selectedDepartment === 'No Department' ? 'text-blue-700' : 'text-gray-600' }}">Default department</p>
+                        <p class="text-sm font-medium {{ $selectedDepartment === $dept ? 'text-blue-900' : 'text-gray-900' }}">{{ $dept }}</p>
+                        <p class="text-xs {{ $selectedDepartment === $dept ? 'text-blue-700' : 'text-gray-600' }}">Existing department</p>
                     </div>
                 </label>
-        
-                <!-- Student's provided department if exists and is not "No Department" -->
-                @if(!empty($acceptanceLetter->department_name) && $acceptanceLetter->department_name !== 'No Department')
-                    <label class="flex items-start p-3 {{ $selectedDepartment === $acceptanceLetter->department_name ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg cursor-pointer">
-                        <input type="radio" wire:model="selectedDepartment" value="{{ $acceptanceLetter->department_name }}"
-                            class="mt-1 text-primary focus:ring-primary">
-                        <div class="ml-3">
-                            <p class="text-sm font-medium {{ $selectedDepartment === $acceptanceLetter->department_name ? 'text-blue-900' : 'text-gray-900' }}">
-                                {{ $acceptanceLetter->department_name }}
-                            </p>
-                            <p class="text-xs {{ $selectedDepartment === $acceptanceLetter->department_name ? 'text-blue-700' : 'text-gray-600' }}">
-                                Provided by student
-                            </p>
-                        </div>
-                    </label>
-                @endif
-        
-                <!-- Other existing departments -->
-                @foreach($existingDepartments as $dept)
-                    @if($dept !== 'No Department' && $dept !== $acceptanceLetter->department_name)
-                        <label class="flex items-start p-3 {{ $selectedDepartment === $dept ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg cursor-pointer">
-                            <input type="radio" wire:model="selectedDepartment" value="{{ $dept }}"
-                                class="mt-1 text-primary focus:ring-primary">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium {{ $selectedDepartment === $dept ? 'text-blue-900' : 'text-gray-900' }}">{{ $dept }}</p>
-                                <p class="text-xs {{ $selectedDepartment === $dept ? 'text-blue-700' : 'text-gray-600' }}">Existing department</p>
-                            </div>
-                        </label>
-                    @endif
-                @endforeach
-            </div>
-        </div>
-        @endif
+            @endif
+        @endforeach
+    </div>
+</div>
+@endif
 
         <!-- Company Registration Form -->
         @if($isCreatingCompany)

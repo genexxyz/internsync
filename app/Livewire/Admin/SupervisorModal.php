@@ -60,7 +60,56 @@ class SupervisorModal extends ModalComponent
             $this->dispatch('alert', type: 'error', text: 'Error verifying supervisor!');
         }
     }
+    public function disableSupervisor()
+    {
+        if (!$this->supervisor->user) {
+            $this->dispatch('alert', type: 'error', text: 'Error disabling supervisor!');
+            return;
+        }
 
+        try {
+            DB::beginTransaction();
+
+            // Check if supervisor has active deployments
+            if ($this->supervisor->deployments()->where('status', 'ongoing')->exists()) {
+                $this->dispatch('alert', type: 'error', 
+                    text: 'Cannot disable supervisor with active interns.'
+                );
+                return;
+            }
+
+            // Disable the user account
+            $this->supervisor->user->update(['status' => 0]);
+
+            // Cancel any pending deployments
+            $this->supervisor->deployments()
+                ->where('status', 'pending')
+                ->update(['status' => 'cancelled']);
+
+            DB::commit();
+
+            Notification::send(
+                $this->supervisor->user_id,
+                'supervisor_disabled',
+                'Account Disabled',
+                'Your supervisor account has been disabled.',
+                '',
+                'fa-user-slash'
+            );
+
+            $this->dispatch('alert', type: 'success', text: 'Supervisor account has been disabled.');
+            $this->dispatch('refreshSupervisors');
+            $this->dispatch('closeModal');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger()->error('Error disabling supervisor', [
+                'error' => $e->getMessage(),
+                'supervisor_id' => $this->supervisor->id
+            ]);
+            $this->dispatch('alert', type: 'error', text: 'Error disabling supervisor account.');
+        }
+    }
     public function deleteSupervisor()
     {
         // Ensure the user and supervisor exist

@@ -31,7 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'form_completed',
+        
         'status',
         'email_verified_at',
         'is_verified',
@@ -74,6 +74,10 @@ class User extends Authenticatable
             default => null
         };
     }
+    public function canLogin()
+{
+    return $this->status === 1;
+}
 
     public function isEmailVerified()
     {

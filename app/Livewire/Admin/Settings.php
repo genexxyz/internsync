@@ -22,9 +22,13 @@ class Settings extends Component
     public $default_logo;
 
     public $logo;
+    public $headerImage;
+public $footerImage;
+public $uploadedHeaderPath;
+public $uploadedFooterPath;
     public $uploadProgress = 0;  // Track upload progress
     public $uploadedLogoPath = null;
-    public $minimum_minutes;
+    public $minimum_hours;
 
     public function mount()
     {
@@ -39,7 +43,9 @@ class Settings extends Component
             $this->system_contact = $settings->system_contact;
             $this->default_theme = $settings->default_theme;
             $this->uploadedLogoPath = $settings->default_logo;
-            $this->minimum_minutes = $settings->minimum_minutes;
+            $this->minimum_hours = $settings->minimum_hours;
+            $this->uploadedHeaderPath = $settings->header_image;
+        $this->uploadedFooterPath = $settings->footer_image;
             
         }
     }
@@ -92,7 +98,57 @@ class Settings extends Component
         $this->dispatch('alert', type: 'danger', text: 'Error uploading System Logo!');
     }
 }
+public function uploadHeaderImage()
+{
+    $this->validate([
+        'headerImage' => 'required|image|max:2048|mimes:png,jpg,jpeg',
+    ]);
 
+    try {
+        $filename = 'header_' . Str::uuid() . '.' . $this->headerImage->getClientOriginalExtension();
+        $path = $this->headerImage->storeAs('logos', $filename, 'public');
+
+        $settings = Setting::first() ?? new Setting();
+        if ($settings->header_image) {
+            Storage::disk('public')->delete($settings->header_image);
+        }
+
+        $settings->header_image = $path;
+        $settings->save();
+
+        $this->uploadedHeaderPath = $path;
+        $this->headerImage = null;
+        $this->dispatch('alert', type: 'success', text: 'Header image updated successfully!');
+    } catch (\Exception $e) {
+        $this->dispatch('alert', type: 'error', text: 'Error uploading header image!');
+    }
+}
+
+public function uploadFooterImage()
+{
+    $this->validate([
+        'footerImage' => 'required|image|max:2048|mimes:png,jpg,jpeg',
+    ]);
+
+    try {
+        $filename = 'footer_' . Str::uuid() . '.' . $this->footerImage->getClientOriginalExtension();
+        $path = $this->footerImage->storeAs('documents', $filename, 'public');
+
+        $settings = Setting::first() ?? new Setting();
+        if ($settings->footer_image) {
+            Storage::disk('public')->delete($settings->footer_image);
+        }
+
+        $settings->footer_image = $path;
+        $settings->save();
+
+        $this->uploadedFooterPath = $path;
+        $this->footerImage = null;
+        $this->dispatch('alert', type: 'success', text: 'Footer image updated successfully!');
+    } catch (\Exception $e) {
+        $this->dispatch('alert', type: 'error', text: 'Error uploading footer image!');
+    }
+}
 
     public function saveSettings()
     {
@@ -104,7 +160,7 @@ class Settings extends Component
             'system_email' => 'required|email|max:255',
             'system_contact' => 'required|string',
             'default_theme' => 'required|string|in:maroon,blue,green,gold',
-            'minimum_minutes' => 'required|integer|min:1|max:720',
+            'minimum_hours' => 'required|integer|min:1|max:24',
         ]);
 
 

@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ReopenRequest;
 use App\Models\Journal;
 use App\Models\Attendance;
-use App\Models\Notification;
 use App\Models\Task;
-use App\Models\TaskHistory;
+use App\Models\Notification;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReopenEntryModal extends ModalComponent
 {
@@ -23,14 +23,17 @@ class ReopenEntryModal extends ModalComponent
     public $startBreak;
     public $endBreak;
     
-    public $tasks = [];
+    public $journalText = '';
     public $newTask = '';
+    public $editingTask = null;
+    public $editedDescription = '';
 
     protected $rules = [
         'timeIn' => 'required|date_format:H:i',
         'timeOut' => 'required|date_format:H:i|after:timeIn',
         'startBreak' => 'nullable|date_format:H:i|after:timeIn',
         'endBreak' => 'nullable|date_format:H:i|after:startBreak|before:timeOut',
+        'journalText' => 'required|min:3'
     ];
 
     public function mount()
@@ -51,9 +54,13 @@ class ReopenEntryModal extends ModalComponent
     protected function loadEntryData($date)
     {
         // Load journal and tasks
-        $this->journal = Journal::with('taskHistories', 'tasks')->where('student_id', Auth::user()->student->id)
+        $this->journal = Journal::with(['tasks' => function($query) {
+            $query->orderBy('order', 'asc');
+        }])->where('student_id', Auth::user()->student->id)
             ->where('date', $date)
             ->first();
+
+        $this->journalText = $this->journal?->text ?? '';
 
         // Load attendance
         $this->attendance = Attendance::where('student_id', Auth::user()->student->id)
@@ -66,124 +73,110 @@ class ReopenEntryModal extends ModalComponent
             $this->startBreak = $this->attendance->start_break ? Carbon::parse($this->attendance->start_break)->format('H:i') : null;
             $this->endBreak = $this->attendance->end_break ? Carbon::parse($this->attendance->end_break)->format('H:i') : null;
         }
-
-        // Load tasks
-        $this->tasks = $this->journal ? $this->journal->tasks->map(function($task) {
-            return [
-                'id' => $task->id,
-                'description' => $task->description,
-                'status' => $task->histories->first()->status ?? 'pending'
-            ];
-        })->toArray() : [];
     }
+    public function saveJournalText()
+{
+    $this->validate([
+        'journalText' => 'required|min:3'
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        if (!$this->journal) {
+            // Create new journal if it doesn't exist
+            $this->journal = Journal::create([
+                'student_id' => Auth::user()->student->id,
+                'date' => $this->selectedDate,
+                'text' => $this->journalText,
+                'is_approved' => 0
+            ]);
+        } else {
+            // Update existing journal
+            $this->journal->update([
+                'text' => $this->journalText,
+                'is_approved' => 0
+            ]);
+        }
+
+        DB::commit();
+        $this->loadEntryData($this->selectedDate);
+        $this->dispatch('alert', type: 'success', text: 'Journal title saved successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        $this->dispatch('alert', type: 'error', text: 'Error saving journal title.');
+    }
+}
 
     public function addTask()
     {
-        if (empty($this->newTask)) return;
+        if (empty($this->journal->text)) {
+            $this->dispatch('alert', type: 'error', text: 'Please add a title first before adding tasks.');
+            return;
+        }
 
-        $this->tasks[] = [
-            'description' => $this->newTask,
-            'status' => 'pending'
-        ];
+        $this->validate([
+            'newTask' => 'required|min:3'
+        ]);
 
-        $this->newTask = '';
-    }
-
-    public function removeTask($index)
-    {
-        unset($this->tasks[$index]);
-        $this->tasks = array_values($this->tasks);
-    }
-
-    public function updateTaskStatus($index, $status)
-    {
-        $this->tasks[$index]['status'] = $status;
-    }
-
-    public function saveChanges()
-    {
-        $this->validate();
-
+        DB::beginTransaction();
         try {
-            // Save attendance
-            $attendanceData = [
-                'student_id' => Auth::user()->student->id,
-                'date' => $this->selectedDate,
-                'time_in' => $this->timeIn,
-                'time_out' => $this->timeOut,
-                'start_break' => $this->startBreak,
-                'end_break' => $this->endBreak,
-                'total_hours' => $this->calculateTotalHours($this->timeIn, $this->timeOut),
-                'is_approved' => 0
-            ];
+            Task::create([
+                'journal_id' => $this->journal->id,
+                'description' => $this->newTask,
+                'order' => $this->journal->tasks->count()
+            ]);
 
-            if ($this->attendance) {
-                $this->attendance->update($attendanceData);
-            } else {
-                $this->attendance = Attendance::create($attendanceData);
-            }
-
-            // Save journal and tasks
-            if (!$this->journal) {
-                $this->journal = Journal::create([
-                    'student_id' => Auth::user()->student->id,
-                    'date' => $this->selectedDate,
-                    'is_approved' => 0
-                ]);
-            }
-
-            // Update task histories
-            foreach ($this->tasks as $task) {
-                $taskModel = Task::updateOrCreate(
-                    ['id' => $task['id'] ?? null],
-                    ['description' => $task['description']]
-                );
-
-                TaskHistory::create([
-                    'task_id' => $taskModel->id,
-                    'journal_id' => $this->journal->id,
-                    'status' => $task['status'],
-                    'changed_at' => now()
-                ]);
-            }
-
-            // Mark reopen request as completed
-        $reopenRequest = ReopenRequest::where('student_id', Auth::user()->student->id)
-        ->where('reopened_date', $this->selectedDate)
-        ->where('status', 'PENDING')
-        ->first();
-
-    if ($reopenRequest) {
-        $reopenRequest->update(['status' => 'COMPLETED']);
-        
-        // Send notification with better context
-        $fullName = Auth::user()->student->name();
-        $formattedDate = Carbon::parse($this->selectedDate)->format('F d, Y');
-        
-        Notification::send(
-            $reopenRequest->supervisor->user_id,
-            'reopen_entry_completed',
-            'Reopened Entry Completed',
-            "{$fullName} has updated their entry for {$formattedDate}. Please review the changes.",
-            'supervisor.dailyReports',
-            'fa-calendar-check'
-        );
-
+            DB::commit();
+            $this->newTask = '';
+            $this->loadEntryData($this->selectedDate);
+            $this->dispatch('alert', type: 'success', text: 'Task added successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('alert', type: 'error', text: 'Error adding task.');
+        }
     }
 
-    $this->dispatch('alert', type: 'success', text: 'Entry updated successfully!');
-    $this->dispatch('dailyEntryUpdated');
-    $this->dispatch('closeModal');
-        
-} catch (\Exception $e) {
-    logger()->error('Error updating reopened entry', [
-        'error' => $e->getMessage(),
-        'student_id' => Auth::user()->student->id,
-        'date' => $this->selectedDate
-    ]);
-    
-    $this->dispatch('alert', type: 'error', text: 'Error saving changes: ' . $e->getMessage());
-}
+    public function startEditing($taskId)
+    {
+        $task = $this->journal->tasks->find($taskId);
+        $this->editingTask = $taskId;
+        $this->editedDescription = $task->description;
+    }
+
+    public function saveEdited()
+    {
+        $this->validate([
+            'editedDescription' => 'required|min:3'
+        ]);
+
+        Task::where('id', $this->editingTask)->update([
+            'description' => $this->editedDescription
+        ]);
+
+        $this->editingTask = null;
+        $this->editedDescription = '';
+        $this->loadEntryData($this->selectedDate);
+    }
+
+    public function cancelEditing()
+    {
+        $this->editingTask = null;
+        $this->editedDescription = '';
+    }
+
+    public function removeTask($taskId)
+    {
+        try {
+            Task::where('id', $taskId)
+                ->where('journal_id', $this->journal->id)
+                ->delete();
+
+            $this->loadEntryData($this->selectedDate);
+            $this->dispatch('alert', type: 'success', text: 'Task removed successfully.');
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', text: 'Error removing task.');
+        }
     }
     private function calculateTotalHours($timeIn, $timeOut)
     {
@@ -238,6 +231,73 @@ class ReopenEntryModal extends ModalComponent
             return '00:00:00';
         }
     }
+    public function saveChanges()
+    {
+        $this->validate();
+
+        try {
+            DB::beginTransaction();
+
+            // Save attendance
+            $attendanceData = [
+                'student_id' => Auth::user()->student->id,
+                'date' => $this->selectedDate,
+                'time_in' => $this->timeIn,
+                'time_out' => $this->timeOut,
+                'start_break' => $this->startBreak,
+                'end_break' => $this->endBreak,
+                'total_hours' => $this->calculateTotalHours($this->timeIn, $this->timeOut),
+                'is_approved' => 0
+            ];
+
+            if ($this->attendance) {
+                $this->attendance->update($attendanceData);
+            } else {
+                $this->attendance = Attendance::create($attendanceData);
+            }
+
+            // Update journal text
+            $this->journal->update([
+                'text' => $this->journalText,
+                'is_approved' => 0
+            ]);
+
+            // Mark reopen request as completed
+            $reopenRequest = ReopenRequest::where('student_id', Auth::user()->student->id)
+                ->where('reopened_date', $this->selectedDate)
+                ->where('status', 'PENDING')
+                ->first();
+
+            if ($reopenRequest) {
+                $reopenRequest->update(['status' => 'COMPLETED']);
+                
+                // Send notification
+                $fullName = Auth::user()->student->name();
+                $formattedDate = Carbon::parse($this->selectedDate)->format('F d, Y');
+                
+                Notification::send(
+                    $reopenRequest->supervisor->user_id,
+                    'reopen_entry_completed',
+                    'Reopened Entry Completed',
+                    "{$fullName} has updated their entry for {$formattedDate}. Please review the changes.",
+                    'supervisor.dailyReports',
+                    'fa-calendar-check'
+                );
+            }
+
+            DB::commit();
+            $this->dispatch('alert', type: 'success', text: 'Entry updated successfully!');
+            $this->dispatch('dailyEntryUpdated');
+            $this->dispatch('closeModal');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('alert', type: 'error', text: 'Error saving changes: ' . $e->getMessage());
+        }
+    }
+
+    // ... keep existing calculateTotalHours method ...
+
     public static function modalMaxWidth(): string
     {
         return '3xl';

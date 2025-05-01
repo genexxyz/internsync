@@ -42,10 +42,18 @@ class AuthenticatedSessionController extends Controller
         // Get the authenticated user
         $user = Auth::user();
         $checkEmail = User::where('email', $user->email)->first();
+        
         if (!$checkEmail->isEmailVerified()) {
             Auth::logout();
             return redirect()->route('verify.email', ['email' => $user->email])
                 ->with('message', 'Please verify your email address before logging in.');
+        }
+
+        if ($user->status === 0) {
+            Auth::logout();
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your account is disabled. Please contact support.',
+            ]);
         }
         // Redirect based on user role if the form is completed
         return match ($user->role) {

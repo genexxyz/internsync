@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     protected $fillable = [
+        'journal_id',
         'description',
-        'order'
+        'order',
     ];
 
     public function histories()
@@ -24,5 +25,10 @@ class Task extends Model
     public function getCurrentJournalAttribute()
     {
         return $this->histories()->latest('changed_at')->first()?->journal;
+    }
+
+    public function journal()
+    {
+        return $this->belongsTo(Journal::class);
     }
 }

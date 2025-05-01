@@ -109,54 +109,26 @@
     
     <!-- Tasks Section -->
     <div class="mb-6">
-        <h3 class="text-sm font-medium text-gray-900 mb-3">Tasks</h3>
-        
-        <div class="space-y-3">
-            <div>
-                <div class="flex items-center gap-4">
-                    <!-- Pending Status -->
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full shrink-0 bg-yellow-400"></div>
-                        <span class="text-sm text-gray-600">Pending</span>
-                    </div>
-                    
-                    <!-- Done Status -->
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full shrink-0 bg-green-400"></div>
-                        <span class="text-sm text-gray-600">Done</span>
-                    </div>
-                </div>
-            </div>
-            @forelse($journal->taskHistories->groupBy('task_id') as $taskHistories)
-                        @php
-                            $latestHistory = $taskHistories->sortByDesc('changed_at')->first();
-                            $task = $latestHistory->task;
-                        @endphp
-                        <div class="bg-white p-3 rounded-lg border border-gray-200">
-                            <div class="flex items-start gap-3">
-                                <div @class([
-                                    'mt-1 w-2 h-2 rounded-full shrink-0',
-                                    'bg-yellow-400' => $latestHistory->status === 'pending',
-                                    'bg-green-400' => $latestHistory->status === 'done',
-                                ])></div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="text-sm font-medium text-gray-900">{{ $task->title }}</h4>
-                                    @if($task->description)
-                                        <p class="mt-1 text-sm text-gray-500">{{ $task->description }}</p>
-                                    @endif
-                                    @if($latestHistory->remarks)
-                                        <p class="mt-2 text-sm text-gray-600 italic">{{ $latestHistory->remarks }}</p>
-                                    @endif
-                                </div>
-                                @if($latestHistory->worked_hours)
-                                    <span class="text-xs text-gray-500">{{ $latestHistory->worked_hours }}h</span>
-                                @endif
-                            </div>
-                        </div>
-            @empty
-                <p class="text-sm text-gray-500">No tasks recorded</p>
-            @endforelse
+        <div class="mt-1 text-gray-800 font-semibold">
+            {{ $journal->text }}
         </div>
+    
+
+    <!-- Tasks List -->
+    @if($journal->tasks->isNotEmpty())
+        
+            <ul class="list-disc list-inside">
+                @foreach($journal->tasks as $task)
+                    <li class="text-gray-800 text-sm">
+                        {{ $task->description }}
+                    </li>
+                @endforeach
+            </ul>
+        
+            @else
+                <p class="text-sm text-gray-500">No tasks recorded</p>
+            @endif
+        
     </div>
 
     @if($showFeedbackForm)

@@ -165,8 +165,9 @@ public function refreshTask()
         return;
     }
 
-    // Get minimum minutes from settings
-    $minimumMinutes = Setting::first()->minimum_minutes ?? 240; // Default to 4 hours (240 minutes)
+    // Get minimum hours from settings and convert to minutes
+    $minimumHours = Setting::first()->minimum_hours ?? 4; // Default to 4 hours
+    $minimumMinutes = $minimumHours * 60;
 
     // Calculate elapsed minutes
     $timeIn = Carbon::parse($this->attendance->time_in);
@@ -184,12 +185,22 @@ public function refreshTask()
     // Check if minimum duration is met
     if ($elapsedMinutes < $minimumMinutes) {
         $remainingMinutes = $minimumMinutes - $elapsedMinutes;
-        $remainingHours = ceil($remainingMinutes / 60);
-        $remainingMinutes = $remainingMinutes % 60;
-        $this->addError('all', 
-            "You must complete at least {$minimumMinutes} minutes of work. " . 
-            "Please work for {$remainingMinutes} more minutes."
-        );
+        $remainingHours = floor($remainingMinutes / 60);
+        $remainingMins = $remainingMinutes % 60;
+        
+        $message = "You must complete at least {$minimumHours} hour" . ($minimumHours > 1 ? 's' : '') . " of work. ";
+        $message .= "Remaining time: ";
+        
+        if ($remainingHours > 0) {
+            $message .= "{$remainingHours} hour" . ($remainingHours > 1 ? 's' : '');
+            if ($remainingMins > 0) {
+                $message .= " and {$remainingMins} minute" . ($remainingMins > 1 ? 's' : '');
+            }
+        } else {
+            $message .= "{$remainingMins} minute" . ($remainingMins > 1 ? 's' : '');
+        }
+
+        $this->addError('all', $message);
         return;
     }
 

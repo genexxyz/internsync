@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Livewire\Admin;
 
+use App\Models\Academic;
 use App\Models\Journal;
 use App\Models\Report;
 use App\Models\Student;
@@ -11,6 +13,10 @@ use LivewireUI\Modal\ModalComponent;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use App\Models\Setting;
+use App\Services\DocumentGeneratorService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
 class StudentModal extends ModalComponent
 {
     public Student $student;
@@ -37,6 +43,12 @@ class StudentModal extends ModalComponent
         return '2xl';
     }
 
+    protected $documentGenerator;
+    public function boot(DocumentGeneratorService $documentGenerator)
+    {
+        $this->documentGenerator = $documentGenerator;
+    }
+
     public function mount(Student $student)
     {
         $this->student = $student->load([
@@ -47,7 +59,7 @@ class StudentModal extends ModalComponent
             'deployment.department',
             'deployment.evaluation', // Add this line
             'acceptance_letter',
-            'weeklyReports' => function($query) {
+            'weeklyReports' => function ($query) {
                 $query->orderBy('week_number', 'desc');
             }
         ]);
@@ -79,7 +91,12 @@ class StudentModal extends ModalComponent
         if (!$this->student->deployment) {
             return;
         }
-
+        // Check if course allows special type
+        $course = $this->student->section->course;
+        if ($this->deploymentData['student_type'] === 'special' && !$course->allows_custom_hours) {
+            $this->addError('deploymentData.student_type', 'This course does not allow special type students.');
+            return;
+        }
         $this->validate([
             'deploymentData.custom_hours' => 'nullable|integer|min:1|max:999',
             'deploymentData.student_type' => 'required|in:regular,special',
@@ -94,7 +111,7 @@ class StudentModal extends ModalComponent
                 if ($deployment->permit_path) {
                     Storage::disk('public')->delete($deployment->permit_path);
                 }
-                
+
                 // Store new permit
                 $path = $this->permitFile->store('permits', 'public');
                 $this->deploymentData['permit_path'] = $path;
@@ -109,7 +126,6 @@ class StudentModal extends ModalComponent
             $this->student = $this->student->fresh(['deployment']);
             $this->isEditingDeployment = false;
             $this->dispatch('alert', type: 'success', text: 'Deployment updated successfully!');
-
         } catch (\Exception $e) {
             logger()->error('Error updating deployment', [
                 'error' => $e->getMessage(),
@@ -136,7 +152,7 @@ class StudentModal extends ModalComponent
                     $exists = Student::where('student_id', $value)
                         ->where('id', '!=', $this->student->id)
                         ->exists();
-                    
+
                     if ($exists) {
                         $fail('This student ID is already taken.');
                     }
@@ -159,7 +175,7 @@ class StudentModal extends ModalComponent
                 'contact' => $this->editableData['contact'],
                 'address' => $this->editableData['address'],
             ]);
-            
+
             $this->isEditing = false;
             $this->dispatch('alert', type: 'success', text: 'Student updated successfully!');
             $this->dispatch('refreshStudents');
@@ -178,101 +194,100 @@ class StudentModal extends ModalComponent
         $this->selectedTab = $tab;
     }
 
-    public function downloadAcceptanceLetter()
+    // public function downloadAcceptanceLetter()
+    // {
+    //     if ($this->student->acceptance_letter?->signed_path) {
+    //         return Storage::disk('public')->download(
+    //             $this->student->acceptance_letter->signed_path,
+    //             "acceptance-letter-{$this->student->student_id}_{$this->student->last_name}_{$this->student->first_name}.pdf"
+    //         );
+    //     }
+    // }
+
+
+    public function generateWeeklyReport(Report $report)
     {
-        if ($this->student->acceptance_letter?->signed_path) {
-            return Storage::disk('public')->download(
-                $this->student->acceptance_letter->signed_path,
-                "acceptance-letter-{$this->student->student_id}_{$this->student->last_name}_{$this->student->first_name}.pdf"
+        try {
+            // Get journals with tasks and attendance for the week, excluding rejected entries
+            $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
+                ->where('student_id', $report->student_id)
+                ->where(function ($query) {
+                    $query->where('is_approved', 1)  // Approved journals
+                        ->orWhereNull('is_approved'); // Pending journals
+                })
+                ->with([
+                    'attendance',
+                    'taskHistories' => function ($query) {
+                        $query->orderBy('created_at', 'asc');
+                    },
+                    'taskHistories.task'
+                ])
+                ->orderBy('date')
+                ->get();
+
+            // Calculate total hours
+            $totalMinutes = $journals->reduce(function ($total, $journal) {
+                if ($journal->attendance && $journal->attendance->total_hours) {
+                    list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
+                    return $total + ((int)$hours * 60) + (int)$minutes;
+                }
+                return $total;
+            }, 0);
+
+            $hours = floor($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+            $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
+
+            // Get deployment relationships
+            $student = $report->student->load(['deployment.department.company', 'deployment.supervisor', 'section.course.instructorCourses.instructor']);
+
+            // Group task histories by journal date and get latest status
+            $journals->each(function ($journal) {
+                $journal->taskHistories = $journal->taskHistories
+                    ->groupBy('task_id')
+                    ->map(function ($histories) {
+                        $latestHistory = $histories->last();
+                        $latestHistory->task->current_status = $latestHistory->status;
+                        return $latestHistory;
+                    })->values();
+            });
+
+            // Prepare data for PDF
+            $data = [
+                'report' => $report,
+                'journals' => $journals,
+                'student' => $student,
+                'deployment' => $student->deployment,
+                'company' => $student->deployment?->department?->company,
+                'totalHours' => $formattedTotal,
+                'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
+                'endDate' => Carbon::parse($report->end_date)->format('M d, Y'),
+                'settings' => Setting::first()
+            ];
+
+            // Generate PDF
+            $pdf = app()->make('dompdf.wrapper');
+            $pdf->loadView('pdfs.weekly-report', $data);
+
+            // Return download response
+            return response()->streamDownload(
+                function () use ($pdf) {
+                    echo $pdf->output();
+                },
+                'Weekly_Report_Week_' . $report->week_number . '_' . $student->student_id . '_' . $student->last_name . '_' . $student->first_name . '.pdf'
             );
+        } catch (\Exception $e) {
+            logger()->error('Error generating weekly report', [
+                'error' => $e->getMessage(),
+                'report_id' => $report->id,
+                'student_id' => $report->student_id
+            ]);
+
+            $this->dispatch('alert', type: 'error', text: 'Error generating weekly report.');
+            return null;
         }
     }
-
-    
-    public function generateWeeklyReport(Report $report)
-{
-    try {
-        // Get journals with tasks and attendance for the week, excluding rejected entries
-        $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
-            ->where('student_id', $report->student_id)
-            ->where(function($query) {
-                $query->where('is_approved', 1)  // Approved journals
-                      ->orWhereNull('is_approved'); // Pending journals
-            })
-            ->with([
-                'attendance',
-                'taskHistories' => function($query) {
-                    $query->orderBy('created_at', 'asc');
-                },
-                'taskHistories.task'
-            ])
-            ->orderBy('date')
-            ->get();
-        
-        // Calculate total hours
-        $totalMinutes = $journals->reduce(function ($total, $journal) {
-            if ($journal->attendance && $journal->attendance->total_hours) {
-                list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
-                return $total + ((int)$hours * 60) + (int)$minutes;
-            }
-            return $total;
-        }, 0);
-        
-        $hours = floor($totalMinutes / 60);
-        $minutes = $totalMinutes % 60;
-        $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
-        
-        // Get deployment relationships
-        $student = $report->student->load(['deployment.department.company', 'deployment.supervisor', 'section.course.instructorCourses.instructor']);
-        
-        // Group task histories by journal date and get latest status
-        $journals->each(function ($journal) {
-            $journal->taskHistories = $journal->taskHistories
-                ->groupBy('task_id')
-                ->map(function ($histories) {
-                    $latestHistory = $histories->last();
-                    $latestHistory->task->current_status = $latestHistory->status;
-                    return $latestHistory;
-                })->values();
-        });
-        
-        // Prepare data for PDF
-        $data = [
-            'report' => $report,
-            'journals' => $journals,
-            'student' => $student,
-            'deployment' => $student->deployment,
-            'company' => $student->deployment?->department?->company,
-            'totalHours' => $formattedTotal,
-            'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
-            'endDate' => Carbon::parse($report->end_date)->format('M d, Y'),
-            'settings' => Setting::first()
-        ];
-        
-        // Generate PDF
-        $pdf = app()->make('dompdf.wrapper');
-        $pdf->loadView('pdfs.weekly-report', $data);
-        
-        // Return download response
-        return response()->streamDownload(
-            function() use ($pdf) { 
-                echo $pdf->output(); 
-            },
-            'Weekly_Report_Week_' . $report->week_number . '_' . $student->student_id . '_' . $student->last_name . '_' . $student->first_name . '.pdf'
-        );
-
-    } catch (\Exception $e) {
-        logger()->error('Error generating weekly report', [
-            'error' => $e->getMessage(),
-            'report_id' => $report->id,
-            'student_id' => $report->student_id
-        ]);
-        
-        $this->dispatch('alert', type: 'error', text: 'Error generating weekly report.');
-        return null;
-    }
-}
-public function downloadEvaluation()
+    public function downloadEvaluation()
     {
         if (!$this->student->deployment?->evaluation) {
             return;
@@ -319,60 +334,159 @@ public function downloadEvaluation()
 
         $pdf = app()->make('dompdf.wrapper');
         $pdf->loadView('pdfs.evaluation-report', $data);
-        
+
         return response()->streamDownload(
-            function() use ($pdf) { 
-                echo $pdf->output(); 
+            function () use ($pdf) {
+                echo $pdf->output();
             },
             'Evaluation_Report_' . $this->student->student_id . '_' . $this->student->last_name . '_' . $this->student->first_name . '.pdf'
         );
     }
 
     public function verifyStudent()
-{
-    try {
-        $this->student->user->update([
-            'is_verified' => true,
-            'email_verified_at' => now()
-        ]);
-        
-        $this->student = $this->student->fresh(['user']);
-        $this->dispatch('alert', type: 'success', text: 'Student verified successfully!');
-    } catch (\Exception $e) {
-        logger()->error('Error verifying student', [
-            'error' => $e->getMessage(),
-            'student_id' => $this->student->id
-        ]);
-        $this->dispatch('alert', type: 'error', text: 'Error verifying student.');
+    {
+        try {
+            $this->student->user->update([
+                'is_verified' => true,
+                'email_verified_at' => now()
+            ]);
+
+            $this->student = $this->student->fresh(['user']);
+            $this->dispatch('alert', type: 'success', text: 'Student verified successfully!');
+        } catch (\Exception $e) {
+            logger()->error('Error verifying student', [
+                'error' => $e->getMessage(),
+                'student_id' => $this->student->id
+            ]);
+            $this->dispatch('alert', type: 'error', text: 'Error verifying student.');
+        }
     }
-}
 
 
 
-public function deleteStudent()
+    public function disableStudent()
 {
+    $default_ay = Academic::where('ay_default', true)->first();
+    
     try {
-        // Check for dependencies
-        if ($this->student->deployment()->exists()) {
-            $this->dispatch('alert', type: 'error', text: 'Cannot delete student with existing deployment.');
+        // Check if student has a deployment
+        if (!$this->student->deployment()->exists()) {
+            $this->performDisable();
             return;
         }
 
-        // Delete related records
-        $this->student->user->delete();
-        $this->student->delete();
-        
-        $this->dispatch('alert', type: 'success', text: 'Student deleted successfully!');
+        // Series of validation checks for existing deployment
+        $deployment = $this->student->deployment;
+
+        // Check 1: Deployment is in current academic year
+        if ($deployment->academic_id !== $default_ay->id) {
+            $this->performDisable();
+            return;
+        }
+
+        // Check 2: Deployment status checks
+        if ($deployment->status === 'completed') {
+            $this->dispatch('alert', 
+                type: 'error', 
+                text: 'Cannot disable student with completed deployment in current academic year.'
+            );
+            return;
+        }
+
+        if ($deployment->status === 'ongoing') {
+            $this->dispatch('alert', 
+                type: 'error', 
+                text: 'Cannot disable student with ongoing deployment. Please wait until deployment is completed.'
+            );
+            return;
+        }
+
+        if ($deployment->status === 'pending') {
+            // Allow disabling if deployment is still pending
+            $this->performDisable();
+            return;
+        }
+
+    } catch (\Exception $e) {
+        logger()->error('Error during student account disable validation', [
+            'error' => $e->getMessage(),
+            'student_id' => $this->student->id,
+            'deployment_id' => $this->student->deployment?->id
+        ]);
+        $this->dispatch('alert', type: 'error', text: 'Error validating student account status.');
+    }
+}
+
+private function performDisable()
+{
+    try {
+        DB::beginTransaction();
+
+        // Disable the account
+        $this->student->user->update([
+            'status' => 0,
+            
+        ]);
+
+        // If student has pending deployment, cancel it
+        if ($this->student->deployment && $this->student->deployment->status === 'pending') {
+            $this->student->deployment->update(['status' => 'cancelled']);
+        }
+
+        DB::commit();
+
+        $this->dispatch('alert', type: 'success', text: 'Student account has been disabled.');
         $this->dispatch('refreshStudents');
         $this->dispatch('closeModal');
+
     } catch (\Exception $e) {
-        logger()->error('Error deleting student', [
+        DB::rollBack();
+        logger()->error('Error disabling student account', [
             'error' => $e->getMessage(),
             'student_id' => $this->student->id
         ]);
-        $this->dispatch('alert', type: 'error', text: 'Error deleting student.');
+        $this->dispatch('alert', type: 'error', text: 'Error disabling student account.');
     }
 }
+
+
+    public function downloadAcceptanceLetter()
+    {
+        try {
+            if (!$this->student->deployment) {
+                $this->dispatch('alert', type: 'error', text: 'Student is not yet deployed.');
+                return;
+            }
+
+            // if (!$this->student->deployment->acceptance_letter_signed) {
+            //     $this->dispatch('alert', type: 'error', text: 'Acceptance letter is not yet signed.');
+            //     return;
+            // }
+
+            $pdf = $this->documentGenerator->generateAcceptanceLetter($this->student->deployment);
+
+            $filename = sprintf(
+                'acceptance_letter_%s_%s_%s.pdf',
+                $this->student->student_id,
+                Str::slug($this->student->last_name),
+                Str::slug($this->student->first_name)
+            );
+
+            return response()->streamDownload(
+                function () use ($pdf) {
+                    echo $pdf->output();
+                },
+                $filename
+            );
+        } catch (\Exception $e) {
+            logger()->error('Error generating acceptance letter', [
+                'error' => $e->getMessage(),
+                'student_id' => $this->student->id,
+                'deployment_id' => $this->student->deployment?->id
+            ]);
+            $this->dispatch('alert', type: 'error', text: 'Error generating acceptance letter.');
+        }
+    }
     public function render()
     {
         return view('livewire.admin.student-modal');

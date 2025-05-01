@@ -23,7 +23,11 @@ class Admin extends Model
         'middle_name',
         'last_name',
         'suffix',
+        'is_super_admin',
         'image',
+    ];
+    protected $casts = [
+        'is_super_admin' => 'boolean',
     ];
 
     public function user()

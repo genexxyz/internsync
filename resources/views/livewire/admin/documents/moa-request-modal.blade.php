@@ -40,13 +40,13 @@
                         'color' => 'purple',
                         'received_by' => $request->received_by_student
                     ],
-                    'received_by_company' => [
-                        'icon' => 'fa-check-circle',
-                        'date' => $request->received_by_company_at,
-                        'label' => 'Received',
-                        'color' => 'green',
-                        'received_by' => null
-                    ]
+                    // 'received_by_company' => [
+                    //     'icon' => 'fa-check-circle',
+                    //     'date' => $request->received_by_company_at,
+                    //     'label' => 'Received',
+                    //     'color' => 'green',
+                    //     'received_by' => null
+                    // ]
                 ];
         
                 $currentFound = false;

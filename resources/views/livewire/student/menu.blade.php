@@ -8,7 +8,12 @@
         <span>Dashboard</span>
     </a>
 
-
+    <a wire:navigate href="{{ route('student.taskAttendance') }}"
+    class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
+    {{ request()->routeIs('student.taskAttendance') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
+    <i class="fa fa-list-check"></i>
+    <span>Task & Attendance</span>
+</a>
     <a wire:navigate href="{{ route('student.journey') }}"
         class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
             {{ request()->routeIs('student.journey') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
@@ -16,12 +21,7 @@
         <span>OJT Journey</span>
     </a>
 
-    <a wire:navigate href="{{ route('student.taskAttendance') }}"
-        class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
-        {{ request()->routeIs('student.taskAttendance') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
-        <i class="fa fa-list-check"></i>
-        <span>Task & Attendance</span>
-    </a>
+    
 
     <a wire:navigate href="{{ route('student.document') }}"
         class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none

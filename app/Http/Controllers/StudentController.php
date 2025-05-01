@@ -18,11 +18,15 @@ use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\WeeklyReport;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
+use App\Services\DocumentGeneratorService;
 
 class StudentController extends Controller
 {
     public $company;
     public $supervisor;
+
+    
     public function index(): View
     {
         $student = Auth::user()->student;
@@ -187,69 +191,61 @@ public function viewEvaluation(Evaluation $evaluation)
     $pdf = PDF::loadView('pdfs.evaluation-report', $data);
     return $pdf->stream('Evaluation_Report.pdf');
 }
-    public function generateWeeklyReportPdf(Report $report)
-    {
-        // Check if user owns this report
-        if ($report->student_id !== Auth::user()->student->id) {
-            abort(403);
-        }
-        
-        // Get journals with tasks and attendance for the week, excluding rejected entries
-        $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
-            ->where('student_id', $report->student_id)
-            ->where('is_approved', '!=', 2) // Exclude rejected journals
-            ->with([
-                'attendance',
-                'taskHistories' => function($query) {
-                    $query->orderBy('created_at', 'asc'); // Get history in chronological order
-                },
-                'taskHistories.task' // Include the base task for description and remarks
-            ])
-            ->orderBy('date')
-            ->get();
-        
-        // Calculate total hours (excluding rejected entries)
-        $totalMinutes = 0;
-        foreach ($journals as $journal) {
-            if ($journal->attendance && $journal->attendance->total_hours) {
-                list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
-                $totalMinutes += ((int)$hours * 60) + (int)$minutes;
-            }
-        }
-        
-        $hours = floor($totalMinutes / 60);
-        $minutes = $totalMinutes % 60;
-        $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
-        
-        $student = $report->student;
-        $deployment = $student->deployment;
-        $company = $deployment ? $deployment->department->company : null;
-        
-        // Group task histories by journal date
-        foreach ($journals as $journal) {
-            $journal->taskHistories = $journal->taskHistories->groupBy('task_id')->map(function ($histories) {
-                // Get the latest status for each task
-                $latestHistory = $histories->last();
-                $latestHistory->task->current_status = $latestHistory->status;
-                return $latestHistory;
-            })->values();
-        }
-        
-        $data = [
-            'report' => $report,
-            'journals' => $journals,
-            'student' => $student,
-            'deployment' => $deployment,
-            'company' => $company,
-            'totalHours' => $formattedTotal,
-            'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
-            'endDate' => Carbon::parse($report->end_date)->format('M d, Y')
-        ];
-        
-        $pdf = PDF::loadView('pdfs.weekly-report', $data);
-        
-        return $pdf->download('Weekly_Report_Week_' . $report->week_number . '_' .  $student->last_name . '-' . $student->first_name . '.pdf');
+public function generateWeeklyReportPdf(Report $report)
+{
+    // Check if user owns this report
+    if ($report->student_id !== Auth::user()->student->id) {
+        abort(403);
     }
+    
+    // Get journals with tasks and attendance for the week
+    $journals = Journal::whereBetween('date', [$report->start_date, $report->end_date])
+        ->where('student_id', $report->student_id)
+        ->where('is_approved', '!=', 2) // Exclude rejected journals
+        ->with([
+            'attendance',
+            'tasks' => function($query) {
+                $query->orderBy('order', 'asc');
+            }
+        ])
+        ->orderBy('date')
+        ->get();
+    
+    // Calculate total hours (excluding rejected entries)
+    $totalMinutes = 0;
+    foreach ($journals as $journal) {
+        if ($journal->attendance && $journal->attendance->total_hours) {
+            list($hours, $minutes) = array_pad(explode(':', $journal->attendance->total_hours), 2, 0);
+            $totalMinutes += ((int)$hours * 60) + (int)$minutes;
+        }
+    }
+    
+    $hours = floor($totalMinutes / 60);
+    $minutes = $totalMinutes % 60;
+    $formattedTotal = sprintf("%d hours and %d minutes", $hours, $minutes);
+    
+    $student = $report->student;
+    $deployment = $student->deployment;
+    $company = $deployment ? $deployment->department->company : null;
+    $settings = \App\Models\Setting::findOrFail(3);
+    
+    $data = [
+        'report' => $report,
+        'journals' => $journals,
+        'student' => $student,
+        'deployment' => $deployment,
+        'company' => $company,
+        'settings' => $settings,
+        'totalHours' => $formattedTotal,
+        'startDate' => Carbon::parse($report->start_date)->format('M d, Y'),
+        'endDate' => Carbon::parse($report->end_date)->format('M d, Y')
+    ];
+    
+    $pdf = PDF::loadView('pdfs.weekly-report', $data);
+    
+    return $pdf->download('Weekly_Report_Week_' . $report->week_number . '_' . 
+        $student->last_name . '-' . $student->first_name . '.pdf');
+}
 
     
 public function generateDtr(Request $request)
@@ -344,5 +340,64 @@ public function generateDtr(Request $request)
     return $pdf->download('DTR_' . Carbon::create($request->year, $request->month)->format('F_Y') . '_' . 
         $student->last_name . '-' . $student->first_name . '.pdf');
 }
+
+
+public function downloadAcceptanceLetter()
+    {
+        $student = Auth::user()->student->load([
+            'deployment.supervisor',
+            'deployment.department.company',
+            'section.course'
+        ]);
+        
+        try {
+            if (!$student->deployment) {
+                return back()->with('error', 'Student is not yet deployed.');
+            }
+
+            if (!$student->deployment->supervisor) {
+                return back()->with('error', 'No supervisor assigned.');
+            }
+
+            if (!$student->deployment->supervisor->signature_path) {
+                return back()->with('error', 'Supervisor signature not found.');
+            }
+
+            $settings = \App\Models\Setting::findOrFail(3);
+
+            $data = [
+                'deployment' => $student->deployment,
+                'studentName' => $student->name(),
+                'supervisorName' => $student->deployment->supervisor->getFullNameAttribute(),
+                'company' => $student->deployment->department->company,
+                'settings' => $settings,
+                'signatureUrl' => $student->deployment->supervisor->signature_path,
+                'date' => now()->format('F d, Y')
+            ];
+
+            $pdf = PDF::loadView('pdfs.acceptance-letter', $data);
+            
+            $filename = sprintf(
+                'acceptance_letter_%s_%s_%s.pdf',
+                $student->student_id,
+                Str::slug($student->last_name),
+                Str::slug($student->first_name)
+            );
+
+            return response()->streamDownload(
+                function() use ($pdf) { 
+                    echo $pdf->output(); 
+                },
+                $filename
+            );
+        } catch (\Exception $e) {
+            logger()->error('Error generating acceptance letter', [
+                'error' => $e->getMessage(),
+                'student_id' => $student->id,
+                'deployment_id' => $student->deployment?->id
+            ]);
+            return back()->with('error', 'Failed to generate acceptance letter: ' . $e->getMessage());
+        }
+    }
 
 }

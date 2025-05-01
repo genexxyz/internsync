@@ -17,11 +17,17 @@
         <!-- Department Name -->
         <div>
             <x-text-input icon="fa fa-building" id="department_name" class="block mt-1 w-full" type="text"
-                        wire:model="department_name" name="department_name" :value="old('department_name')" autofocus
-                        placeholder="Department(If Applicable)" />
+                        wire:model="department_name" name="department_name" :value="old('department_name')" autofocus required
+                        placeholder="Department" />
                     <x-input-error :messages="$errors->get('department_name')" class="mt-2" />
         </div>
-
+<!-- Address -->
+<div>
+    <x-text-input icon="fa fa-location-dot" id="address" class="block mt-1 w-full" type="text"
+                wire:model="address" name="address" :value="old('address')" required autofocus
+                placeholder="Company Address" />
+            <x-input-error :messages="$errors->get('address')" class="mt-2" />
+</div>
         <!-- Supervisor Name -->
         <div>
             <x-text-input icon="fa fa-user-tie" id="supervisor_name" class="block mt-1 w-full" type="text"
@@ -32,19 +38,13 @@
 
         
 
-        <!-- Address -->
-        <div>
-            <x-text-input icon="fa fa-location-dot" id="address" class="block mt-1 w-full" type="text"
-                        wire:model="address" name="address" :value="old('address')" required autofocus
-                        placeholder="Company Address" />
-                    <x-input-error :messages="$errors->get('address')" class="mt-2" />
-        </div>
+        
 
         <!-- Contact Number -->
         <div>
-            <x-text-input icon="fa fa-phone" id="contact" class="block mt-1 w-full" type="number"
+            <x-text-input icon="fa fa-phone" id="contact" class="block mt-1 w-full" type="text"
                         wire:model="contact" name="contact" :value="old('contact')" required autofocus
-                        placeholder="Contact Number" />
+                        placeholder="Contact Number" maxlength="11" />
                     <x-input-error :messages="$errors->get('contact')" class="mt-2" />
         </div>
 
@@ -52,7 +52,7 @@
         <div>
             <x-text-input icon="fa fa-id-card" id="email" class="block mt-1 w-full" type="email"
                         wire:model="email" name="email" :value="old('email')" required
-                        placeholder="Email (If Applicable)" />
+                        placeholder="Email" />
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 

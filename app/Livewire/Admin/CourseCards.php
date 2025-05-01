@@ -5,124 +5,43 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\Course;
 use Livewire\Attributes\On;
+use App\Imports\CourseSectionImport;
 
 class CourseCards extends Component
 {
     public $search = '';
     public $query;
     public $editingCourse = null;
+    public $showImportModal = false;
+    public $courses;
+public $importFile;
+public $academic_year_id;
     public $editableData = [
         'course_code' => '',
         'course_name' => '',
     ];
 
-    #[On('refreshCourses')] 
-    public function refresh()
+    protected $listeners = [
+        'refreshCourses' => 'refresh',
+        'coursesRefreshed' => 'loadCourses'
+    ];
+
+    public function mount()
     {
-        // Reset the search term
-        $this->search = '';
-        
-        // This will trigger a re-render of the component
-        $this->dispatch('coursesRefreshed');
+        $this->loadCourses();
     }
 
-    public static function modalMaxWidth(): string
+    public function loadCourses()
     {
-        return '2xl';
-    }
-
-    public function startEditing($courseId)
-    {
-        $course = Course::find($courseId);
-        $this->editingCourse = $courseId;
-        $this->editableData = [
-            'course_code' => $course->course_code,
-            'course_name' => $course->course_name,
-        ];
-    }
-
-    public function cancelEditing()
-    {
-        $this->editingCourse = null;
-        $this->editableData = [
-            'course_code' => '',
-            'course_name' => '',
-        ];
-    }
-
-    public function saveCourseChanges()
-    {
-        $this->validate([
-            'editableData.course_code' => [
-                'required',
-                'string',
-                'max:50',
-                function ($attribute, $value, $fail) {
-                    $exists = Course::where('course_code', $value)
-                        ->where('id', '!=', $this->editingCourse)
-                        ->exists();
-                    
-                    if ($exists) {
-                        $fail('This course code is already taken.');
-                    }
-                },
-            ],
-            'editableData.course_name' => 'required|string|max:255',
-        ]);
-
-        try {
-            $course = Course::find($this->editingCourse);
-            $course->update([
-                'course_code' => $this->editableData['course_code'],
-                'course_name' => $this->editableData['course_name'],
-            ]);
-
-            $this->cancelEditing();
-            $this->dispatch('alert', type: 'success', text: 'Course updated successfully!');
-            $this->dispatch('refreshCourses');
-            
-        } catch (\Exception $e) {
-            logger()->error('Error updating course', [
-                'error' => $e->getMessage(),
-                'course_id' => $this->editingCourse
-            ]);
-            $this->dispatch('alert', type: 'error', text: 'Error updating course.');
-        }
-    }
-    public function deleteCourse($courseId)
-{
-    try {
-        $course = Course::findOrFail($courseId);
-        
-        // Check if course has any sections
-        if ($course->sections()->exists()) {
-            $this->dispatch('alert', type: 'error', text: 'Cannot delete course with existing sections.');
-            return;
-        }
-        
-        $course->delete();
-        $this->cancelEditing();
-        $this->dispatch('alert', type: 'success', text: 'Course deleted successfully!');
-        $this->dispatch('refreshCourses');
-        
-    } catch (\Exception $e) {
-        logger()->error('Error deleting course', [
-            'error' => $e->getMessage(),
-            'course_id' => $courseId
-        ]);
-        $this->dispatch('alert', type: 'error', text: 'Error deleting course.');
-    }
-}
-
-    public function render()
-    {
-        // Start the query to order by course_name with sections and students count
         $query = Course::query()
-            ->orderBy('course_name', 'asc')
-            ->with('sections.students')
-            ->withCount('students');
+            ->withCount('students')
+            ->with(['sections.students', 'instructorCourses' => function($query) {
+                $query->whereHas('academic_year', function($q) {
+                    $q->where('ay_default', true);
+                })->with('instructor');
+            }])
+            ->orderBy('course_code');
 
-        // Apply search filter if search term is provided
         if (!empty($this->search)) {
             $query->where(function ($q) {
                 $q->where('course_name', 'like', '%' . $this->search . '%')
@@ -130,11 +49,77 @@ class CourseCards extends Component
             });
         }
 
-        // Fetch the results
-        $courses = $query->get();
-
-        return view('livewire.admin.course-cards', [
-            'courses' => $courses
-        ]);
+        $this->courses = $query->get();
     }
+    public static function modalMaxWidth(): string
+    {
+        return '2xl';
+    }
+    public function importCourses()
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:csv,txt|max:2048',
+            'academic_year_id' => 'required|exists:academic_years,id',
+        ]);
+    
+        try {
+            $path = $this->importFile->getRealPath();
+            $importer = new CourseSectionImport($this->academic_year_id);
+            $result = $importer->import($path);
+    
+            if ($result['success']) {
+                $this->dispatch('alert', type: 'success', text: 'Courses imported successfully!');
+            } else {
+                $this->dispatch('alert', type: 'error', text: implode("\n", $result['errors']));
+            }
+    
+            $this->showImportModal = false;
+            $this->dispatch('refreshCourses');
+    
+        } catch (\Exception $e) {
+            $this->dispatch('alert', type: 'error', text: 'Failed to import courses: ' . $e->getMessage());
+        }
+    }
+    
+//     public function deleteCourse($courseId)
+// {
+//     try {
+//         $course = Course::findOrFail($courseId);
+        
+//         // Check if course has any sections
+//         if ($course->sections()->exists()) {
+//             $this->dispatch('alert', type: 'error', text: 'Cannot delete course with existing sections.');
+//             return;
+//         }
+        
+//         $course->delete();
+//         $this->cancelEditing();
+//         $this->dispatch('alert', type: 'success', text: 'Course deleted successfully!');
+//         $this->dispatch('refreshCourses');
+        
+//     } catch (\Exception $e) {
+//         logger()->error('Error deleting course', [
+//             'error' => $e->getMessage(),
+//             'course_id' => $courseId
+//         ]);
+//         $this->dispatch('alert', type: 'error', text: 'Error deleting course.');
+//     }
+// }
+
+public function updatedSearch()
+{
+    $this->loadCourses();
+}
+
+public function refresh()
+{
+    $this->search = '';
+    $this->loadCourses();
+    $this->dispatch('coursesRefreshed');
+}
+
+public function render()
+{
+    return view('livewire.admin.course-cards');
+}
 }

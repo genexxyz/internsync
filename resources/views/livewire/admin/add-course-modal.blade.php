@@ -48,20 +48,31 @@
             <!-- Hours Configuration -->
             <div class="space-y-4">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Hours Configuration</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <x-text-input 
-                            icon="fa fa-clock" 
-                            id="required_hours" 
-                            class="block w-full" 
-                            type="number"
-                            wire:model="required_hours" 
-                            placeholder="Required Hours" 
-                            required 
-                        />
-                        <x-input-error :messages="$errors->get('required_hours')" class="mt-1" />
-                    </div>
-
+                
+                <div>
+                    <x-text-input 
+                        icon="fa fa-clock" 
+                        id="required_hours" 
+                        class="block w-full" 
+                        type="number"
+                        wire:model="required_hours" 
+                        placeholder="Required Hours" 
+                        required 
+                    />
+                    <x-input-error :messages="$errors->get('required_hours')" class="mt-1" />
+                </div>
+            
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                        wire:model.live="allows_custom_hours" 
+                        id="allows_custom_hours"
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="allows_custom_hours" class="ml-2 text-sm text-gray-700">
+                        Allow Custom Hours for Special Cases
+                    </label>
+                </div>
+            
+                @if($allows_custom_hours)
                     <div>
                         <x-text-input 
                             icon="fa fa-clock" 
@@ -69,12 +80,14 @@
                             class="block w-full" 
                             type="number"
                             wire:model="custom_hours" 
-                            placeholder="Custom Hours" 
-                            required 
+                            placeholder="Custom Hours (for special cases)" 
                         />
+                        <p class="mt-1 text-xs text-gray-500">
+                            Students in this course can be assigned as "special" with these hours
+                        </p>
                         <x-input-error :messages="$errors->get('custom_hours')" class="mt-1" />
                     </div>
-                </div>
+                @endif
             </div>
 
             <!-- Academic Year Selection -->

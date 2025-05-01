@@ -8,6 +8,7 @@ class Deployment extends Model
 {
     protected $fillable = [
         'student_id',
+        'year_section_id',
         'instructor_id',
         'supervisor_id',
         'company_id',

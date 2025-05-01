@@ -187,66 +187,42 @@ class WeeklyReportReview extends Component
     // }
 
     protected function loadJournals()
-    {
-        $this->weeklyJournals = collect();
-        $currentDate = Carbon::parse($this->report->start_date)->startOfDay();
-        $endDate = Carbon::parse($this->report->end_date)->endOfDay();
+{
+    $this->weeklyJournals = collect();
+    $currentDate = Carbon::parse($this->report->start_date)->startOfDay();
+    $endDate = Carbon::parse($this->report->end_date)->endOfDay();
 
-        // Get all journals with relationships for the date range
-        $journals = Journal::with([
-            'attendance',
-            'taskHistories.task'
-        ])
-            ->where('student_id', $this->student->id)
-            ->whereBetween('date', [
-                $currentDate->format('Y-m-d'),
-                $endDate->format('Y-m-d')
-            ]);
+    // Get all journals with relationships for the date range
+    $journals = Journal::with(['attendance', 'tasks'])
+        ->where('student_id', $this->student->id)
+        ->whereBetween('date', [
+            $currentDate->format('Y-m-d'),
+            $endDate->format('Y-m-d')
+        ]);
 
-        $journalsByDate = $journals->get()->keyBy(function ($journal) {
-            return $journal->date->format('Y-m-d');
-        });
+    $journalsByDate = $journals->get()->keyBy(function ($journal) {
+        return $journal->date->format('Y-m-d');
+    });
 
-        // Create entries for each day in the range
-        while ($currentDate->lte($endDate)) {
-            $dateString = $currentDate->format('Y-m-d');
-            $journal = $journalsByDate->get($dateString);
+    // Create entries for each day in the range
+    while ($currentDate->lte($endDate)) {
+        $dateString = $currentDate->format('Y-m-d');
+        $journal = $journalsByDate->get($dateString);
 
-            // Calculate daily total if attendance exists
-            $dailyTotal = '00:00';
-            if ($journal && $journal->attendance) {
-                $dailyTotal = $journal->attendance->total_hours ?? '00:00';
-            }
-
-            // Process tasks for this journal
-            $tasks = collect();
-            if ($journal) {
-                $taskHistories = $journal->taskHistories;
-                $groupedHistories = $taskHistories->groupBy('task_id');
-
-                $tasks = $groupedHistories->map(function ($histories) {
-                    $latestHistory = $histories->sortByDesc('changed_at')->first();
-                    $task = $latestHistory->task;
-
-                    return [
-                        'title' => $task->title,
-                        'description' => $task->description,
-                        'status' => $latestHistory->status,
-                        'worked_hours' => $latestHistory->worked_hours,
-                        'remarks' => $latestHistory->remarks
-                    ];
-                })->values();
-            }
-
-            $this->weeklyJournals[$dateString] = [
-                'journal' => $journal,
-                'daily_total' => $dailyTotal,
-                'tasks' => $tasks
-            ];
-
-            $currentDate->addDay();
+        // Calculate daily total if attendance exists
+        $dailyTotal = '00:00';
+        if ($journal && $journal->attendance) {
+            $dailyTotal = $journal->attendance->total_hours ?? '00:00';
         }
+
+        $this->weeklyJournals[$dateString] = [
+            'journal' => $journal,
+            'daily_total' => $dailyTotal
+        ];
+
+        $currentDate->addDay();
     }
+}
 
     protected function calculateWeeklyTotal()
     {

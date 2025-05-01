@@ -15,9 +15,18 @@
     <div class="px-6 py-4">
         <!-- Profile Section -->
         <div class="flex flex-col lg:flex-row items-center lg:items-start gap-6 mb-6">
-            <img src="{{ $supervisor->image ? Storage::url($supervisor->image) : '/images/default_avatar.jpg' }}"
+            <div class="relative">
+                <img 
+                    src="{{ $supervisor->image ? Storage::url($supervisor->image) : '/images/default_avatar.jpg' }}"
                     class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm mx-auto lg:mx-0" 
-                    alt="Profile Picture">
+                    alt="Profile Picture"
+                >
+                @if ($supervisor->user && $supervisor->user->status === 0)
+                    <span class="absolute -top-1 -right-1 px-2 py-1 text-xs font-bold text-red-600 bg-red-100 rounded-full">
+                        Disabled
+                    </span>
+                @endif
+            </div>
 
             <div class="flex-1 text-center lg:text-left">
                 <div class="flex items-center justify-center lg:justify-start gap-2 mb-2">
@@ -151,17 +160,25 @@
     <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
         <div class="flex justify-end gap-3">
             @if (!$supervisor->user->is_verified)
-                <button wire:click="verifySupervisor"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                <button 
+                    wire:click="verifySupervisor"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                >
                     <i class="fa fa-check mr-2"></i>
                     Verify Supervisor
                 </button>
             @endif
-            <button wire:click="deleteSupervisor"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
-                <i class="fa fa-trash mr-2"></i>
-                Delete Supervisor
-            </button>
+    
+            @if($supervisor->user->status === 1)
+                <button 
+                    wire:click="disableSupervisor"
+                    wire:confirm="Are you sure you want to disable this supervisor's account?"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                >
+                    <i class="fa fa-ban mr-2"></i>
+                    Disable Account
+                </button>
+            @endif
         </div>
     </div>
 

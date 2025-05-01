@@ -35,7 +35,7 @@ public $newAcademic = [
         'editableData.academic_year' => 'required|string|max:9',
         'editableData.semester' => 'required|string',
         'editableData.description' => 'nullable|string|max:255',
-        'editableData.start_date' => 'required|date',
+        'editableData.start_date' => 'required|date|min:today',
         'editableData.end_date' => 'required|date|after:editableData.start_date',
     ];
 
@@ -45,7 +45,7 @@ public $newAcademic = [
         'newAcademic.academic_year' => 'required|string|max:9',
         'newAcademic.semester' => 'required|string',
         'newAcademic.description' => 'nullable|string|max:255',
-        'newAcademic.start_date' => 'required|date',
+        'newAcademic.start_date' => 'required|date|min:today',
         'newAcademic.end_date' => 'required|date|after:newAcademic.start_date',
     ]);
 if (Academic::where('academic_year', $this->newAcademic['academic_year'])

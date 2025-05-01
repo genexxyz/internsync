@@ -83,32 +83,24 @@
         </div>
 
         <!-- Acceptance Letter -->
-        @if($deployment->student->acceptance_letter)
-            <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-semibold text-gray-800 mb-4">Acceptance Letter</h4>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <i class="fa fa-file-lines text-blue-500 text-xl"></i>
-                        <span class="text-gray-600">Signed Acceptance Letter</span>
-                    </div>
-                    @if($deployment->student->acceptance_letter->signed_path)
-                        <button 
-                            @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
-                                detail: { url: '{{ Storage::url($deployment->student->acceptance_letter->signed_path) }}' }
-                            }))"
-                            class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
-                        >
-                            <i class="fa fa-eye mr-2"></i>
-                            View Letter
-                        </button>
-                    @else
-                        <span class="text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full text-sm">
-                            <i class="fas fa-clock mr-1"></i> Pending Signature
-                        </span>
-                    @endif
-                </div>
+        @if(!empty($deployment->supervisor_id))
+    <div class="bg-gray-50 rounded-lg p-4">
+        <h4 class="font-semibold text-gray-800 mb-4">Acceptance Letter</h4>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa fa-file-lines text-blue-500 text-xl"></i>
+                <span class="text-gray-600">Acceptance Letter</span>
             </div>
-        @endif
+            <button 
+                wire:click="downloadAcceptanceLetter"
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+            >
+                <i class="fa fa-download mr-2"></i>
+                Download Letter
+            </button>
+        </div>
+    </div>
+@endif
     </div>
 
 <!-- PDF Viewer Component -->

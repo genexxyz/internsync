@@ -30,6 +30,7 @@ use App\Http\Livewire\Supervisor\CompleteProfileForm;
 use App\Http\Middleware\SupervisorFirstLoginMiddleware;
 use App\Livewire\Supervisor\Menu;
 use App\Models\Report;
+use Illuminate\Support\Facades\Mail;
 
 Route::get('document/preview/{path}', function (Request $request, $path) {
     if (!$request->hasValidSignature()) {
@@ -67,6 +68,10 @@ Route::get('/', function () {
     }
     return view('auth.login'); // Login page for unauthenticated users
 });
+
+Route::get('/supervisor/register/{reference}', \App\Livewire\Auth\SupervisorRegistration::class)
+    ->name('supervisor.register.reference')
+    ->middleware('guest');
 
 Route::get('/semester-notice', function() {
     $currentAcademic = \App\Models\Academic::where('ay_default', true)->first();
@@ -113,6 +118,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function ()
         })->name('admin.weekly-report.pdf');
         Route::get('/academic-year', \App\Livewire\Admin\AcademicYear::class)->name('academic-year');
         Route::get('/academic-year/{academic}', App\Livewire\Admin\AcademicYearShow::class)->name('academic-year.show');
+        Route::get('/students', \App\Livewire\Admin\Students::class)->name('students');
     });
 });
 
@@ -131,8 +137,18 @@ Route::middleware(['auth', RoleMiddleware::class . ':student'])->group(function 
         Route::post('/student/endorsement-request', [StudentController::class, 'requestEndorsement'])->name('student.request-endorsement');
         Route::get('/evaluation/{evaluation}/view', [StudentController::class, 'viewEvaluation'])
         ->name('student.evaluation.view');
+        Route::get('/acceptance-letter/download', [StudentController::class, 'downloadAcceptanceLetter'])
+        ->name('student.acceptance-letter.download');
 });
 
+Route::get('/send-test-mail', function () {
+    Mail::raw('This is a test email from InternSync.', function ($message) {
+        $message->to('genesisroxas4@gmail.com')
+                ->subject('Test Mail from Laravel + Hostinger');
+    });
+
+    return 'Test email sent!';
+});
 // Instructor dashboard
 Route::middleware(['auth', RoleMiddleware::class . ':instructor'])->group(function () {
     Route::get('/instructor/dashboard', [InstructorController::class, 'index'])->name('instructor.dashboard');

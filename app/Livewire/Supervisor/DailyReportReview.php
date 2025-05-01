@@ -28,22 +28,24 @@ class DailyReportReview extends ModalComponent
     }
 
     public function loadJournalData()
-    {
-        $this->journal = Journal::with([
-            'student',
-            'attendance',
-            'taskHistories.task'
-        ])->findOrFail($this->journalId);
-        
-        $this->student = $this->journal->student;
-        
-        // Check if journal date is in an approved weekly report
-        $this->isInApprovedWeeklyReport = Report::where('student_id', $this->student->id)
-            ->where('status', 'approved')
-            ->where('start_date', '<=', $this->journal->date)
-            ->where('end_date', '>=', $this->journal->date)
-            ->exists();
-    }
+{
+    $this->journal = Journal::with([
+        'student',
+        'attendance',
+        'tasks' => function($query) {
+            $query->orderBy('order', 'asc');
+        }
+    ])->findOrFail($this->journalId);
+    
+    $this->student = $this->journal->student;
+    
+    // Check if journal date is in an approved weekly report
+    $this->isInApprovedWeeklyReport = Report::where('student_id', $this->student->id)
+        ->where('status', 'approved')
+        ->where('start_date', '<=', $this->journal->date)
+        ->where('end_date', '>=', $this->journal->date)
+        ->exists();
+}
 
     
 

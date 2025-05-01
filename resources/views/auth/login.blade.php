@@ -76,17 +76,17 @@
 
                     </div> --}}
                 </form>
-                <hr class="mt-5">
+                {{-- <hr class="mt-5">
                 <div class="flex justify-center mt-5 text-sm">
                     <p>Don't have an account yet? <a href="{{ route('register') }}"
-                            class="text-primary hover:text-accent font-bold">Register</a></p>
+                            class="text-primary hover:text-accent font-bold">Register</a></p> --}}
 
                 </div>
             </div>
         </div>
     </div>
     <div>
-        <div class="flex flex-col items-center text-sm mt-5 text-accent">
+        <div class="flex flex-col items-center text-sm mt-5 text-white">
             <p><i class="fa fa-location-dot"></i> {{ $settings->school_address ?? 'School Address' }}</p>
             <p><i class="fa fa-envelope"></i> {{ $settings->system_email ?? 'School Email' }} | <i
                     class="fa fa-phone"></i> {{ $settings->system_contact ?? 'School Contact' }}</p>

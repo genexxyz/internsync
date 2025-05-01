@@ -76,6 +76,9 @@ public function sections()
     }
 
     // Helper method to check if instructor is program head
-    
+    public function instructorCourses()
+{
+    return $this->hasMany(Program::class, 'instructor_id')->where('is_verified', true);
+}
 
 }

@@ -4,22 +4,22 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">Student Profile</h2>
             <div class="flex items-center gap-2">
-                @unless($student->user->is_verified)
+                {{-- @unless($student->user->is_verified)
                 <button wire:click="verifyStudent"
                     wire:confirm="Are you sure you want to verify this student?"
                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
                 <i class="fa fa-check mr-2"></i>
                 Verify Student
             </button>
-                @endunless
+                @endunless --}}
                 <button 
-                    wire:click="deleteStudent"
-                    wire:confirm="Are you sure you want to delete this student? This action cannot be undone."
-                    class="p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
-                    title="Delete Student"
-                >
-                    <i class="fa fa-trash"></i>
-                </button>
+    wire:click="disableStudent"
+    wire:confirm="Are you sure you want to disable this student's account?"
+    class="p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
+    title="Disable Student Account"
+>
+    <i class="fa fa-ban"></i>
+</button>
                 <button 
                     wire:click="$dispatch('closeModal')"
                     class="p-2 rounded-full hover:bg-gray-200 transition-colors"
@@ -68,6 +68,10 @@
                                     {{ $student->middle_name }}
                                     {{ $student->last_name }}
                                     {{ $student->suffix }}
+                                    @if ($student->user->status === 0)
+                                        <i class="fa fa-ban text-red-500 text-lg" title="Verified"></i>
+                                    
+                                    @endif
                                 </h3>
                                 <p class="mt-1 text-sm font-medium text-primary">
                                     {{ $student->section->course->course_code }} 
@@ -102,9 +106,9 @@
                         @endif
                     </div>
                     <div class="flex items-center gap-3">
-                        @if ($student->user->is_verified)
+                        {{-- @if ($student->user->is_verified)
                             <i class="fa fa-circle-check text-green-500 text-xl" title="Verified"></i>
-                        @endif
+                        @endif --}}
                         <button wire:click="toggleEdit" class="p-2 hover:bg-gray-100 rounded-full">
                             <i class="fa {{ $isEditing ? 'fa-times' : 'fa-pen' }} text-gray-500"></i>
                         </button>
@@ -228,15 +232,19 @@
                                     <!-- ...existing fields... -->
                                     <p class="flex items-center gap-2 text-gray-600">
                                         <i class="fa fa-building w-5"></i>
-                                        <span>{{ $student->deployment->company->company_name }}</span>
+                                        <span>{{ $student->deployment->company->company_name ?? '-' }}</span>
                                     </p>
                                     <p class="flex items-center gap-2 text-gray-600">
                                         <i class="fa fa-briefcase w-5"></i>
-                                        <span>{{ $student->deployment->department->department_name }}</span>
+                                        <span>{{ $student->deployment->department->department_name ?? '-' }}</span>
                                     </p>
                                     <p class="flex items-center gap-2 text-gray-600">
                                         <i class="fa fa-user-tie w-5"></i>
-                                        <span>{{ $student->deployment->supervisor->getFullNameAttribute() ?? 'No Supervisor'}}</span>
+                                        @if ($student->deployment->supervisor)
+                                            <span>{{ $student->deployment->supervisor->getFullNameAttribute() ?? 'No Supervisor'}}</span>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
                                     </p>
                                     @if ($student->deployment->starting_date != null && $student->deployment->ending_date != null)
                                     <p class="flex items-center gap-2 text-gray-600">
@@ -300,7 +308,7 @@
 
             @elseif($selectedTab === 'documents')
                 <div class="space-y-4">
-                    <!-- Student ID -->
+                    {{-- <!-- Student ID -->
                     <div class="bg-gray-50 rounded-lg p-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -318,7 +326,7 @@
                                 <span class="text-gray-400">No document uploaded</span>
                             @endif
                         </div>
-                    </div>
+                    </div> --}}
 
                     <!-- Acceptance Letter -->
                     <div class="bg-gray-50 rounded-lg p-4">
@@ -327,7 +335,7 @@
                                 <i class="fa fa-file-contract text-green-500 text-xl"></i>
                                 <span class="text-gray-600">Acceptance Letter</span>
                             </div>
-                            @if($student->acceptance_letter?->signed_path)
+                            @if($student->deployment->supervisor_id)
                                 <button wire:click="downloadAcceptanceLetter"
                                     class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">
                                     <i class="fa fa-download mr-2"></i>

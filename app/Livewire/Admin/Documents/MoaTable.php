@@ -17,7 +17,7 @@ class MoaTable extends Component
     public $statusFilter = '';
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
-
+protected $listeners = ['moaStatusUpdated' => 'render'];
     public function sortBy($field)
     {
         if ($this->sortField === $field) {

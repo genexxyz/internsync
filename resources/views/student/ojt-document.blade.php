@@ -18,14 +18,30 @@
                 </div>
                 <div class="mt-4">
                     @if($acceptance_letter && $acceptance_letter->signed_path)
-                        <!-- If letter is signed, show view button -->
+                        {{-- <!-- If letter is signed, show view button -->
                         <button @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
                             detail: { url: '{{ Storage::url($acceptance_letter->signed_path) }}' }
                         }))" 
                         class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
                             <i class="fa fa-eye text-sm"></i>
                             <span class="text-sm font-medium">View Signed Letter</span>
-                        </button>
+                        </button> --}}
+
+                        <!-- Add download button -->
+                        <a href="{{ route('student.acceptance-letter.download') }}"
+                           class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                            <i class="fa fa-download text-sm"></i>
+                            <span class="text-sm font-medium">Download</span>
+                        </a>
+                
+                        @if(session('error'))
+                            <div class="mt-2 p-2 bg-red-50 rounded-lg">
+                                <p class="text-xs text-red-600">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                    {{ session('error') }}
+                                </p>
+                            </div>
+                        @endif
                     @elseif($acceptance_letter && $acceptance_letter->is_generated)
                         <!-- If letter is generated but not signed -->
                         <button 
@@ -75,9 +91,9 @@
                         'label' => 'Ready for Pickup'
                     ],
                     'picked_up' => [
-                        'bg' => 'bg-purple-50',
-                        'text' => 'text-purple-600',
-                        'icon' => 'fa-truck',
+                        'bg' => 'bg-green-50',
+                        'text' => 'text-green-600',
+                        'icon' => 'fa-check-circle',
                         'label' => 'Picked Up'
                     ],
                     'received_by_company' => [
@@ -108,12 +124,14 @@
                 </button>
             @endif
         @else
+        @if($student->deployment?->company_id && $student->deployment?->supervisor_id)
             <button
                 onclick="Livewire.dispatch('openModal', { component: 'student.moa-request-form'})"
                 class="w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors duration-200 flex items-center justify-center gap-2">
                 <i class="fa fa-plus text-sm"></i>
                 <span class="text-sm font-medium">Request MOA</span>
             </button>
+            @endif
         @endif
 
         @if($moaRequest && $moaRequest->admin_remarks)
@@ -186,7 +204,7 @@
                             <span class="text-sm font-medium">{{ $status['label'] }}</span>
                         </div>
             
-                        @if($endorsementRequest->picked_up_at)
+                        {{-- @if($endorsementRequest->picked_up_at)
                             <div class="mt-2 p-2 bg-gray-50 rounded-lg">
                                 <p class="text-xs text-gray-600">
                                     <i class="fas fa-user mr-1"></i>
@@ -197,7 +215,7 @@
                                     Picked up on: {{ $endorsementRequest->picked_up_at->format('M d, Y g:i A') }}
                                 </p>
                             </div>
-                        @endif
+                        @endif --}}
             
                         @if($endorsementRequest->admin_remarks)
                             <div class="mt-2 p-2 bg-gray-50 rounded-lg">
@@ -208,6 +226,7 @@
                             </div>
                         @endif
                     @else
+                    @if($student->deployment?->company_id && $student->deployment?->supervisor_id)
                         <form action="{{ route('student.request-endorsement') }}" method="POST">
                             @csrf
                             <button type="submit"
@@ -216,6 +235,7 @@
                                 <span class="text-sm font-medium">Request Letter</span>
                             </button>
                         </form>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -242,7 +262,7 @@
                     <span class="text-sm font-medium">View Evaluation</span>
                 </button>
 
-                @if($student->deployment->evaluation->created_at)
+                {{-- @if($student->deployment->evaluation->created_at)
                     <div class="mt-2 p-2 bg-gray-50 rounded-lg">
                         <p class="text-xs text-gray-600">
                             <i class="fas fa-calendar mr-1"></i>
@@ -253,7 +273,7 @@
                             Score: {{ $student->deployment->evaluation->total_score }}/100
                         </p>
                     </div>
-                @endif
+                @endif --}}
             @else
                 <div class="w-full py-2 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center gap-2">
                     <i class="fas fa-clock text-sm"></i>

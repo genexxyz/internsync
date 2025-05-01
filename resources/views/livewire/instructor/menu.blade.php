@@ -7,7 +7,12 @@
         <i class="fa fa-gauge"></i>
         <span>Dashboard</span>
     </a>
-
+    <a wire:navigate href="{{ route('instructor.deployments.section') }}"
+    class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
+        {{ request()->routeIs('instructor.deployments.section') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
+    <i class="fa fa-user-check"></i>
+    <span>Deployments</span>
+</a>
     <a wire:navigate href="{{ route('instructor.taskAttendance') }}"
     class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
     {{ request()->routeIs('instructor.taskAttendance') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
@@ -15,12 +20,7 @@
     <span>Task & Attendance</span>
 </a>
 
-    <a wire:navigate href="{{ route('instructor.deployments.section') }}"
-        class="flex items-center rounded-md gap-3 px-2 py-1.5 font-medium text-lg underline-offset-2 focus:outline-none
-            {{ request()->routeIs('instructor.deployments.section') ? 'bg-black/30 text-white' : 'hover:bg-black/20' }}">
-        <i class="fa fa-user-check"></i>
-        <span>Deployments</span>
-    </a>
+    
 
     @if($isCourseHead)
     <a wire:navigate href="{{ route('instructor.company') }}"

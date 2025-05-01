@@ -25,11 +25,11 @@ class AcceptanceLetterForm extends ModalComponent
 
     protected $rules = [
         'company_name' => 'required|string|max:255',
-        'department_name'=> 'nullable|string|max:255',
+        'department_name'=> 'required|string|max:255',
         'supervisor_name' => 'required|string|max:255',
         'address' => 'required|string|max:255',
-        'contact' => 'required|string|max:255',
-        'email'=> 'string|email|max:255',
+        'contact' => 'required|digits:11',
+        'email'=> 'required|string|email|max:255',
     ];
 
     public function generatePDF()
@@ -57,7 +57,8 @@ class AcceptanceLetterForm extends ModalComponent
             'address' => $this->address,
             'contact' => $this->contact,
             'email' => $this->email,
-            'is_generated' => true
+            'is_generated' => true,
+            'reference_link' => Str::random(10),
         ]);
 
         $studentFullName = $student->last_name . '-' . $student->first_name;

@@ -104,12 +104,10 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button 
-                                            wire:click="$dispatch('openModal', {
-                                                component: 'supervisor.intern-details-modal',
-                                                arguments: {
-                                                    deployment: {{ $deployment->id }}
-                                                }
-                                            })"
+                                        onclick="Livewire.dispatch('openModal', { 
+                                            component: 'student-modal', 
+                                            arguments: { student: {{ $deployment->student->id }} } 
+                                        })"
                                             class="text-blue-600 hover:text-blue-900"
                                         >
                                             View Details
@@ -377,39 +375,78 @@
             </div>
         @endif
                 <!-- Start Date Modal -->
-                @if($selectedDeployment)
-                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
-                    <div class="fixed inset-0 overflow-y-auto z-50">
-                        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                            <div
-                                class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                                <div class="mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900">Set Internship Start Date</h3>
-                                    <div class="mt-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                                        <input type="date" wire:model="startDate"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
-                                            min="{{ now()->format('Y-m-d') }}">
-                                        @error('startDate')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                    <button wire:click="saveStartDate"
-                                        class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark sm:col-start-2">
-                                        Save
-                                    </button>
-                                    <button wire:click="$set('selectedDeployment', null)"
-                                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
-                                        Cancel
-                                    </button>
-                                </div>
+                <!-- Start Date Modal -->
+@if($selectedDeployment)
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+<div class="fixed inset-0 overflow-y-auto z-50">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Set Internship Start Date</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Select a date within the current academic year ({{ \Carbon\Carbon::parse($academicDate->start_date)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($academicDate->end_date)->format('M d, Y') }})
+                </p>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input 
+                        type="date" 
+                        wire:model="startDate"
+                        min="{{ ($academicDate->start_date)->format('Y-m-d') }}"
+                        max="{{ ($academicDate->end_date)->format('Y-m-d') }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                    >
+                    @error('startDate')
+                    <div class="mt-2 p-3 bg-red-50 rounded-md">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-600">{{ $message }}</p>
                             </div>
                         </div>
                     </div>
-                @endif
+                @enderror
+                </div>
+            </div>
+
+            <div class="mb-4 p-3 bg-blue-50 rounded-md">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Important Information</h3>
+                        <p class="text-sm text-blue-700">
+                            • Academic Year: {{ \Carbon\Carbon::parse($academicDate->start_date)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($academicDate->end_date)->format('M d, Y') }}<br>
+                            • Required Hours: {{ $deployment->custom_hours }} hours<br>
+                            • Estimated Working Days: {{ ceil($deployment->custom_hours / 8) }} days (8 hours/day, excluding weekends)
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            
+
+            <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                <button 
+                    wire:click="saveStartDate"
+                    class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark sm:col-start-2"
+                >
+                    Save
+                </button>
+                <button 
+                    wire:click="$set('selectedDeployment', null)"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
             </div>
     @else
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">

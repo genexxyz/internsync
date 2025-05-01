@@ -30,6 +30,20 @@
                 </div>
             </div>
         </div>
+        @elseif($deployment->status === 'completed')
+        <!-- Completed Internship Message -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Internship Completed</h3>
+                    <p class="text-gray-600 mb-2">Congratulations! You have successfully completed your internship.</p>
+                    
+                </div>
+            </div>
+        </div>
     @else
         <!-- Main Card -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">

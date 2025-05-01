@@ -101,27 +101,107 @@
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">Attendance Settings</h3>
                 
                 <div>
-                    <label for="minimum_minutes" class="block text-sm font-medium text-gray-700 mb-2">
-                        Minimum Duration Required
+                    <label for="minimum_hours" class="block text-sm font-medium text-gray-700 mb-2">
+                        Minimum Work Duration Required (Hours)
                     </label>
                     <div class="relative max-w-xs">
                         <x-text-input 
                             icon="fa fa-clock" 
-                            id="minimum_minutes" 
+                            id="minimum_hours" 
                             class="block w-full" 
                             type="number"
                             min="1"
-                            max="720"
-                            wire:model="minimum_minutes" 
-                            name="minimum_minutes" 
-                            placeholder="(In Minutes e.g. 240)" 
+                            max="24"
+                            wire:model="minimum_hours" 
+                            name="minimum_hours" 
+                            placeholder="Enter hours (e.g. 4)" 
                         />
                         <div class="mt-1 text-xs text-gray-500">
-                            Students must complete these minutes before they can time out (e.g. 240 = 4 hours)
+                            Students must complete these hours before they can time out
                         </div>
                     </div>
-                    <x-input-error :messages="$errors->get('minimum_minutes')" class="mt-2" />
+                    <x-input-error :messages="$errors->get('minimum_hours')" class="mt-2" />
                 </div>
+            </div>
+
+            <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Document Template Images</h3>
+                
+                <!-- Header Image -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-gray-700">Header Image</h4>
+                        <div class="text-sm text-gray-500">Recommended size: 800x150px</div>
+                    </div>
+            
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0 w-40 h-20 bg-gray-100 rounded-lg overflow-hidden">
+                            @if($headerImage)
+                                <img src="{{ $headerImage->temporaryUrl() }}" class="w-full h-full object-cover">
+                            @elseif($uploadedHeaderPath)
+                                <img src="{{ Storage::url($uploadedHeaderPath) }}" class="w-full h-full object-cover">
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="fa fa-image text-3xl"></i>
+                                </div>
+                            @endif
+                        </div>
+            
+                        <div class="flex-grow">
+                            <label class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <i class="fa fa-upload mr-2 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">Choose Header Image</span>
+                                <input type="file" wire:model="headerImage" accept=".png,.jpg,.jpeg" class="hidden">
+                            </label>
+            
+                            @if($headerImage)
+                                <button type="button" wire:click="uploadHeaderImage" 
+                                    class="ml-3 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    <i class="fa fa-check mr-2"></i>
+                                    Confirm Upload
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Footer Image -->
+                {{-- <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-gray-700">Footer Image</h4>
+                        <div class="text-sm text-gray-500">Recommended size: 800x100px</div>
+                    </div>
+            
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0 w-40 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                            @if($footerImage)
+                                <img src="{{ $footerImage->temporaryUrl() }}" class="w-full h-full object-cover">
+                            @elseif($uploadedFooterPath)
+                                <img src="{{ Storage::url($uploadedFooterPath) }}" class="w-full h-full object-cover">
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="fa fa-image text-3xl"></i>
+                                </div>
+                            @endif
+                        </div>
+            
+                        <div class="flex-grow">
+                            <label class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <i class="fa fa-upload mr-2 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">Choose Footer Image</span>
+                                <input type="file" wire:model="footerImage" accept=".png,.jpg,.jpeg" class="hidden">
+                            </label>
+            
+                            @if($footerImage)
+                                <button type="button" wire:click="uploadFooterImage" 
+                                    class="ml-3 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    <i class="fa fa-check mr-2"></i>
+                                    Confirm Upload
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div> --}}
             </div>
             <!-- Theme Selection -->
             <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">

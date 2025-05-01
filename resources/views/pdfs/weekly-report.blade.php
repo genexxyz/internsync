@@ -11,9 +11,15 @@
             color: #333;
             font-size: 12px;
         }
+        .header1 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: -40px;
+        }
         .header {
             text-align: center;
             margin-bottom: 20px;
+            margin-top: -40px;
         }
         .header img {
             max-width: 100px;
@@ -98,9 +104,43 @@
     main {
         margin-bottom: 100px;
     }
+    .document-header {
+    width: 100%;
+    padding: 0;               /* Remove padding if not needed */
+    margin: 0;                /* Remove margin */
+    text-align: center;
+    position: relative;
+    top: -30px;                   /* Ensure it's at the top */
+}
+
+.document-header img {
+    display: block;           /* Removes whitespace below image */
+    margin: 0 auto;           /* Center the image */
+    max-width: 100%;          /* Fit within the page */
+    height: auto;
+}
+    .document-footer {
+        width: 100%;
+        margin-top: 20px;
+        text-align: center;
+    }
+    .document-footer img {
+        max-width: 800px;
+        height: auto;
+    }
     </style>
 </head>
 <body>
+    @if($settings->header_image)
+    <div class="document-header">
+        <img src="{{ public_path('storage/' . $settings->header_image) }}" alt="">
+    </div>
+    <div class="header1">
+        
+        <h4>On-the-Job-Training Weekly Journal Form</h4>
+        <p>Week {{ $report->week_number }} ({{ $startDate }} - {{ $endDate }})</p>
+    </div>
+    @else
     <div class="header">
         <div>
                     
@@ -112,6 +152,18 @@
         <h4>On-the-Job-Training Weekly Journal Form</h4>
         <p>Week {{ $report->week_number }} ({{ $startDate }} - {{ $endDate }})</p>
     </div>
+@endif
+    {{-- <div class="header">
+        <div>
+                    
+            <strong><p>{{ $settings->school_name ?? 'InternSync' }}</p></strong>
+            <strong><p>{{ $settings->school_address ?? 'N/A' }}</p></strong>
+        </div>
+        
+
+        <h4>On-the-Job-Training Weekly Journal Form</h4>
+        <p>Week {{ $report->week_number }} ({{ $startDate }} - {{ $endDate }})</p>
+    </div> --}}
         <div class="info-table">
             <p><strong>Student:</strong> {{ $student->first_name }} {{ $student->last_name }}</p>
             @if($deployment && $company)
@@ -144,24 +196,24 @@
                         <td>{{ Carbon\Carbon::parse($journal->date)->format('M d, Y') }}</td>
                         <td>
                             @if($journal->text)
-                                <ul class="work-list">
-                                    <li>{{ $journal->text }}</li>
-                                </ul>
-                            @endif
-                            
-                            @if($journal->taskHistories->isNotEmpty())
-                                <ul class="work-list">
-                                    @foreach($journal->taskHistories->groupBy('task_id') as $taskHistories)
-                                        @php
-                                            $latestHistory = $taskHistories->last();
-                                            $task = $latestHistory->task;
-                                        @endphp
-                                        <li>
-                                            {{ $task->description }}
-                                            <span class="status">[{{ ucfirst($latestHistory->status) }}]</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                <strong>{{ $journal->text }}</strong>
+                                @if($journal->tasks->isNotEmpty())
+                                    <ul class="work-list">
+                                        @foreach($journal->tasks as $task)
+                                            <li>{{ $task->description }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            @else
+                                @if($journal->tasks->isNotEmpty())
+                                    <ul class="work-list">
+                                        @foreach($journal->tasks as $task)
+                                            <li>{{ $task->description }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-gray-500 italic">No entries for this day</p>
+                                @endif
                             @endif
                         </td>
                         <td>
@@ -196,7 +248,7 @@
             <div style="position: relative; width: auto;">
                 @if ($report->status == 'approved')
                     <img src="{{ public_path('storage/' . $deployment->supervisor->signature_path) }}" 
-                         alt="signature"
+                         alt=""
                          style="position: absolute; top: -15px; left: 23%; transform: translateX(-50%); width: 100px; opacity: 0.9;">
                 @endif
                 <p class="signature-line">{{ $deployment->supervisor->first_name }} {{ $deployment->supervisor->last_name }}</p>
@@ -210,8 +262,8 @@
                     
                          @if($deployment->student->section->course->instructorCourses->first()?->instructor->signature_path)
             <img 
-                src="{{ storage_path('app/public/' . $deployment->student->section->course->instructorCourses->first()?->instructor->signature_path) }}" 
-                alt="Program Head Signature" 
+                src="{{ public_path('storage/' . $deployment->student->section->course->instructorCourses->first()?->instructor->signature_path) }}" 
+                alt="" 
                 class="program-head-signature" style="position: absolute; top: -25px; left: 15%; transform: translateX(-50%); width: 100px; opacity: 0.9;">
             
         @else
@@ -225,13 +277,19 @@
             </div>
         </div>
     </div>
-
+    @if($settings->footer_image)
+    <div class="document-footer">
+        <img src="{{ public_path('storage/' . $settings->footer_image) }}" alt="Footer">
+    </div>
+    @else
     <div class="footer">
         
         <div class="footer-content">
             On-the-Job Training Daily Journal and Accomplishment Report
         </div>
     </div>
+@endif
+    
     
     
 </body>

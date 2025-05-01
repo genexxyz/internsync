@@ -24,7 +24,7 @@ return new class extends Migration
             $table->enum('student_type', ['regular', 'special'])->default('regular');
             $table->date('starting_date')->nullable();
             $table->date('ending_date')->nullable();
-            $table->enum('status', ['pending', 'ongoing', 'compeleted'])->default('pending');
+            $table->enum('status', ['pending', 'ongoing', 'compeleted', 'cancelled'])->default('pending');
             $table->boolean('is_verified')->default(false);
             $table->text('permit_path')->nullable();
             $table->timestamps();

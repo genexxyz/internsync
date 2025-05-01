@@ -16,11 +16,13 @@ return new class extends Migration
             $table->string('system_name');
             $table->string('default_theme');
             $table->string('default_logo')->nullable();
+            $table->string('header_image')->nullable();
+            $table->string('footer_image')->nullable();
             $table->string('school_name');
             $table->string('school_address');
             $table->string('system_email');
             $table->string('system_contact');
-            $table->integer('minimum_minutes')->default(0);
+            $table->integer('minimum_hours')->default(0);
             $table->unsignedBigInteger('updated_by');
             $table->timestamps();
         

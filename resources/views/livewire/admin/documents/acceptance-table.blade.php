@@ -1,5 +1,14 @@
 <div class="mt-6 p-4 sm:p-6 bg-gray-50 rounded-md">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Acceptance Letters Management</h2>
+    <button 
+        onclick="Livewire.dispatch('openModal', { component: 'admin.letter-template-manager' })"
+        class="inline-flex items-center px-4 py-2.5 rounded-lg bg-primary text-white hover:bg-accent transition-colors gap-2 shadow-sm"
+    >
+        <i class="fas fa-file-alt mr-2"></i>
+        Manage Templates
+    </button>
+    </div>
     <!-- Filters -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
         
@@ -11,6 +20,7 @@
                 class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
             >
         </div>
+
         <div>
             <select 
                 wire:model.live="courseFilter"
@@ -61,7 +71,7 @@
                     <th class="py-3 px-6 text-left">Course</th>
                     <th class="py-3 px-6 text-left">Section</th>
                     <th class="py-3 px-6 text-left">Status</th>
-                    <th class="py-3 px-6 text-center">Actions</th>
+                    {{-- <th class="py-3 px-6 text-center">Actions</th> --}}
                 </tr>
             </thead>
             <tbody class="text-gray-600 text-sm">
@@ -110,14 +120,19 @@
                                 {{ $statusLabels[$status] }}
                             </span>
                         </td>
-                        <td class="py-3 px-6 text-center">
-                            <button 
-                                wire:click="generatePdf({{ $student->id }})"
-                                class="bg-primary text-white px-3 py-1 rounded-lg text-sm hover:bg-primary-dark transition-colors
-                                {{ $status != 'deployed' ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $status != 'deployed' ? 'disabled' : '' }}>
-                                Generate PDF
-                            </button>
-                        </td>
+                        {{-- <td class="py-3 px-6 text-center">
+                            @if($student->acceptance_letter && $student->acceptance_letter->signed_path)
+                        <!-- If letter is signed, show view button -->
+                        <button @click="window.dispatchEvent(new CustomEvent('open-pdf-viewer', {
+                            detail: { url: '{{ Storage::url($student->acceptance_letter->signed_path) }}' }
+                        }))" 
+                        class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center gap-2">
+                            <i class="fa fa-eye text-sm"></i>
+                            <span class="text-sm font-medium">View Signed Letter</span>
+                        </button>
+                        @endif
+                            
+                        </td> --}}
                     </tr>
                 @empty
                     <tr>
@@ -134,4 +149,36 @@
     <div class="mt-4">
         {{ $students->links() }}
     </div>
+    <div x-data="{
+        showPdfViewer: false,
+        pdfUrl: '',
+        init() {
+            window.addEventListener('open-pdf-viewer', (e) => {
+                this.pdfUrl = e.detail.url;
+                this.showPdfViewer = true;
+            });
+        }
+    }" x-show="showPdfViewer" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+    
+            <!-- Backdrop overlay -->
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+    
+            <!-- Modal container -->
+            <div class="relative min-h-screen flex items-center justify-center p-4">
+                <div class="relative bg-white rounded-xl shadow-xl max-w-4xl w-full">
+                    <!-- Close button -->
+                    <div class="absolute top-4 right-4">
+                        <button @click="showPdfViewer = false"
+                            class="py-2 px-4 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors duration-200">
+                            <i class="fa fa-times text-gray-500"></i>
+                        </button>
+                    </div>
+    
+                    <!-- PDF iframe container -->
+                    <div class="p-1">
+                        <iframe :src="pdfUrl" class="w-full h-[85vh] rounded-lg" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>

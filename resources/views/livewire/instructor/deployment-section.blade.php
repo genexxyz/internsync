@@ -10,19 +10,19 @@
             >
         </div>
         
-        @if(!$isProgramHead)
-        <div>
-            <select 
-                wire:model.live="courseFilter"
-                class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
-            >
-                <option value="">All Courses</option>
-                @foreach($courses as $course)
-                    <option value="{{ $course->id }}">{{ $course->course_name }}</option>
-                @endforeach
-            </select>
-        </div>
-        @endif
+        @if($isProgramHead)
+<div>
+    <select 
+        wire:model.live="courseFilter"
+        class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring-primary"
+    >
+        <option value="">All Courses</option>
+        @foreach($courses as $course)
+            <option value="{{ $course->id }}">{{ $course->course_name }}</option>
+        @endforeach
+    </select>
+</div>
+@endif
 
         <div>
             <select 
@@ -107,26 +107,27 @@
                                 <!-- View Profile - Always visible -->
                                 <button 
                                     onclick="Livewire.dispatch('openModal', { 
-                                        component: 'instructor.student-modal', 
+                                        component: 'student-modal', 
                                         arguments: { student: {{ $student->id }} } 
                                     })"
                                     class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
                                     title="View Profile">
-                                    <i class="fas fa-eye"></i>
+                                    View Details
                                 </button>
                         
                                 <!-- Assign Company - Only for program head, with letter but not deployed -->
-                                @if($isProgramHead && $student->acceptance_letter && !$student->deployment->company_id)
-                                    <button 
-                                        onclick="Livewire.dispatch('openModal', { 
-                                            component: 'instructor.assign-modal', 
-                                            arguments: { student: {{ $student->id }} } 
-                                        })"
-                                        class="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
-                                        title="Assign Company">
-                                        <i class="fas fa-building-user"></i>
-                                    </button>
-                                @endif
+                                @if($isProgramHead && $student->acceptance_letter && !$student->deployment?->company_id  && 
+    $programHeadCourses->pluck('course_id')->contains($student->yearSection->course_id))
+    <button 
+        onclick="Livewire.dispatch('openModal', { 
+            component: 'instructor.assign-modal', 
+            arguments: { student: {{ $student->id }} } 
+        })"
+        class="p-1.5 text-white bg-green-600 hover:bg-green-800 rounded-md transition-colors"
+        title="Assign Company">
+        Assign
+    </button>
+@endif
                         
                                 {{-- <!-- Reassign Company - Only for program head and deployed students -->
                                 @if($isProgramHead && $student->acceptance_letter && $student->deployment)

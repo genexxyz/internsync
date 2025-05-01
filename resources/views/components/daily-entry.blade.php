@@ -3,29 +3,22 @@
         <div>
             <h4 class="font-medium text-gray-900">
                 {{ Carbon\Carbon::parse($date)->format('l, M d') }}
-
-
-
                 @if($journal)
-                                <span @class([
-                                    'px-2 py-1 text-xs font-medium rounded-full',
-                                    'bg-yellow-100 text-yellow-800' => !$journal->is_approved === 0,
-                                    'bg-green-100 text-green-800' => $journal->is_approved === 1,
-                                    'bg-red-100 text-red-800' => $journal->is_approved === 2,
-                                ])>
-                                    @if($journal->is_approved === 1)
-                                        Approved
-                                    @elseif($journal->is_approved === 2)
-                                        Rejected
-                                    @else
-                                        Pending
-                                    @endif
-                                </span>
-                            @else
-                                <span class="text-sm text-gray-500"></span>
-                            @endif
-
-
+                    <span @class([
+                        'px-2 py-1 text-xs font-medium rounded-full',
+                        'bg-yellow-100 text-yellow-800' => $journal->is_approved === 0,
+                        'bg-green-100 text-green-800' => $journal->is_approved === 1,
+                        'bg-red-100 text-red-800' => $journal->is_approved === 2,
+                    ])>
+                        @if($journal->is_approved === 1)
+                            Approved
+                        @elseif($journal->is_approved === 2)
+                            Rejected
+                        @else
+                            Pending
+                        @endif
+                    </span>
+                @endif
                 @if(Carbon\Carbon::parse($date)->isWeekend())
                     <span class="text-xs font-normal text-yellow-600 ml-2">(Weekend)</span>
                 @endif
@@ -43,50 +36,44 @@
     </div>
 
     @if($journal)
-        <div class="prose prose-sm max-w-none text-gray-600 mb-4">
-            {{ $journal->text }}
-        </div>
+        <!-- Journal Title -->
+        
+            <div class="mt-1 text-gray-800 font-semibold">
+                {{ $journal->text }}
+            </div>
+        
 
-        @if($journal->taskHistories->isNotEmpty())
-            <div class="mt-4 space-y-3">
-                {{-- <h5 class="text-sm font-medium text-gray-700">Tasks</h5> --}}
-                @foreach($journal->taskHistories->groupBy('task_id') as $histories)
-                    @php
-                        $latestHistory = $histories->first();
-                    @endphp
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <div class="flex justify-between items-start">
-                            <span class="text-sm text-gray-900">{{ $latestHistory->task->description }}</span>
-                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ 
-                                $latestHistory->status === 'done' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' 
-                            }}">
-                                {{ ucfirst($latestHistory->status) }}
-                            </span>
-                        </div>
-                       
-                    </div>
-                    
-                @endforeach
+        <!-- Tasks List -->
+        @if($journal->tasks->isNotEmpty())
+            <div class="">
+                <ul class="list-disc list-inside">
+                    @foreach($journal->tasks as $task)
+                        <li class="text-gray-800 text-sm">
+                            {{ $task->description }}
+                        </li>
+                    @endforeach
+                </ul>
             </div>
         @endif
+
         @if($journal->is_approved === 2 && $journal->feedback)
-        <div class="mb-6 bg-red-50 border border-red-100 rounded-lg p-2">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-exclamation-circle text-red-400"></i>
-                </div>
-                <div class="ml-3">
-                    <h4 class="text-xs font-medium text-red-800">Supervisor's Feedback:</h4>
-                    <p class="mt-1 text-xs text-red-700">
-                        {{ $journal->feedback }}
-                    </p>
-                    <p class="mt-2 text-xs text-red-600">
-                        Rejected on: {{ Carbon\Carbon::parse($journal->reviewed_at)->format('M d, Y h:i A') }}
-                    </p>
+            <div class="mt-4 bg-red-50 border border-red-100 rounded-lg p-2">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-xs font-medium text-red-800">Supervisor's Feedback:</h4>
+                        <p class="mt-1 text-xs text-red-700">
+                            {{ $journal->feedback }}
+                        </p>
+                        <p class="mt-2 text-xs text-red-600">
+                            Rejected on: {{ Carbon\Carbon::parse($journal->reviewed_at)->format('M d, Y h:i A') }}
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
     @else
         <p class="text-sm text-gray-500 italic">No entries for this day</p>
     @endif

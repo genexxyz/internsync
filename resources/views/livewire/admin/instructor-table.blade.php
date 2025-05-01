@@ -1,112 +1,141 @@
-<div class="mt-6 p-4 sm:p-6 bg-gray-50 rounded-md">
+<div class="mt-6 p-4 sm:p-6 bg-white rounded-xl shadow-sm">
+    
     <!-- Header and Controls -->
     <div class="mb-6">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Instructors Management</h2>
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Instructors Management</h2>
+            <button 
+                onclick="Livewire.dispatch('openModal', { component: 'admin.import-instructors-modal' })"
+                class="inline-flex items-center px-4 py-2.5 rounded-lg bg-primary text-white hover:bg-accent transition-colors gap-2 shadow-sm"
+            >
+                <i class="fas fa-file-import"></i>
+                Import Instructors
+            </button>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                    <i class="fa fa-search text-gray-500"></i>
-                </span>
                 <input 
                     type="text" 
                     wire:model.live.debounce.300ms="search"
-                    class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    class="pl-10 w-full h-11 rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                     placeholder="Search instructors..." 
                 />
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <i class="fas fa-search"></i>
+                </span>
             </div>
-            <select 
-                wire:model.live="filter"
-                class="w-full sm:w-48 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            {{-- <select 
+                wire:model.live="courseFilter"
+                class="w-full sm:w-48 h-11 rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             >
-                <option value="all">All Instructors</option>
-                <option value="verified">Verified</option>
-                <option value="unverified">Unverified</option>
-            </select>
+                <option value="">All Courses</option>
+                @foreach($courses as $course)
+                    <option value="{{ $course->id }}">{{ $course->course_code }}</option>
+                @endforeach
+            </select> --}}
         </div>
     </div>
-    <div class="p-4 sm:p-6 bg-gray-50">
+
+    <!-- Table Container -->
+    <div class="relative overflow-hidden rounded-xl border border-gray-200">
+        {{-- <!-- Loading Overlay -->
         <div 
-            class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200"
-            wire:loading.class="opacity-50"
+            wire:loading 
+            class="absolute inset-0 flex items-center justify-center bg-white/75 z-50 backdrop-blur-sm"
         >
-            <!-- Add a loading indicator -->
-            <div 
-                wire:loading 
-                class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10"
-            >
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="flex items-center gap-2 text-primary">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                <span class="text-sm font-medium">Loading...</span>
             </div>
-    <!-- Table Container with horizontal scroll for small screens -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+        </div> --}}
+
+        <!-- Table -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Sections</th>
-                        <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            #
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Instructor Details
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                            Program Head
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Handled Sections
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse ($instructors as $instructor)
-                        <tr class="hover:bg-gray-50 transition-colors duration-200">
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $loop->iteration + ($instructors->currentPage() - 1) * $instructors->perPage() }}
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $loop->iteration }}
                             </td>
-                            <td class="px-4 sm:px-6 py-4">
-                                <div class="flex flex-col">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {{ $instructor->first_name }} {{ $instructor->last_name }} {{ $instructor->suffix ?? '' }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-none">
-                                        {{ $instructor->user->email }}
-                                    </div>
-                                    <!-- Mobile-only section count -->
-                                    <div class="sm:hidden text-xs text-gray-500 mt-1">
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                            {{ $instructor->handles->count() ?? 0 }} sections
-                                        </span>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $instructor->first_name }} {{ $instructor->last_name }} {{ $instructor->suffix ?? '' }}
+                                        </div>
+                                        
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
-                                @if($instructor->user->is_verified)
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Verified
-                                    </span>
+                            <td class="px-6 whitespace-nowrap hidden lg:table-cell">
+                                @if($instructor->instructorCourses->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($instructor->instructorCourses as $program)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                {{ $program->course->course_code }}
+                                            </span>
+                                        @endforeach
+                                    </div>
                                 @else
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Pending
-                                    </span>
+                                    <span class="text-sm text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                                    {{ $instructor->handles->count() ?? 0 }} sections
-                                </span>
+                            <td class="px-6 whitespace-nowrap hidden sm:table-cell">
+                                @if($instructor->handles->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($instructor->handles as $handle)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                {{ $handle->section->course->course_code }}-{{ $handle->section->year_level }}{{ $handle->section->class_section }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-400">No sections</span>
+                                @endif
                             </td>
-                            <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <td class="px-6 whitespace-nowrap text-center">
                                 <button
                                     onclick="Livewire.dispatch('openModal', { 
                                         component: 'admin.instructor-modal', 
                                         arguments: { instructor: {{ $instructor->id }} } 
                                     })"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
                                 >
-                                    <i class="fa fa-eye mr-2"></i>
-                                    <span class="hidden sm:inline">View Details</span>
-                                    <span class="sm:hidden">View</span>
+                                    <i class="fas fa-eye mr-2"></i>
+                                    View Details
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 sm:px-6 py-4 text-center text-gray-500 text-sm">
-                                <div class="flex flex-col items-center justify-center py-6">
-                                    <i class="fa fa-user-slash text-gray-400 text-3xl mb-2"></i>
-                                    <span>No instructors found</span>
+                            <td colspan="5" class="px-6 py-8 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-500">
+                                    <i class="fas fa-users-slash text-4xl mb-3"></i>
+                                    <p class="text-lg font-medium">No instructors found</p>
+                                    <p class="text-sm text-gray-400">Try adjusting your search or filters</p>
                                 </div>
                             </td>
                         </tr>
@@ -115,10 +144,21 @@
             </table>
         </div>
     </div>
-</div>
-</div>
+
     <!-- Pagination -->
-    <div class="mt-4 px-4 sm:px-0">
+    <div class="mt-6">
         {{ $instructors->links() }}
+    </div>
+    <div class="fixed bottom-4 right-4">
+        <button onclick="Livewire.dispatch('openModal', { component: 'admin.add-instructor-modal' })"
+            class="w-16 h-16 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-accent focus:outline-none group">
+            <i class="fa fa-plus"></i>
+            <!-- Tooltip -->
+            <span
+                class="absolute top-1/2 -translate-y-1/2 right-20 bg-gray-800 text-white text-medium px-3 py-1 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                style="white-space: nowrap;">
+                Add an Instructor
+            </span>
+        </button>
     </div>
 </div>

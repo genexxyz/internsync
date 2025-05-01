@@ -16,7 +16,7 @@ class Section extends Model
 
     public function course()
 {
-    return $this->belongsTo(Course::class);
+    return $this->belongsTo(Course::class, 'course_id');
 }
 public function students()
     {
@@ -32,6 +32,11 @@ public function students()
     return $this->hasMany(Program::class, 'course_id', 'course_id');
 }
 public function handles()
+{
+    return $this->hasMany(Handle::class, 'year_section_id');
+}
+
+public function handle()
 {
     return $this->hasMany(Handle::class, 'year_section_id');
 }

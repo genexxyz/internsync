@@ -16,9 +16,18 @@
         <div class="flex flex-col items-center lg:flex-row lg:items-start gap-6 mb-6">
             <!-- Left Column -->
             <div class="lg:w-1/4">
-                <img src="{{ $user->image ? Storage::url($user->image) : '/images/default_avatar.jpg' }}"
-                    class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm mx-auto lg:mx-0" 
-                    alt="Profile Picture">
+                <div class="relative inline-block">
+                    <img 
+                        src="{{ $user->image ? Storage::url($user->image) : '/images/default_avatar.jpg' }}"
+                        class="w-32 h-32 rounded-full object-cover border-4 border-gray-100 shadow-sm" 
+                        alt="{{ $user->first_name }}'s Profile Picture"
+                    >
+                    @if ($user->user && $user->user->status === 0)
+                        <span class="absolute -top-1 -right-1 px-2 py-1 text-xs font-bold text-red-600 bg-red-100 rounded-full">
+                            Disabled
+                        </span>
+                    @endif
+                </div>
                 
                 <!-- Basic Info -->
                 <div class="mt-6 space-y-3">
@@ -49,11 +58,19 @@
                                     {{ $user->last_name }}
                                     {{ $user->suffix }}
                                 </h3>
-                                @if($user->instructorCourse)
-                                    <p class="mt-1 text-sm font-medium text-primary">
-                                        Program Head - {{ $user->instructorCourse->course->course_code }}
-                                    </p>
-                                @endif
+                                @if($user->instructorCourses->isNotEmpty())
+    <p class="mt-1 text-sm font-medium text-primary">
+        <i class="fas fa-user-tie mr-1"></i>
+        Program Head of:
+        <span class="flex flex-wrap gap-2 mt-1">
+            @foreach($user->instructorCourses as $programHead)
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    {{ $programHead->course->course_code }}
+                </span>
+            @endforeach
+        </span>
+    </p>
+@endif
                             </div>
                         @else
                             <div class="space-y-4">
@@ -89,9 +106,9 @@
                         @endif
                     </div>
                     <div class="flex items-center gap-3">
-                        @if ($user->user->is_verified)
+                        {{-- @if ($user->user->is_verified)
                             <i class="fa fa-circle-check text-green-500 text-xl" title="Verified"></i>
-                        @endif
+                        @endif --}}
                         <button wire:click="toggleEdit" class="p-2 hover:bg-gray-100 rounded-full">
                             <i class="fa {{ $isEditing ? 'fa-times' : 'fa-pen' }} text-gray-500"></i>
                         </button>
@@ -167,7 +184,7 @@
             </div>
         </div>
 
-        <!-- Supporting Documents -->
+        {{-- <!-- Supporting Documents -->
         <div class="mb-6">
             <h4 class="font-semibold text-gray-800 mb-4">Supporting Documents</h4>
             @if($instructor->supporting_doc)
@@ -190,24 +207,22 @@
             @else
                 <p class="text-gray-500">No supporting documents available</p>
             @endif
-        </div>
+        </div> --}}
     </div>
 
     <!-- Footer -->
     <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
         <div class="flex justify-end gap-3">
-            @if (!$instructor->user->is_verified)
-                <button wire:click="verifyInstructor"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                    <i class="fa fa-check mr-2"></i>
-                    Verify Instructor
+            @if($user->user && $user->user->status === 1)
+                <button 
+                    wire:click="disableInstructor"
+                    wire:confirm="Are you sure you want to disable this instructor's account?"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                >
+                    <i class="fa fa-ban mr-2"></i>
+                    Disable Account
                 </button>
             @endif
-            <button wire:click="deleteInstructor"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
-                <i class="fa fa-trash mr-2"></i>
-                Delete Instructor
-            </button>
         </div>
     </div>
     <!-- Document Preview Modal -->

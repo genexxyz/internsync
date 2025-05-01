@@ -11,6 +11,11 @@
             color: #333;
             font-size: 12px;
         }
+        .header1 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: -40px;
+        }
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -119,14 +124,51 @@
             text-align: center;
             font-size: 11px;
         }
+
+        .document-header {
+    width: 100%;
+    padding: 0;               /* Remove padding if not needed */
+    margin: 0;                /* Remove margin */
+    text-align: center;
+    position: relative;
+    top: -30px;                   /* Ensure it's at the top */
+}
+
+.document-header img {
+    display: block;           /* Removes whitespace below image */
+    margin: 0 auto;           /* Center the image */
+    max-width: 100%;          /* Fit within the page */
+    height: auto;
+}
+    .document-footer {
+        width: 100%;
+        margin-top: 20px;
+        text-align: center;
+    }
+    .document-footer img {
+        max-width: 800px;
+        height: auto;
+    }
     </style>
 </head>
 <body>
+    
+
+    @if($settings->header_image)
+    <div class="document-header">
+        <img src="{{ public_path('storage/' . $settings->header_image) }}" alt="">
+    </div>
+    <div class="header1">
+        <h3>On-the-Job-Training Program Performance Evaluation Report</h3>
+    </div>
+    @else
     <div class="header">
         <strong><p>{{ $settings->school_name ?? 'InternSync' }}</p></strong>
         <strong><p>{{ $settings->school_address ?? 'N/A' }}</p></strong>
         <h3>On-the-Job-Training Program Performance Evaluation Report</h3>
     </div>
+@endif
+
 
     <div class="info-section">
         <table class="info-grid">
@@ -182,7 +224,7 @@
                     @if($deployment->supervisor->signature_path)
                         <img 
                             src="{{ public_path('storage/' . $deployment->supervisor->signature_path) }}" 
-                            alt="Supervisor Signature"
+                            alt=""
                             class="signature-image">
                     @endif
                     <div class="signature-line"></div>
@@ -195,10 +237,13 @@
             <td>
                 <div class="signature-container">
                     @if($deployment->student->section->course->instructorCourses->first()?->instructor->signature_path)
-                        <img 
-                            src="{{ storage_path('app/public/' . $deployment->student->section->course->instructorCourses->first()?->instructor->signature_path) }}" 
-                            alt="Program Head Signature"
-                            class="signature-image">
+                        
+
+                            <img 
+                src="{{ public_path('storage/' . $deployment->student->section->course->instructorCourses->first()?->instructor->signature_path) }}" 
+                alt="" 
+                class="signature-image"
+            >
                     @endif
                     <div class="signature-line"></div>
                     <p class="signature-name">

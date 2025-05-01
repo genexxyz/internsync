@@ -10,11 +10,15 @@ class Course extends Model
         'course_name',
         'course_code',
         'required_hours',
+        'allows_custom_hours',
         'custom_hours',
         'academic_year_id',
         'instructor_id',
-    ];
 
+    ];
+    protected $casts = [
+        'allows_custom_hours' => 'boolean'
+    ];
     public function sections()
 {
     return $this->hasMany(Section::class);

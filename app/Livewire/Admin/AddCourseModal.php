@@ -13,7 +13,7 @@ class AddCourseModal extends ModalComponent
     public $instructors;
     public $academicYear;
     
-    public $course_name, $course_code, $required_hours, $custom_hours, $academic_year, $year_level, $instructor_id;
+    public $course_name, $course_code, $required_hours, $allows_custom_hours = false, $custom_hours, $academic_year, $year_level, $instructor_id;
     protected $listeners = [
         'valueSingleUpdated' => 'updatedSingleSelection',
     ];
@@ -21,10 +21,19 @@ class AddCourseModal extends ModalComponent
         'course_name' => 'required|string|unique:courses,course_name',
         'course_code' => 'required|string|unique:courses,course_code',
         'required_hours' => 'required|integer|min:2',
-        'custom_hours' => 'nullable|integer|min:2',
+        'allows_custom_hours' => 'boolean',
+        'custom_hours' => 'nullable|integer|min:200|required_if:allows_custom_hours,true',
         'academic_year' => 'required|integer',
-        // 'instructor_id' => 'nullable|integer',
     ];
+    protected $messages = [
+        'custom_hours.required_if' => 'Custom hours is required when custom hours are allowed.',
+    ];
+    public function updatedAllowsCustomHours($value)
+    {
+        if (!$value) {
+            $this->custom_hours = null;
+        }
+    }
     public function updatedSingleSelection($value)
     {
         
@@ -39,16 +48,15 @@ class AddCourseModal extends ModalComponent
             'course_name' => $this->course_name,
             'course_code' => $this->course_code,
             'required_hours' => $this->required_hours,
-            'custom_hours' => $this->custom_hours,
+            'allows_custom_hours' => $this->allows_custom_hours,
+            'custom_hours' => $this->allows_custom_hours ? $this->custom_hours : null,
             'academic_year_id' => $this->academic_year,
-            // 'instructor_id' => $this->instructor_id,
         ]);
         
         $this->resetForm();
         $this->closeModal();
         $this->dispatch('refreshCourses');
         $this->dispatch('alert', type:'success', text:'Course Added Successfully!');
-        
     }
 
     public function resetForm()

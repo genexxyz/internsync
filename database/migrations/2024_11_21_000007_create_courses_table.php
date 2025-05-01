@@ -15,6 +15,7 @@ class CreateCoursesTable extends Migration
             $table->string('course_name')->unique(); // Course name
             $table->string('course_code')->unique(); // Unique course code
             $table->integer('required_hours');
+            $table->boolean('allows_custom_hours')->default(false); //if athelete
             $table->integer('custom_hours')->nullable(); //if athelete
             $table->unsignedBigInteger('academic_year_id')->nullable();
         

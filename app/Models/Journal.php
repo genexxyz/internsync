@@ -35,14 +35,13 @@ class Journal extends Model
 {
     return $this->hasOne(Attendance::class, 'date', 'date');
 }
-public function taskHistories()
-{
-    return $this->hasMany(TaskHistory::class);
-}
+// public function taskHistories()
+// {
+//     return $this->hasMany(TaskHistory::class);
+// }
 public function tasks()
 {
-    return $this->belongsToMany(Task::class, 'task_histories')
-        ->withPivot('id', 'status', 'created_at', 'updated_at')
-        ->withTimestamps();
+    return $this->hasMany(Task::class);
 }
+
 }

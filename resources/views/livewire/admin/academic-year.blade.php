@@ -45,18 +45,22 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                             <input type="date" 
-                                wire:model="newAcademic.start_date"
-                                class="w-full border-gray-300 rounded-lg text-sm"
+                                wire:model.live="newAcademic.start_date"
+                                class="w-full border-gray-300 rounded-lg text-sm" min="{{ now()->format('Y-m-d') }}"
                             >
                             @error('newAcademic.start_date')
                                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                             @enderror
+                            
                         </div>
+                    
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                             <input type="date" 
                                 wire:model="newAcademic.end_date"
-                                class="w-full border-gray-300 rounded-lg text-sm"
+                                class="w-full border-gray-300 rounded-lg text-sm" @if (empty($newAcademic['start_date'])) disabled
+                                
+                                @endif min="{{ $newAcademic['start_date'] }}"
                             >
                             @error('newAcademic.end_date')
                                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>

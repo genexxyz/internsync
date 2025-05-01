@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('is_generated')->default(false); //dont include this
             $table->boolean('is_verified')->default(false);
             $table->string('signed_path')->nullable();
+            $table->string('reference_link')->nullable();
             $table->timestamps();
 
 

@@ -11,6 +11,7 @@ class Handle extends Model
     protected $fillable = [
         'instructor_id',
         'year_section_id',
+        'academic_year_id',
         'is_verified',
     ];
 

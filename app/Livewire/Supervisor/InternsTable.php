@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Supervisor;
 
+use App\Models\Academic;
 use App\Models\Attendance;
 use App\Models\Department;
 use Livewire\Component;
@@ -17,6 +18,7 @@ use App\Models\AcceptanceLetter;
 use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
+use App\Services\DocumentGeneratorService;
 
 class InternsTable extends Component
 {
@@ -40,6 +42,14 @@ class InternsTable extends Component
     public $viewingDeploymentId = null; // To track which deployment's letter is being viewed
     public $showLetterModal = false; // Control letter modal visibility
     public $showSignatureUpload = false;
+    public $academicDate;
+    protected $documentGenerator;
+
+
+    public function boot(DocumentGeneratorService $documentGenerator)
+    {
+        $this->documentGenerator = $documentGenerator;
+    }
     public function uploadSignature()
     {
         $this->validate([
@@ -80,15 +90,17 @@ class InternsTable extends Component
         return [
             'signature' => 'nullable|image|max:2048', // 2MB limit
             'selectedStudents' => 'array',
+            
         ];
     }
     public function mount()
-    {
-        $this->availableStudents = new Collection();
-        $this->startDate = now()->format('Y-m-d');
-        $this->calculateTotalHours();
-        $this->updateAvailableStudentCount();
-    }
+{
+    $this->availableStudents = new Collection();
+    $this->startDate = now()->format('Y-m-d');
+    $this->calculateTotalHours();
+    $this->updateAvailableStudentCount();
+    $this->academicDate = Academic::where('ay_default', 1)->firstOrFail();
+}
 
     public function viewStudentLetter($deploymentId)
     {
@@ -155,6 +167,29 @@ class InternsTable extends Component
 
         if ($deployment && is_null($deployment->supervisor_id)) {
             try {
+                DB::beginTransaction();
+
+                // Update deployment
+                $deployment->update([
+                    'supervisor_id' => $supervisorId,
+                    'accepted_at' => now(),
+                    'acceptance_letter_signed' => true
+                ]);
+
+                // Update acceptance letter record
+                AcceptanceLetter::updateOrCreate(
+                    ['student_id' => $deployment->student_id],
+                    [
+                        'is_generated' => true,
+                        'company_name' => $deployment->department->company->company_name,
+                        'department_name' => $deployment->department->department_name,
+                        'supervisor_name' => Auth::user()->supervisor->getFullNameAttribute(),
+                        'supervisor_id' => $supervisorId,
+                        'signed_at' => now()
+                    ]
+                );
+
+                // Send notification
                 $supervisorName = Auth::user()->supervisor->getFullNameAttribute();
                     $companyName = Auth::user()->supervisor->department->company->company_name ?? 'Company';
 
@@ -167,65 +202,7 @@ class InternsTable extends Component
                         'student.document',
                         'fa-handshake'
                     );
-                DB::beginTransaction();
-
-                // Update deployment
-                $deployment->update([
-                    'supervisor_id' => $supervisorId,
-                    'accepted_at' => now(),
-                    'acceptance_letter_signed' => true
-                ]);
-
-                // Prepare data for PDF
-                $studentName = $deployment->student->first_name . ' ' . $deployment->student->last_name;
-                $supervisorName = Auth::user()->supervisor->first_name . ' ' . Auth::user()->supervisor->last_name;
-
-                $data = [
-                    'deployment' => $deployment,
-                    'studentName' => $studentName,
-                    'settings' => Setting::where('id', 3)->first(),
-                    'signatureUrl' => Auth::user()->supervisor->signature_path,
-                    'date' => now()->format('F d, Y')
-                ];
-
-                // Generate PDF
-                $pdf = Pdf::loadView('pdfs.acceptance-letter', $data);
-
-                // Create filename
-                $fileName = implode('-', [
-                    $deployment->student->student_id,
-                    Str::slug($deployment->student->last_name),
-                    Str::slug($deployment->student->first_name),
-                    $deployment->student->yearSection->course->course_code,
-                    'acceptance-letter-signed',
-                    Str::random(8)
-                ]) . '.pdf';
-
-                // Create directory if it doesn't exist
-                $directory = storage_path('app/public/acceptance_letters');
-                if (!file_exists($directory)) {
-                    mkdir($directory, 0775, true);
-                }
-
-                // Store PDF with full path
-                $fullPath = 'acceptance_letters/' . $fileName;
-                if (!Storage::disk('public')->put($fullPath, $pdf->output())) {
-                    throw new \Exception('Failed to save PDF file');
-                }
-
-                // Create or update acceptance letter record
-                AcceptanceLetter::updateOrCreate(
-                    ['student_id' => $deployment->student_id],
-                    [
-                        'is_generated' => true,
-                        'signed_path' => $fullPath,
-                        'company_name' => $deployment->department->company->company_name,
-                        'department_name' => $deployment->department->department_name,
-                        'supervisor_name' => $supervisorName,
-                        'supervisor_id' => $supervisorId,
-                        'signed_at' => now()
-                    ]
-                );
+                
 
                 DB::commit();
                 $accepted++;
@@ -330,22 +307,60 @@ class InternsTable extends Component
         }
     }
 }
-    public function saveStartDate()
-    {
-        $this->validate([
-            'startDate' => 'required|date|after_or_equal:today',
-        ]);
 
-        $deployment = Deployment::findOrFail($this->selectedDeployment);
+public function saveStartDate()
+{
+    // Get the deployment and required hours
+    $deployment = Deployment::findOrFail($this->selectedDeployment);
+    $requiredHours = $deployment->custom_hours;
+    
+    // Calculate working days left in academic year
+    $startDate = \Carbon\Carbon::parse($this->startDate);
+    $academicEndDate = \Carbon\Carbon::parse($this->academicDate->end_date);
+    $workingDays = 0;
+    
+    $currentDate = $startDate->copy();
+    while ($currentDate->lte($academicEndDate)) {
+        if (!$currentDate->isWeekend()) {
+            $workingDays++;
+        }
+        $currentDate->addDay();
+    }
+
+    // Calculate possible hours (8 hours per working day)
+    $possibleHours = $workingDays * 8;
+
+    // Validate the start date
+    $this->validate([
+        'startDate' => [
+            'required',
+            'date',
+            'after_or_equal:' . $this->academicDate->start_date,
+            'before_or_equal:' . $this->academicDate->end_date,
+            function ($attribute, $value, $fail) use ($possibleHours, $requiredHours) {
+                if ($possibleHours < $requiredHours) {
+                    $fail("Starting on this date would not allow completion of required {$requiredHours} hours within the academic year. " .
+                          "Only {$possibleHours} hours possible with 8-hour workdays (excluding weekends).");
+                }
+            },
+        ],
+    ], [
+        'startDate.after_or_equal' => 'Start date must be within the current academic year (' . $this->academicDate->start_date . ' onwards)',
+        'startDate.before_or_equal' => 'Start date must not exceed the academic year end date (' . $this->academicDate->end_date . ')',
+    ]);
+
+    try {
         $deployment->update([
             'starting_date' => $this->startDate,
             'status' => 'ongoing'
         ]);
 
         $this->selectedDeployment = null;
-
         $this->dispatch('alert', type: 'success', text: 'Starting date has been set successfully!');
+    } catch (\Exception $e) {
+        $this->dispatch('alert', type: 'error', text: 'Failed to set starting date. Please try again.');
     }
+}
     public function showAcceptStudentsView()
     {
         $this->loadAvailableStudents();

@@ -89,12 +89,19 @@
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            @if($report['tasks']->isNotEmpty())
-                                <div class="text-sm text-gray-900">
-                                    {{ $report['tasks']->count() }} task(s)
-                                </div>
+                            @if($report['journal'])
+                                @if($report['tasks']->isNotEmpty())
+                                    <div class="text-sm text-gray-900">
+                                        {{ $report['tasks']->count() }} task(s)
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            <span class="font-medium">Title:</span> {{ $report['journal']->text }}
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-500">No tasks added</span>
+                                @endif
                             @else
-                                <span class="text-sm text-gray-500">No tasks</span>
+                                <span class="text-sm text-gray-500">No journal entry</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

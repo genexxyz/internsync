@@ -16,7 +16,7 @@ class DeploymentSection extends Component
     use WithPagination;
 
     public $instructor;
-    public $isProgramHead;
+    public $programHeadCourses;
     public $search = '';
     public $courseFilter = '';
     public $sectionFilter = '';
@@ -33,11 +33,14 @@ class DeploymentSection extends Component
     public function mount()
     {
         $this->instructor = $this->getInstructor();
-        $this->isProgramHead = (bool) ($this->instructor->instructorCourse?->is_verified);
+        $this->programHeadCourses = $this->instructor->instructorCourse()
+            ->where('is_verified', true)
+            ->with('course')
+            ->get();
         
-        // If program head, set initial course filter
-        if ($this->isProgramHead) {
-            $this->courseFilter = $this->instructor->instructorCourse->course_id;
+        // If program head, set initial course filter to first course
+        if ($this->programHeadCourses->isNotEmpty()) {
+            $this->courseFilter = $this->programHeadCourses->first()->course_id;
         }
     }
 
@@ -75,12 +78,15 @@ class DeploymentSection extends Component
                 });
             });
 
-        // Handle program head vs regular instructor filtering
-        if ($this->isProgramHead) {
-            $query->whereHas('yearSection', function($q) {
-                $q->where('course_id', $this->instructor->instructorCourse->course_id);
+        // Handle program head and/or instructor filtering
+        if ($this->programHeadCourses->isNotEmpty()) {
+            $programHeadCourseIds = $this->programHeadCourses->pluck('course_id')->toArray();
+            
+            $query->whereHas('yearSection', function($q) use ($programHeadCourseIds) {
+                $q->whereIn('course_id', $programHeadCourseIds);
             });
         } else {
+            // Only show handled sections if not a program head
             $query->whereHas('yearSection', function($q) {
                 $q->whereHas('handles', function($sq) {
                     $sq->where('instructor_id', $this->instructor->id)
@@ -119,18 +125,21 @@ class DeploymentSection extends Component
 
     public function render()
     {
-        $courses = $this->isProgramHead 
-            ? Course::where('id', $this->instructor->instructorCourse->course_id)->get()
-            : Course::whereHas('sections.handles', function($query) {
+        // Get courses based on program head status and handled sections
+        if ($this->programHeadCourses->isNotEmpty()) {
+            $courses = Course::whereIn('id', $this->programHeadCourses->pluck('course_id'))->get();
+        } else {
+            $courses = Course::whereHas('sections.handles', function($query) {
                 $query->where('instructor_id', $this->instructor->id)
                       ->where('is_verified', true);
             })->get();
+        }
 
         return view('livewire.instructor.deployment-section', [
             'students' => $this->loadStudents(),
             'courses' => $courses,
             'instructor' => $this->instructor,
-            'isProgramHead' => $this->isProgramHead
+            'isProgramHead' => $this->programHeadCourses->isNotEmpty()
         ]);
     }
 }

@@ -13,6 +13,15 @@
                     placeholder="Search courses..." 
                 />
             </div>
+            <div class="flex items-center gap-2">
+                <button 
+            onclick="Livewire.dispatch('openModal', { component: 'admin.import-course-section-modal' })"
+            class="inline-flex items-center px-4 py-2.5 rounded-lg bg-primary text-white hover:bg-accent transition-colors gap-2 shadow-sm"
+        >
+            <i class="fas fa-file-import"></i>
+            Import Courses
+        </button>
+            </div>
         </div>
 
         <!-- Course Cards Grid -->
@@ -68,7 +77,10 @@
                                         <p class="text-sm text-white/90">{{ $course->course_name }}</p>
                                     </div>
                                     <button 
-                                        wire:click="startEditing({{ $course->id }})"
+                                    onclick="Livewire.dispatch('openModal', { 
+                                        component: 'admin.edit-course-modal', 
+                                        arguments: { course: {{ $course->id }} } 
+                                    })"
                                         class="p-1.5 hover:bg-white/20 rounded transition-colors"
                                     >
                                         <i class="fas fa-pen text-white/80 text-sm"></i>
@@ -121,4 +133,51 @@
             </div>
         @endif --}}
     </div>
+    @if($showImportModal)
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="fixed inset-0 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                <div class="absolute right-0 top-0 pr-4 pt-4">
+                    <button wire:click="$set('showImportModal', false)" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Import Courses</h3>
+                    <p class="mt-1 text-sm text-gray-500">Upload a CSV file with courses and sections.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Academic Year</label>
+                        <select wire:model="academic_year_id" class="mt-1 block w-full rounded-md border-gray-300">
+                            <option value="">Select Academic Year</option>
+                            @foreach(\App\Models\Academic::where('status', 1)->get() as $academic)
+                                <option value="{{ $academic->id }}">{{ $academic->academic_year }} - {{ $academic->semester }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">CSV File</label>
+                        <input type="file" wire:model="importFile" accept=".csv" class="mt-1 block w-full">
+                        <p class="mt-1 text-xs text-gray-500">Download the <a href="#" class="text-blue-500">template file</a></p>
+                    </div>
+                </div>
+
+                <div class="mt-5 sm:mt-6">
+                    <button 
+                        wire:click="importCourses"
+                        class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark"
+                    >
+                        Import Courses
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 </div>

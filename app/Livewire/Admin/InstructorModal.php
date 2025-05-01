@@ -208,7 +208,61 @@ Notification::send(
 }
 
 
+public function disableInstructor()
+{
+    try {
+        DB::beginTransaction();
 
+        if (!$this->user->user) {
+            throw new \Exception('User account not found.');
+        }
+
+        // Check if instructor is a program head
+        if ($this->user->instructorCourses()->where('is_verified', true)->exists()) {
+            $this->dispatch('alert', type: 'error', 
+                text: 'Cannot disable instructor who is currently a program head.'
+            );
+            return;
+        }
+
+        // Check if instructor has active sections
+        if ($this->user->handles()->where('is_verified', true)->exists()) {
+            $this->dispatch('alert', type: 'error', 
+                text: 'Cannot disable instructor with active section assignments.'
+            );
+            return;
+        }
+
+        // Disable the user account
+        $this->user->user->update(['status' => 0]);
+
+        // Cancel any pending section assignments
+        $this->user->handles()->where('is_verified', false)->delete();
+
+        DB::commit();
+
+        Notification::send(
+            $this->user->user_id,
+            'instructor_disabled',
+            'Account Disabled',
+            'Your instructor account has been disabled.',
+            '',
+            'fa-user-slash'
+        );
+
+        $this->dispatch('alert', type: 'success', text: 'Instructor account has been disabled.');
+        $this->dispatch('refreshInstructors');
+        $this->dispatch('closeModal');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        logger()->error('Error disabling instructor', [
+            'error' => $e->getMessage(),
+            'instructor_id' => $this->user->id
+        ]);
+        $this->dispatch('alert', type: 'error', text: 'Error disabling instructor account.');
+    }
+}
     
     public function deleteInstructor()
     {

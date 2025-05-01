@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
 
 class Register extends Component
 {
@@ -293,8 +294,12 @@ class Register extends Component
         $documentPath = $this->processDocument($user);
 
         // Generate and send OTP
+        // $otp = $user->generateOTP();
+        // $this->sendOtpEmail($user, $otp);
+        
+
         $otp = $user->generateOTP();
-        $this->sendOtpEmail($user, $otp);
+Mail::to($user->email)->send(new OtpMail($user, $otp));
 
         // Create role-specific profile
         $this->createRoleProfile($user, $documentPath);
@@ -408,6 +413,8 @@ class Register extends Component
             'Email Verification OTP',
             "Your OTP for email verification is: {$otp}"
         );
+
+        
     }
 
     public function mount()
